@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "event_id": "EXAMPLE-event-1",
+  "run_id": "EXAMPLE-run",
+  "task_id": "M0-process-adapter",
+  "attempt_id": null,
+  "sequence": 1,
+  "timestamp": "2026-10-03T05:00:00Z",
+  "type": "RunStarted",
+  "worker_id": "EXAMPLE-local",
+  "provider": null,
+  "model": null,
+  "session_id": null,
+  "data": {
+    "message": "FORMAT EXAMPLE ONLY, not a runtime event.",
+    "artifact_sha256": null
+  }
+}

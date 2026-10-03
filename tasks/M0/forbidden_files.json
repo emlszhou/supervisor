@@ -1,0 +1,22 @@
+[
+  ".git/**",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "HERMES.md",
+  "README.md",
+  "SECURITY.md",
+  "CONTRIBUTING.md",
+  "pyproject.toml",
+  "uv.lock",
+  ".python-version",
+  ".github/**",
+  "docs/**",
+  "schemas/**",
+  "tasks/**",
+  "templates/**",
+  "examples/**",
+  "scripts/**",
+  "tests/protected/**",
+  "src/supervisor/cli.py",
+  "src/supervisor/__init__.py"
+]

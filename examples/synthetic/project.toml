@@ -1,0 +1,51 @@
+schema_version = 1
+
+[project]
+name = "synthetic-calculator"
+root = "."
+
+[worker]
+id = "local-mock"
+kind = "local"
+real_agents_enabled = false
+
+[roles]
+planner = "A"
+implementer = "B"
+reviewer = "A"
+fallback_repairer = "A"
+final_verifier = "A"
+
+[agents.A]
+adapter = "mock"
+model = "deterministic-reviewer"
+
+[agents.B]
+adapter = "mock"
+model = "deterministic-implementer"
+
+[policy]
+require_sandbox = true
+network = "disabled"
+allowed_domains = []
+mcp = "disabled"
+raw_transcripts = false
+auto_push = false
+allowed_files = ["calculator.py"]
+forbidden_files = [".git/**", "project.toml", "test_calculator.py"]
+
+[budgets]
+max_agent_calls = 7
+max_repair_rounds = 1
+max_takeovers = 1
+max_wall_seconds = 3600
+max_changed_files = 2
+max_diff_lines = 100
+max_output_bytes = 1048576
+
+[[verification.checks]]
+id = "calculator-tests"
+kind = "protected"
+argv = ["python", "-m", "pytest", "test_calculator.py", "-q"]
+cwd = "."
+required = true

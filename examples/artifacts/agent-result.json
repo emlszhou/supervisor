@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "M0-process-adapter",
+  "run_id": "EXAMPLE-run",
+  "attempt_id": "EXAMPLE-implementation-1",
+  "role": "implementer",
+  "provider": "mock",
+  "model": null,
+  "session_id": "EXAMPLE-mock-session",
+  "status": "completed",
+  "exit_code": 0,
+  "summary": "FORMAT EXAMPLE ONLY: deterministic fixture, not a real agent run.",
+  "error": null,
+  "usage": null,
+  "artifacts": [],
+  "truncated": false
+}

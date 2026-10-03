@@ -1,0 +1,56 @@
+name: Scaffold checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Python 3.12 on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned uv
+        run: python -m pip install uv==0.12.19
+      - name: Install frozen dependencies
+        run: uv sync --frozen --group dev
+      - name: Diagnose scaffold prerequisites
+        run: uv run --frozen ab-supervisor doctor
+      - name: Validate specifications
+        run: uv run --frozen python scripts/check_specs.py
+      - name: Run all tests (M0 fails until implemented)
+        run: uv run --frozen pytest
+      - name: Check synthetic example
+        run: uv run --frozen pytest examples/synthetic -q
+      - name: Lint
+        run: uv run --frozen ruff check .
+      - name: Format
+        run: uv run --frozen ruff format --check .
+      - name: Build wheel and source distribution
+        run: uv build --no-sources
+      - name: Create wheel smoke environment
+        run: uv venv .supervisor/wheel-smoke
+      - name: Install wheel (POSIX)
+        if: runner.os != 'Windows'
+        run: uv pip install --python .supervisor/wheel-smoke/bin/python dist/ab_agent_supervisor-0.1.0.dev0-py3-none-any.whl
+      - name: Install wheel (Windows)
+        if: runner.os == 'Windows'
+        run: uv pip install --python .supervisor/wheel-smoke/Scripts/python.exe dist/ab_agent_supervisor-0.1.0.dev0-py3-none-any.whl
+      - name: Run installed wheel (POSIX)
+        if: runner.os != 'Windows'
+        run: .supervisor/wheel-smoke/bin/python -m supervisor doctor
+      - name: Run installed wheel (Windows)
+        if: runner.os == 'Windows'
+        run: .supervisor/wheel-smoke/Scripts/python.exe -m supervisor doctor

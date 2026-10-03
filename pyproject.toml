@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ab-agent-supervisor"
+version = "0.1.0.dev0"
+description = "Scaffold for a deterministic, provider-independent coding supervisor"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+ab-supervisor = "supervisor.cli:main"
+
+[dependency-groups]
+dev = [
+  "jsonschema==4.25.1",
+  "pytest==8.4.2",
+  "rfc3339-validator==0.1.4",
+  "ruff==0.14.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/supervisor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "live_agent: requires explicitly configured external agents and credentials",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

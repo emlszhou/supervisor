@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "M0-process-adapter",
+  "run_id": "EXAMPLE-run",
+  "attempt_id": "EXAMPLE-review-1",
+  "bundle_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "snapshot_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "stage": "review_1",
+  "decision": "blocked",
+  "reviewer": {
+    "provider": "example-codex",
+    "model": null,
+    "session_id": "EXAMPLE-fresh-session",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "not_run",
+  "findings": [],
+  "summary": "FORMAT EXAMPLE ONLY: task not frozen and runtime acceptance not executed."
+}
