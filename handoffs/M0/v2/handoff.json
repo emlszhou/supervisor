@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "M0-process-adapter",
+  "revision": 2,
+  "baseline_commit": "c93c8c5054bd12246676337d37993c3c3adfbfb2",
+  "bundle_sha256": "ed298ce414e36deb2cf7a5864d5547bea46d60cbf04ae4ff1de1dc69b0ab5bca",
+  "implementation_branch": "hermes/m0",
+  "coordinator_branch": "main",
+  "implementation_status": "not_implemented",
+  "preparation_passed": 39,
+  "independent_acceptance": {
+    "tests": 57,
+    "passed": 0,
+    "failed": 57,
+    "errors": 0,
+    "skipped": 0
+  },
+  "previous_revision_bundle_sha256": "a01619c7f8f5f8a36dd91550f7e448f11ccbc7c5d83b5c829ed57de38d3d827f",
+  "changes_from_v1": [
+    "Authorized Git commit/pull/push handoff",
+    "Allow deliveries/M0/hermes-report.md",
+    "Freeze Git coordination instructions; API and independent acceptance unchanged"
+  ]
+}

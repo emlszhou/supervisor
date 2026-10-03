@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Independent review v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "attempt_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "bundle_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stage": {
+      "enum": [
+        "review_1",
+        "review_2",
+        "final_verify"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "accept",
+        "return_once",
+        "takeover",
+        "blocked",
+        "reject"
+      ]
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fresh_session": {
+          "type": "boolean"
+        },
+        "independent_provider": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "session_id",
+        "fresh_session",
+        "independent_provider"
+      ]
+    },
+    "verification_status": {
+      "enum": [
+        "passed",
+        "failed",
+        "not_run"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "severity": {
+            "enum": [
+              "blocking",
+              "major",
+              "minor",
+              "info"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "description",
+          "path"
+        ]
+      },
+      "minItems": 0
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "run_id",
+    "attempt_id",
+    "bundle_sha256",
+    "snapshot_sha256",
+    "stage",
+    "decision",
+    "reviewer",
+    "verification_status",
+    "findings",
+    "summary"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "accept"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "verification_status": {
+            "const": "passed"
+          },
+          "reviewer": {
+            "properties": {
+              "fresh_session": {
+                "const": true
+              }
+            }
+          },
+          "findings": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "severity": {
+                    "enum": [
+                      "blocking",
+                      "major"
+                    ]
+                  }
+                },
+                "required": [
+                  "severity"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "const": "review_1"
+          }
+        },
+        "required": [
+          "stage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "accept",
+              "return_once",
+              "blocked",
+              "reject"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "const": "review_2"
+          }
+        },
+        "required": [
+          "stage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "accept",
+              "takeover",
+              "blocked",
+              "reject"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "const": "final_verify"
+          }
+        },
+        "required": [
+          "stage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "accept",
+              "blocked",
+              "reject"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

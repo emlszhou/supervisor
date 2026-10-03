@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Task specification v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "frozen"
+      ]
+    },
+    "baseline_commit": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requirements_file": {
+      "const": "requirements.md"
+    },
+    "allowed_files_file": {
+      "const": "allowed_files.json"
+    },
+    "forbidden_files_file": {
+      "const": "forbidden_files.json"
+    },
+    "verification_file": {
+      "const": "verification.json"
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "planner": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "implementer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "reviewer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "fallback_repairer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "final_verifier": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        }
+      },
+      "required": [
+        "planner",
+        "implementer",
+        "reviewer",
+        "fallback_repairer",
+        "final_verifier"
+      ]
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_agent_calls": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_repair_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_takeovers": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_wall_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_changed_files": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_diff_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "max_agent_calls",
+        "max_repair_rounds",
+        "max_takeovers",
+        "max_wall_seconds",
+        "max_changed_files",
+        "max_diff_lines",
+        "max_output_bytes"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "revision",
+    "status",
+    "baseline_commit",
+    "requirements_file",
+    "allowed_files_file",
+    "forbidden_files_file",
+    "verification_file",
+    "roles",
+    "budgets"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "frozen"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "baseline_commit": {
+            "type": "string",
+            "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+          }
+        }
+      }
+    }
+  ]
+}
