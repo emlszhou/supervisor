@@ -2,6 +2,7 @@
 
 - task ID / run ID / attempt ID：
 - 基线提交 / bundle SHA256 / 候选 snapshot SHA256：
+- 代码提交 SHA / 实现分支：报告引用已完成的代码提交；报告自身提交 SHA 由 Git HEAD 查询，不在文件中自引用。
 - Agent / 模型 / session / Worker / OS 与版本：
 - 目标行为与实现方式：
 - 修改文件与范围说明：

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task_id": "M0-process-adapter",
-  "revision": 1,
+  "revision": 2,
   "status": "draft",
   "baseline_commit": null,
   "requirements_file": "requirements.md",

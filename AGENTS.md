@@ -16,11 +16,22 @@
 - Reviewer 使用全新会话，重新执行检查；自己修改后成为实现者，需要另一个审核会话。
 - 本仓库中 `tests/protected/`、`schemas/`、任务合同和治理文档默认受保护。实现任务若必须改变这些内容，提出具体变更，由协调者另立规格任务。
 
+## 已授权的 Git 交接
+
+用户已明确授权本项目的 Codex/Hermes 使用 commit、fetch、pull 和 push 完成交接，无需每轮重新请求相同授权。范围仅限 `emlszhou/supervisor`；其他仓库、部署或合并仍需各自授权。
+
+- Codex 管理 `main` 上的规格、冻结合同与协调记录；Hermes 在 `hermes/<task>` 实现分支提交和推送。
+- 实现者不向 main 推送、不合并到 main；禁止 force-push、reset、clean 和覆盖既有工作。
+- 拉取使用 `git pull --ff-only`；出现分叉或工作区不干净时保留文件并报告，不擅自重置。
+- 交付报告也是版本化文件，本次 M0 只允许 `deliveries/M0/hermes-report.md`。
+- 冻结输入由 main 拉取并校验，再导出到实施目录之外。Git、分支约定和只读权限不是 OS sandbox。
+- 凭证、venv、缓存、原始 transcript 和运行日志不进入提交。详细命令见 `docs/git-handoff.md`。
+
 ## 开发规则
 
 - Python 3.12，`src` 布局，生产依赖先保持标准库。新增依赖必须有合同授权；依赖更新使用 uv 并提交配套锁文件，不手改锁文件。
 - 云任务已经隔离，使用现有检出；只有用户明确要求时才另外创建开发 worktree。
-- 不触碰用户其他仓库、不覆盖未提交文件、不自动 push、reset、clean，不安装不明插件或关闭 TLS/校验。
+- 不触碰用户其他仓库、不覆盖未提交文件、不执行 force-push、reset、clean，不安装不明插件或关闭 TLS/校验。正常推拉按上述用户授权与分支边界执行。
 - 不将密钥、完整环境变量、原始 Agent 对话写进日志或任务包。
 - 进程命令使用参数数组，禁止 `shell=True`、字符串拼接 shell、`eval` 和动态执行 Agent 文本。
 - 文件修改规则与 OS 执行隔离分开；Git worktree、事后 diff 和工具名单都不能单独充当 sandbox。

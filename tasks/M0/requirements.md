@@ -13,6 +13,7 @@
 - `src/supervisor/agents/mock.py`：无需模型、认证或网络的模拟实现。
 - `src/supervisor/core/events.py`：可序列化最小事件及身份。
 - `tests/unit/test_m0_*.py`：实现方测试，仅新增这一前缀。
+- `deliveries/M0/hermes-report.md`：版本化交付报告。
 
 不改现有 CLI、公共导出、schema、合同、受保护检查、依赖或锁文件。新增模块通过各自路径导入，避免扩大任务。依赖只用标准库。
 
@@ -43,4 +44,4 @@
 
 实现方单元测试覆盖全部失败行为；Reviewer 使用独立黑盒检查。各平台的支持范围实测记录；只测 Linux 时不能宣称 Mac/Windows 已通过。完整要求见 acceptance.md。
 
-交付 diff、候选代码/摘要、真实命令与结果、环境/平台及未实现能力。预算见 task.json。任何需求不清、超范围或必要能力缺失，应报告并停止相应行为；不得修改受保护规格使实现通过。
+用户已授权 Git 交接。实现代码和报告提交、推送到 hermes/m0，禁止向 main 推送或 force-push。新增文件必须纳入提交，普通 git diff 不包含未跟踪文件。报告参照 templates/implementation-report.md，写入 deliveries/M0/hermes-report.md，包含真实命令与结果、环境/平台及未实现能力。预算见 task.json。任何需求不清、超范围或必要能力缺失，应报告并停止相应行为；不得修改受保护规格使实现通过。

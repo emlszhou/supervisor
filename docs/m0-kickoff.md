@@ -2,6 +2,8 @@
 
 本阶段由协调者固定公共 API 和独立黑盒测试、提交可引用的 Git 基线、生成外部冻结包。没有实现 ProcessRunner 或启动 Hermes。
 
+**当前交接渠道已更新为 Git。** 按 docs/git-handoff.md 克隆 hermes/m0，并从 main 导出 v2 冻结合同；以下离线说明保留为原始 v1 交付历史，旧包不修改。
+
 ## 验收状态
 
 `tasks/M0/api.md` 定义确切入口。`tests/protected/test_m0_acceptance.py` 验证实际进程与协议行为，不包含 skip/xfail，不用实现方自测替代验收。

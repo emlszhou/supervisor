@@ -49,6 +49,7 @@ M0 独立行为验收现已加入。执行代码尚未实现，因此完整 `pyt
 | [验收规则](docs/verification.md) | 受保护检查、证据和快照绑定 |
 | [路线图](docs/roadmap.md) | M0–M5 的依赖与完成条件 |
 | [Hermes 交接](docs/hermes-handoff.md) | 本地实现与云端审核的具体步骤 |
+| [Git 交接协议](docs/git-handoff.md) | 已授权的分支、克隆、推拉与报告路径 |
 | [准备验证记录](docs/preparation-status.md) | 当前已验证能力与尚未实现的功能 |
 | [M0 任务包](tasks/M0/README.md) | 第一个可交给实现者的任务草案 |
 | [schemas/](schemas/README.md) | 版本化输入输出格式 |
@@ -81,4 +82,4 @@ docs/             设计、操作与交接
 
 ## 当前交接边界
 
-仓库内 M0 任务是 **draft 源合同**；协调者建立本地基线后，在独立交付目录生成带真实基线、manifest 和摘要的 frozen 执行包。Hermes 以该外部包为准，不修改仓库源合同。当前不支持自动运行任务或推送。云任务使用现有隔离检出；不为开发脚手架额外创建 worktree。
+仓库内 M0 任务是 **draft 源合同**；当前 Git 交接使用 main 上 handoffs/M0/v2/ 的冻结执行包，校验后导出到实施目录之外。原始 v1 离线包保持不变。用户已授权本项目的正常 Git 推拉，Hermes 从 hermes/m0 开发和交付，Codex 从 main 发布规格并审核候选；不自动合并。Supervisor 产品本身的自动执行/推送能力尚未实现。云任务使用现有隔离检出，不额外创建 worktree。

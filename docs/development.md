@@ -21,7 +21,7 @@ uv build --no-sources
 ## 云端与本地
 
 - 云端：规格、独立审核和模拟测试；使用 `/workspace/supervisor` 当前检出。任务已隔离，不额外创建 worktree。
-- Mac mini：Hermes 实现与真实集成；只同步仓库文件和脱敏任务/结果，不同步凭证、venv、缓存或原始会话。
+- Mac mini：Hermes 实现与真实集成；通过 Git 同步规格、代码和脱敏报告，不同步凭证、venv、缓存或原始会话。分支与首次克隆命令见 docs/git-handoff.md。
 - Windows：目标兼容平台，在对应 CI/真实机器通过前不宣称已支持。
 
 无需服务、数据库服务器或云端模型密钥即可执行当前检查。SQLite 运行模块尚未实现。
@@ -34,4 +34,4 @@ M0 独立验收加入后，完整 CI/pytest 会因 M0 未实现而失败，这�
 
 ## 初始基线
 
-本仓库起初没有提交。开工阶段由协调者建立本地 Git 基线，在外部冻结包中填写其真实 SHA。仓库源合同保留 draft；只有外部 frozen 包是执行授权输入。基线以实际 git log 和交接 metadata 为准，不自动 push。
+本仓库起初没有提交。协调者建立 Git 基线，用户授权后通过 main 发布冻结包，并将 hermes/m0 指向其实施起点。源合同保留 draft；Git 导出到检出之外的 frozen 包才是执行输入。基线以实际 git log 与 handoffs/M0/v2/handoff.json 为准。
