@@ -1,0 +1,8 @@
+[
+  "src/supervisor/workers/process.py",
+  "src/supervisor/agents/base.py",
+  "src/supervisor/agents/mock.py",
+  "src/supervisor/core/events.py",
+  "tests/unit/test_m0_*.py",
+  "deliveries/M0R/hermes-report.md"
+]

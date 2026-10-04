@@ -9,3 +9,5 @@
 真实 Hermes CLI 尚未在此云环境核验。不要从本文推断命令参数、resume、取消、JSON 输出或 sandbox 能力。M0 使用模拟 Agent，真实接入见路线图 M2。
 
 完成后按 `templates/implementation-report.md` 交付。最多根据明确 findings 返修一次；仍失败时由协调者决定接管。
+
+当前开工任务已改为 M0R-review2-remediation：读取 main 的 handoffs/M0R/v1，使用 hermes/m0r 和 deliveries/M0R/hermes-report.md。原 M0/v2 与 hermes/m0 保留，不再返修。新版导出器和开工命令见 handoffs/M0R/v1/README.md。

@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Project config v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "root"
+      ]
+    },
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "kind": {
+          "const": "local"
+        },
+        "real_agents_enabled": {
+          "const": false
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "real_agents_enabled"
+      ]
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "planner": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "implementer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "reviewer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "fallback_repairer": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "final_verifier": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        }
+      },
+      "required": [
+        "planner",
+        "implementer",
+        "reviewer",
+        "fallback_repairer",
+        "final_verifier"
+      ]
+    },
+    "agents": {
+      "type": "object",
+      "minProperties": 2,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "adapter"
+        ]
+      },
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_sandbox": {
+          "const": true
+        },
+        "network": {
+          "enum": [
+            "disabled",
+            "restricted"
+          ]
+        },
+        "allowed_domains": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.-]+$"
+          },
+          "minItems": 0
+        },
+        "mcp": {
+          "const": "disabled"
+        },
+        "raw_transcripts": {
+          "const": false
+        },
+        "auto_push": {
+          "const": false
+        },
+        "allowed_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "forbidden_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "require_sandbox",
+        "network",
+        "allowed_domains",
+        "mcp",
+        "raw_transcripts",
+        "auto_push",
+        "allowed_files",
+        "forbidden_files"
+      ]
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_agent_calls": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_repair_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_takeovers": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_wall_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_changed_files": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_diff_lines": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "max_agent_calls",
+        "max_repair_rounds",
+        "max_takeovers",
+        "max_wall_seconds",
+        "max_changed_files",
+        "max_diff_lines",
+        "max_output_bytes"
+      ]
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+              },
+              "kind": {
+                "enum": [
+                  "project",
+                  "protected",
+                  "independent"
+                ]
+              },
+              "argv": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "cwd": {
+                "const": "."
+              },
+              "required": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "argv",
+              "cwd",
+              "required"
+            ]
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "checks"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "worker",
+    "roles",
+    "agents",
+    "policy",
+    "budgets",
+    "verification"
+  ]
+}

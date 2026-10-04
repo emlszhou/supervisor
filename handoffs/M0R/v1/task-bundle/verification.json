@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "checks": [
+    {
+      "id": "m0-unit",
+      "kind": "project",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit",
+        "--junitxml=.supervisor/evidence/M0-unit.xml"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "specs",
+      "kind": "protected",
+      "argv": [
+        "python",
+        "scripts/check_specs.py"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "m0-independent",
+      "kind": "independent",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "${CONTRACT}/tests/protected/test_m0_acceptance.py",
+        "--junitxml=.supervisor/evidence/M0-independent.xml"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "lint",
+      "kind": "project",
+      "argv": [
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "format",
+      "kind": "project",
+      "argv": [
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "m0r-independent",
+      "kind": "independent",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "${CONTRACT}/tests/protected/test_m0r_acceptance.py",
+        "--junitxml=.supervisor/evidence/M0R-independent.xml"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "full-project",
+      "kind": "project",
+      "argv": [
+        "python",
+        "-m",
+        "pytest"
+      ],
+      "cwd": ".",
+      "required": true
+    }
+  ]
+}

@@ -15,7 +15,7 @@ def git(repo: Path, *args: str) -> bytes:
     return subprocess.check_output(["git", "-C", str(repo), *args], stderr=subprocess.PIPE)
 
 
-def prepare(repo: Path, ref: str, output: Path) -> dict:
+def prepare(repo: Path, ref: str, output: Path, contract_prefix: str = "handoffs/M0/v2") -> dict:
     repo = repo.resolve()
     if output.is_symlink():
         raise ValueError("Output must not be a symlink")
@@ -29,7 +29,10 @@ def prepare(repo: Path, ref: str, output: Path) -> dict:
     spec_commit = spec_commit.decode().strip()
     if not re.fullmatch(r"[a-f0-9]{40}|[a-f0-9]{64}", spec_commit):
         raise ValueError("Invalid coordinator commit")
-    prefix = "handoffs/M0/v2/"
+    check_name(contract_prefix)
+    if not contract_prefix.startswith("handoffs/"):
+        raise ValueError("Contract prefix must be under handoffs")
+    prefix = contract_prefix + "/"
     metadata = json.loads(git(repo, "show", f"{spec_commit}:{prefix}handoff.json"))
     baseline = metadata["baseline_commit"]
     if not re.fullmatch(r"[a-f0-9]{40}|[a-f0-9]{64}", baseline):
@@ -79,8 +82,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ref", default="origin/main")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--contract-prefix", default="handoffs/M0/v2")
     args = parser.parse_args()
-    result = prepare(Path.cwd(), args.ref, args.output)
+    result = prepare(Path.cwd(), args.ref, args.output, args.contract_prefix)
     print(json.dumps(result, indent=2))
     print("Contract exported and hashes verified. Read-only mode is not an OS sandbox.")
     return 0
