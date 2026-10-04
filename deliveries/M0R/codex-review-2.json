@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task_id": "M0R-review2-remediation",
+  "run_id": "m0r-run-1",
+  "attempt_id": "m0r-attempt-2",
+  "bundle_sha256": "75f3473029918da8be5ae52dbb0b4ccb06f20d2306bac2a48f248ff7a52d9fe5",
+  "snapshot_sha256": "ac919174e3d80717a1f7c23cee904cf16dd11e0c70e9e12738404523046ed863",
+  "stage": "review_2",
+  "decision": "takeover",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m0r_fresh_review_2",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "failed",
+  "findings": [
+    {
+      "id": "M0R-R2-drain",
+      "severity": "blocking",
+      "description": "Post-exit drain still uses blocking os.read on descriptors never set nonblocking. Finite inherited child .65s caused .1s request to return completed in .691s. Deadline check before blocking read cannot enforce wall time.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R2-threads",
+      "severity": "blocking",
+      "description": "Windows fallback uses BufferedReader.read(4096) and close waits its reader lock. Finite inherited pipes made actual return .695s despite reported .106s timeout; short flushed stdout/stderr disappear on timeout. Replace with interruptible concurrent reads and bounded closure/lifecycle.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R2-memory",
+      "severity": "major",
+      "description": "Thread reader queues have maxsize0 (unbounded), independent of shared output budget. Finite4MB writer at budget64 accumulated977 stdout chunks (~4MB); arbitrary producer rate/output defeats memory bound.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R2-scope",
+      "severity": "blocking",
+      "description": "New tests/unit/test_m0r_review1_regressions.py does not match frozen tests/unit/test_m0_*.py allowlist. Four files/927 lines fits numerical budget, but this path is unauthorized.",
+      "path": "tests/unit/test_m0r_review1_regressions.py"
+    },
+    {
+      "id": "M0R-R2-tree",
+      "severity": "major",
+      "description": "Successful killpg is treated as confirmed full tree cleanup. Controlled child started its own session, survived timeout while result tree_cleanup_confirmed=true. Group termination alone cannot prove all descendants gone; report false/unknown absent stronger supported tracking.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R2-report",
+      "severity": "major",
+      "description": "Report declares all8 findings fixed and full pytest166, whereas exact root suite190 passes. Required deadline and bounded-memory behavior remains broken; report must distinguish native Windows unrun and simulated evidence limitations.",
+      "path": "deliveries/M0R/hermes-report.md"
+    }
+  ],
+  "summary": "Takeover after the one authorized repair. Required checks pass94 unit/190 full/57+15 frozen, but blocking drain/thread lifecycle failures and allowlist violation remain; unbounded queues and false tree confirmation also prevent acceptance. Native Windows not run. Frozen hashes and exact code/candidate snapshots independently verified."
+}

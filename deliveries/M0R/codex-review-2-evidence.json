@@ -1,0 +1,259 @@
+{
+  "candidate_commit": "35dd97955edb69376a1cfd4709d816821d9263e0",
+  "code_commit": "8167c06fea0c40387ab8f44f0da1b0f89064e967",
+  "baseline_commit": "fc479e760cbcd1e5259e2d62aeddaa6033d2c915",
+  "frozen_main_commit": "30ec417109ae1af7e4301b36083279fb68dd8d80",
+  "bundle_sha256": "75f3473029918da8be5ae52dbb0b4ccb06f20d2306bac2a48f248ff7a52d9fe5",
+  "all_frozen_hashes_verified": true,
+  "code_snapshot_sha256": "7a0ea21489cea171dbd55f792544809914185863c76760e4f1b1825cc5a6e69c",
+  "candidate_snapshot_sha256": "ac919174e3d80717a1f7c23cee904cf16dd11e0c70e9e12738404523046ed863",
+  "scope": {
+    "files": 4,
+    "diff_lines": 927,
+    "numstat": [
+      [
+        "56",
+        "0",
+        "deliveries/M0R/hermes-report.md"
+      ],
+      [
+        "98",
+        "81",
+        "src/supervisor/agents/base.py"
+      ],
+      [
+        "401",
+        "56",
+        "src/supervisor/workers/process.py"
+      ],
+      [
+        "235",
+        "0",
+        "tests/unit/test_m0r_review1_regressions.py"
+      ]
+    ],
+    "disallowed": [
+      "tests/unit/test_m0r_review1_regressions.py"
+    ]
+  },
+  "installation": {
+    "argv": [
+      "uv",
+      "sync",
+      "--frozen",
+      "--group",
+      "dev",
+      "--cache-dir",
+      "/tmp/m0r-review2-cache"
+    ],
+    "exit_code": 0
+  },
+  "checks": [
+    {
+      "id": "unit",
+      "exit_code": 0,
+      "passed": 94,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "id": "full-project",
+      "exit_code": 0,
+      "passed": 190,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "id": "frozen-m0",
+      "exit_code": 0,
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "id": "frozen-m0r",
+      "exit_code": 0,
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "id": "specs",
+      "exit_code": 0,
+      "passed": null,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "id": "lint",
+      "exit_code": 0,
+      "passed": null,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "id": "format",
+      "exit_code": 0,
+      "passed": null,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "check_environment": "env -i PATH=/usr/bin:/bin; candidate .venv; frozen acceptance outside clone",
+  "versions": {
+    "python": "3.12.14",
+    "uv": "0.12.19",
+    "pytest": "8.4.2",
+    "ruff": "0.14.1"
+  },
+  "previous_probes": {
+    "killpg_denial": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "duration_seconds": 0.2014544420017046,
+      "truncated": false,
+      "tree_cleanup_confirmed": false,
+      "error": "wall timeout exceeded",
+      "stdout_bytes": 0,
+      "stderr_bytes": 0
+    },
+    "drive_exception": {
+      "result": {
+        "status": "environment_failure",
+        "exit_code": null,
+        "duration_seconds": 0.001974143997358624,
+        "truncated": false,
+        "tree_cleanup_confirmed": null,
+        "error": "synthetic drive failure",
+        "stdout_bytes": 0,
+        "stderr_bytes": 0
+      },
+      "leader_alive_after_return": false,
+      "stdout_closed": true,
+      "stderr_closed": true
+    },
+    "windows_pipe_select": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "duration_seconds": 0.2053983240002708,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "wall timeout exceeded",
+      "stdout_bytes": 196608,
+      "stderr_bytes": 0
+    },
+    "exact_budget_live_eof": {
+      "status": "completed",
+      "exit_code": 0,
+      "duration_seconds": 0.12722643799861544,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": null,
+      "stdout_bytes": 64,
+      "stderr_bytes": 0
+    },
+    "inherited_pipe_drain": {
+      "status": "completed",
+      "exit_code": 0,
+      "duration_seconds": 0.6422827919996053,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": null,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0
+    },
+    "boolean_exit_code": {
+      "supplied_exit_code": false,
+      "result": {
+        "schema_version": 1,
+        "task_id": "M0R-review2-remediation",
+        "run_id": "m0r-run-1",
+        "attempt_id": "m0r-attempt-1",
+        "role": "implementer",
+        "provider": "mock",
+        "model": null,
+        "session_id": null,
+        "status": "failed",
+        "exit_code": 0,
+        "summary": "",
+        "error": "exit_code type invalid",
+        "usage": null,
+        "artifacts": [],
+        "truncated": false
+      }
+    }
+  },
+  "new_probes": {
+    "posix_inherited_drain": {
+      "actual_wall": 0.6909418989998812,
+      "result": {
+        "status": "completed",
+        "exit_code": 0,
+        "stdout": 0,
+        "stderr": 0,
+        "duration_seconds": 0.6906777520016476,
+        "truncated": false,
+        "tree_cleanup_confirmed": null,
+        "error": null
+      }
+    },
+    "threads_inherited_close": {
+      "actual_wall": 0.6946831269997347,
+      "result": {
+        "status": "timed_out",
+        "exit_code": 0,
+        "stdout": 0,
+        "stderr": 0,
+        "duration_seconds": 0.1058138879998296,
+        "truncated": false,
+        "tree_cleanup_confirmed": null,
+        "error": "wall timeout exceeded"
+      }
+    },
+    "threads_short_timeout": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.10314200299762888,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "wall timeout exceeded"
+    },
+    "escaped_tree": {
+      "result": {
+        "status": "timed_out",
+        "exit_code": -9,
+        "stdout": 0,
+        "stderr": 0,
+        "duration_seconds": 0.10127598699909868,
+        "truncated": false,
+        "tree_cleanup_confirmed": true,
+        "error": "wall timeout exceeded"
+      },
+      "descendant_alive": true
+    },
+    "thread_queue_bound": {
+      "result": {
+        "status": "output_limit",
+        "exit_code": 0,
+        "stdout": 64,
+        "stderr": 0,
+        "duration_seconds": 0.06390538000050583,
+        "truncated": true,
+        "tree_cleanup_confirmed": null,
+        "error": null
+      },
+      "queue_maxsizes": [
+        0,
+        0
+      ],
+      "highwater_chunks": [
+        977,
+        1
+      ]
+    }
+  },
+  "native_windows": "not_run",
+  "probe_bounds": "Each child finite (.4-.8s), outer watchdogs8/12s; escaped descendant explicitly killed. No real credentials supplied."
+}
