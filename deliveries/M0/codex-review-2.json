@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task_id": "M0-process-adapter",
+  "run_id": "m0-review-2",
+  "attempt_id": "m0-review-2-attempt",
+  "bundle_sha256": "ed298ce414e36deb2cf7a5864d5547bea46d60cbf04ae4ff1de1dc69b0ab5bca",
+  "snapshot_sha256": "8af4a0d6229bd17a638915a0afd946849c9dfc43b62177a594d8a4e0126fd80a",
+  "stage": "review_2",
+  "decision": "reject",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m0_fresh_review_2",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "failed",
+  "findings": [
+    {
+      "id": "M0-R2-budget",
+      "severity": "blocking",
+      "description": "Frozen max_diff_lines=1500 is exceeded: baseline-to-candidate numstat sums to 1866 added lines across 9 allowed files (0 deleted). Protected inputs unchanged and file-count budget passes, but scope budget does not. Stop this frozen run; any additional remediation requires a separately scoped contract, not a second primary repair or expanded takeover.",
+      "path": "tasks/M0/task.json"
+    },
+    {
+      "id": "M0-R2-timeout",
+      "severity": "blocking",
+      "description": "select readiness is followed by blocking BufferedReader.read(min(4096,budget)). Child writes one byte then sleeps .6 seconds with timeout .1: returned completed at .616 seconds; both streams short+sleep also completed at .617 seconds. Long-lived short output can hang indefinitely and bypass cancellation. Drain uses unbounded read after leader exit, risking budget memory and inherited-pipe hangs.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R2-cleanup",
+      "severity": "blocking",
+      "description": "Injected killpg PermissionError caused timeout result tree_cleanup_confirmed=true while an independently checked descendant remained alive. Fallback kills only leader and wait confirms only leader. Injected drive exception also leaves leader alive: outer process variable is never assigned and finally only closes pipes. Reviewer terminated all probe children afterward.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R2-process-status",
+      "severity": "blocking",
+      "description": "Valid completed protocol with ProcessResult(status=timed_out,exit_code=0,truncated=false) is parsed as completed. Actual process status must gate success and noncompleted statuses map unchanged regardless of exit0.",
+      "path": "src/supervisor/agents/base.py"
+    },
+    {
+      "id": "M0-R2-protocol",
+      "severity": "major",
+      "description": "Valid model=test-model, summary=retain summary and artifact result.txt are silently replaced by model null, empty summary and empty artifacts. Parser accepts artifacts=null, boolean token counts and schema_version=true; boolean usage output violates schema integer types. Complete strict validation and preserve valid fields.",
+      "path": "src/supervisor/agents/base.py"
+    },
+    {
+      "id": "M0-R2-output-boundary",
+      "severity": "major",
+      "description": "Child exits successfully after exactly 64 output bytes with budget64; runner reports output_limit/truncated=true. Reaching exact budget does not prove excess: EOF streams in readiness list spuriously trigger limit. Draining truncation also does not propagate a truncation flag.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R2-windows",
+      "severity": "major",
+      "description": "Windows ordinary short processes with require_tree_cleanup=false remain unsupported: select.select only supports sockets on Windows, but implementation passes subprocess pipes and suppresses OSError into empty readiness, eventually timing out. Linux simulation of pipe-select OSError reproduces timed_out; actual Windows runtime unrun. POSIX still uses thread-unsafe preexec_fn=os.setpgrp.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R2-report",
+      "severity": "major",
+      "description": "Delivery snapshot1696c043... belongs to original bae5195 candidate, not this tip snapshot8af4a0d6229bd17a638915a0afd946849c9dfc43b62177a594d8a4e0126fd80a. Code SHA3e5462d is report-only commit rather than repaired code30969f0 or delivered tip1c43472. Claims cleanup and fields fixed remain contradicted by probes. Report143 explicitly selected unit+acceptance tests; independently full repository suite has182.",
+      "path": "deliveries/M0/hermes-report.md"
+    }
+  ],
+  "summary": "Fresh review of exact candidate 1c43472e0109936401ccca0e4198f96ad72b89dd rejects frozen run: hard diff budget1866>1500; separately scoped contract needed before more work. All required checks pass (86 unit,57 protected acceptance,182 full); original five probes fixed. New independent probes show timeout bypass, false cleanup confirmation and parser false success/schema loss. Evidence codex-review-2-evidence.json; Linux only."
+}
