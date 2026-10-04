@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import os
+import select
 import signal
 import subprocess
 import threading
@@ -11,6 +12,7 @@ import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import IO, Any
 
 
 @dataclass(frozen=True)
@@ -66,9 +68,14 @@ def _validate_request(req: ProcessRequest) -> None:
         raise ValueError("cwd must be within workspace_root") from e
 
 
+def _is_posix() -> bool:
+    """Check if on POSIX platform (supports process groups)."""
+    return os.name == "posix"
+
+
 def _can_cleanup_tree() -> bool:
     """Check if process tree cleanup is supported on this platform."""
-    return hasattr(os, "killpg") and hasattr(signal, "SIGKILL")
+    return _is_posix() and hasattr(signal, "SIGKILL")
 
 
 class ProcessRunner:
@@ -164,119 +171,23 @@ class ProcessRunner:
             )
 
         # Build explicit environment
-        env_vars = {}
+        env_vars: dict[str, str] = {}
         for k, v in request.env.items():
             env_vars[str(k)] = str(v)
 
         start_time = time.monotonic()
-
+        process: subprocess.Popen | None = None
         try:
-            # Start process
-            process = subprocess.Popen(
-                list(request.argv),
-                cwd=str(request.cwd),
-                env=env_vars,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                preexec_fn=os.setpgrp,
-            )
-
-            # Poll for exit with timeout and cancellation support
-            stdout = b""
-            stderr = b""
-            exit_code = None
-            while True:
-                elapsed = time.monotonic() - start_time
-                remaining = request.timeout_seconds - elapsed
-
-                # Check for cancellation
-                if cancel_event is not None and cancel_event.is_set():
-                    self._kill_process_group(process.pid)
-                    try:
-                        process.wait(timeout=request.cancel_grace_seconds)
-                    except subprocess.TimeoutExpired:
-                        pass
-                    return ProcessResult(
-                        status="cancelled",
-                        exit_code=process.returncode,
-                        stdout=b"",
-                        stderr=b"",
-                        duration_seconds=elapsed,
-                        truncated=False,
-                        tree_cleanup_confirmed=True,
-                        error="cancelled during execution",
-                    )
-
-                # Check for timeout
-                if remaining <= 0:
-                    self._kill_process_group(process.pid)
-                    try:
-                        process.wait(timeout=request.cancel_grace_seconds)
-                    except subprocess.TimeoutExpired:
-                        pass
-                    return ProcessResult(
-                        status="timed_out",
-                        exit_code=process.returncode,
-                        stdout=b"",
-                        stderr=b"",
-                        duration_seconds=elapsed,
-                        truncated=False,
-                        tree_cleanup_confirmed=True,
-                        error="wall timeout exceeded",
-                    )
-
-                # Try to wait with short timeout to check for exit
-                try:
-                    stdout, stderr = process.communicate(timeout=min(0.05, remaining))
-                    exit_code = process.returncode
-                    break
-                except subprocess.TimeoutExpired:
-                    continue
-
-            # Check output limit
-            total_bytes = len(stdout) + len(stderr)
-            truncated = total_bytes > request.max_output_bytes
-            if truncated:
-                # Truncate to limit
-                remaining = request.max_output_bytes
-                truncated_stdout = stdout[:remaining]
-                remaining -= len(truncated_stdout)
-                truncated_stderr = stderr[:remaining]
-                return ProcessResult(
-                    status="output_limit",
-                    exit_code=exit_code,
-                    stdout=truncated_stdout,
-                    stderr=truncated_stderr,
-                    duration_seconds=time.monotonic() - start_time,
-                    truncated=True,
-                    tree_cleanup_confirmed=None,
-                    error=None,
-                )
-
-            if exit_code == 0:
-                return ProcessResult(
-                    status="completed",
-                    exit_code=exit_code,
-                    stdout=stdout,
-                    stderr=stderr,
-                    duration_seconds=time.monotonic() - start_time,
-                    truncated=False,
-                    tree_cleanup_confirmed=None,
-                    error=None,
-                )
-            else:
-                return ProcessResult(
-                    status="failed",
-                    exit_code=exit_code,
-                    stdout=stdout,
-                    stderr=stderr,
-                    duration_seconds=time.monotonic() - start_time,
-                    truncated=False,
-                    tree_cleanup_confirmed=None,
-                    error=f"nonzero exit code: {exit_code}",
-                )
-
+            return self._run_process(request, env_vars, start_time, cancel_event)
         except Exception as e:
+            # Reap if process was started
+            if process is not None:
+                try:
+                    self._close_pipes(process)
+                    process.kill()
+                    process.wait(timeout=0.5)
+                except Exception:
+                    pass
             return ProcessResult(
                 status="environment_failure",
                 exit_code=None,
@@ -288,13 +199,271 @@ class ProcessRunner:
                 error=str(e),
             )
 
-    def _kill_process_group(self, pid: int) -> None:
-        """Kill process and its children by process group."""
+    def _run_process(
+        self,
+        request: ProcessRequest,
+        env_vars: dict,
+        start_time: float,
+        cancel_event: threading.Event | None,
+    ) -> ProcessResult:
+        """Start process and manage its lifecycle with timeout/cancel/output limits."""
+        # Build popen kwargs - preexec_fn only on POSIX
+        popen_kwargs: dict = {
+            "cwd": str(request.cwd),
+            "env": env_vars,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+        }
+        if _is_posix() and request.require_tree_cleanup:
+            popen_kwargs["preexec_fn"] = os.setpgrp
+
+        process = subprocess.Popen(list(request.argv), **popen_kwargs)
+
         try:
-            pgid = os.getpgid(pid)
+            return self._drive_process(process, request, start_time, cancel_event)
+        finally:
+            self._close_pipes(process)
+
+    def _drive_process(
+        self,
+        process: subprocess.Popen,
+        request: ProcessRequest,
+        start_time: float,
+        cancel_event: threading.Event | None,
+    ) -> ProcessResult:
+        """Drive process: poll for cancel/timeout/output limit, then collect exit."""
+        stdout_chunks: list[bytes] = []
+        stderr_chunks: list[bytes] = []
+        total_bytes = 0
+        truncated = False
+
+        # Stream output concurrently while polling for exit/timeout/cancel
+        while True:
+            elapsed = time.monotonic() - start_time
+            remaining = request.timeout_seconds - elapsed
+
+            # Check for cancellation
+            if cancel_event is not None and cancel_event.is_set():
+                cleanup_ok = self._terminate_process(process, request)
+                return ProcessResult(
+                    status="cancelled",
+                    exit_code=process.returncode,
+                    stdout=b"".join(stdout_chunks),
+                    stderr=b"".join(stderr_chunks),
+                    duration_seconds=time.monotonic() - start_time,
+                    truncated=truncated,
+                    tree_cleanup_confirmed=cleanup_ok if request.require_tree_cleanup else None,
+                    error="cancelled during execution",
+                )
+
+            # Check for timeout
+            if remaining <= 0:
+                cleanup_ok = self._terminate_process(process, request)
+                return ProcessResult(
+                    status="timed_out",
+                    exit_code=process.returncode,
+                    stdout=b"".join(stdout_chunks),
+                    stderr=b"".join(stderr_chunks),
+                    duration_seconds=time.monotonic() - start_time,
+                    truncated=truncated,
+                    tree_cleanup_confirmed=cleanup_ok if request.require_tree_cleanup else None,
+                    error="wall timeout exceeded",
+                )
+
+            # Read available output with small timeout (enforce budget in real-time)
+            if process.stdout is not None or process.stderr is not None:
+                rlist: list[IO[Any]] = []
+                if process.stdout is not None:
+                    rlist.append(process.stdout)
+                if process.stderr is not None:
+                    rlist.append(process.stderr)
+                try:
+                    ready, _, _ = select.select(rlist, [], [], 0.05)
+                except (ValueError, OSError):
+                    ready = []
+
+                budget_remaining = request.max_output_bytes - total_bytes
+
+                for stream in ready:
+                    if budget_remaining <= 0:
+                        truncated = True
+                        break
+                    try:
+                        chunk = stream.read(min(4096, budget_remaining))
+                    except (ValueError, OSError):
+                        chunk = b""
+                    if not chunk:
+                        continue
+                    if len(chunk) > budget_remaining:
+                        chunk = chunk[:budget_remaining]
+                        truncated = True
+                    if stream is process.stdout:
+                        stdout_chunks.append(chunk)
+                    else:
+                        stderr_chunks.append(chunk)
+                    total_bytes += len(chunk)
+                    budget_remaining -= len(chunk)
+
+                if truncated:
+                    # Output limit hit - kill process and return output_limit
+                    cleanup_ok = self._terminate_process(process, request)
+                    stdout_total = b"".join(stdout_chunks)
+                    stderr_total = b"".join(stderr_chunks)
+                    # Ensure combined limit
+                    if len(stdout_total) + len(stderr_total) > request.max_output_bytes:
+                        room = request.max_output_bytes - len(stdout_total)
+                        if room < 0:
+                            stdout_total = stdout_total[: request.max_output_bytes]
+                            stderr_total = b""
+                        else:
+                            stderr_total = stderr_total[:room]
+                    return ProcessResult(
+                        status="output_limit",
+                        exit_code=process.returncode,
+                        stdout=stdout_total,
+                        stderr=stderr_total,
+                        duration_seconds=time.monotonic() - start_time,
+                        truncated=True,
+                        tree_cleanup_confirmed=cleanup_ok if request.require_tree_cleanup else None,
+                        error=None,
+                    )
+
+            # Check if process has exited
+            if process.poll() is not None:
+                # Drain any remaining buffered output (respecting budget)
+                self._drain_output(
+                    process, stdout_chunks, stderr_chunks, request.max_output_bytes - total_bytes
+                )
+                break
+
+        # Process exited normally - finalize
+        exit_code = process.returncode
+        elapsed = time.monotonic() - start_time
+        stdout_final = b"".join(stdout_chunks)
+        stderr_final = b"".join(stderr_chunks)
+
+        # Check output limit after exit
+        total = len(stdout_final) + len(stderr_final)
+        if total > request.max_output_bytes:
+            truncated_stdout = stdout_final[: request.max_output_bytes]
+            truncated_stderr = stderr_final[: request.max_output_bytes - len(truncated_stdout)]
+            return ProcessResult(
+                status="output_limit",
+                exit_code=exit_code,
+                stdout=truncated_stdout,
+                stderr=truncated_stderr,
+                duration_seconds=elapsed,
+                truncated=True,
+                tree_cleanup_confirmed=None,
+                error=None,
+            )
+
+        if exit_code == 0:
+            return ProcessResult(
+                status="completed",
+                exit_code=exit_code,
+                stdout=stdout_final,
+                stderr=stderr_final,
+                duration_seconds=elapsed,
+                truncated=False,
+                tree_cleanup_confirmed=None,
+                error=None,
+            )
+        else:
+            return ProcessResult(
+                status="failed",
+                exit_code=exit_code,
+                stdout=stdout_final,
+                stderr=stderr_final,
+                duration_seconds=elapsed,
+                truncated=False,
+                tree_cleanup_confirmed=None,
+                error=f"nonzero exit code: {exit_code}",
+            )
+
+    def _drain_output(
+        self,
+        process: subprocess.Popen,
+        stdout_chunks: list[bytes],
+        stderr_chunks: list[bytes],
+        budget: int,
+    ) -> None:
+        """Drain remaining output after process exit (up to budget)."""
+        if budget <= 0:
+            return
+        if process.stdout is not None:
+            try:
+                remaining = process.stdout.read()
+                if remaining:
+                    if len(remaining) > budget:
+                        stdout_chunks.append(remaining[:budget])
+                    else:
+                        stdout_chunks.append(remaining)
+                    budget -= min(len(remaining), budget)
+            except (ValueError, OSError):
+                pass
+        if budget > 0 and process.stderr is not None:
+            try:
+                remaining = process.stderr.read()
+                if remaining:
+                    if len(remaining) > budget:
+                        stderr_chunks.append(remaining[:budget])
+                    else:
+                        stderr_chunks.append(remaining)
+            except (ValueError, OSError):
+                pass
+
+    def _terminate_process(
+        self,
+        process: subprocess.Popen,
+        request: ProcessRequest,
+    ) -> bool | None:
+        """Terminate process and children.
+
+        Returns:
+            True if cleanup confirmed (process terminated within grace)
+            False if cleanup attempted but failed
+            None if tree cleanup not required
+        """
+        if not request.require_tree_cleanup:
+            # Still need to terminate the process itself
+            try:
+                process.kill()
+                process.wait(timeout=request.cancel_grace_seconds)
+            except Exception:
+                pass
+            return None
+
+        if not _can_cleanup_tree():
+            return False
+
+        # POSIX tree cleanup
+        try:
+            pgid = os.getpgid(process.pid)
             os.killpg(pgid, signal.SIGKILL)
         except (ProcessLookupError, OSError):
             try:
-                os.kill(pid, signal.SIGKILL)
+                process.kill()
             except (ProcessLookupError, OSError):
                 pass
+
+        try:
+            process.wait(timeout=request.cancel_grace_seconds)
+            return True
+        except subprocess.TimeoutExpired:
+            return False
+        except Exception:
+            return False
+
+    def _close_pipes(self, process: subprocess.Popen) -> None:
+        """Close stdout/stderr pipes."""
+        try:
+            if process.stdout is not None:
+                process.stdout.close()
+        except Exception:
+            pass
+        try:
+            if process.stderr is not None:
+                process.stderr.close()
+        except Exception:
+            pass

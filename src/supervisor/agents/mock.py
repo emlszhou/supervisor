@@ -40,37 +40,48 @@ class MockAdapter:
                 "attempt_id": context["attempt_id"],
                 "role": context["role"],
                 "provider": "mock",
+                "model": None,
+                "session_id": "mock-session-123",
+                "status": "completed",
+                "exit_code": 0,
+                "summary": "",
+                "error": None,
+                "usage": None,
+                "artifacts": [],
+                "truncated": False,
             }
         )
 
         if self.scenario == "success":
-            script = (
-                f"import json; "
-                f'data = json.loads("""{identity}"""); '
-                f'data["status"] = "completed"; '
-                f'data["exit_code"] = 0; '
-                f'data["session_id"] = "mock-session-123"; '
-                f'data["truncated"] = False; '
-                f'data["usage"] = None; '
-                f"print(json.dumps(data))"
-            )
+            script = f'import json; data = json.loads("""{identity}"""); print(json.dumps(data))'
         elif self.scenario == "nonzero":
-            script = 'import json, sys; print("not completed"); sys.exit(7)'
+            script = "import json, sys; print('not completed'); sys.exit(7)"
         elif self.scenario == "timeout":
             script = "import time; time.sleep(10)"
         elif self.scenario == "malformed":
-            script = 'print("not valid json")'
+            script = "print('not valid json')"
         elif self.scenario == "wrong_identity":
+            wrong_identity = json.dumps(
+                {
+                    "schema_version": 1,
+                    "task_id": context["task_id"],
+                    "run_id": context["run_id"],
+                    "attempt_id": "wrong-attempt",
+                    "role": context["role"],
+                    "provider": "mock",
+                    "model": None,
+                    "session_id": "mock-session-456",
+                    "status": "completed",
+                    "exit_code": 0,
+                    "summary": "",
+                    "error": None,
+                    "usage": None,
+                    "artifacts": [],
+                    "truncated": False,
+                }
+            )
             script = (
-                f"import json; "
-                f'data = json.loads("""{identity}"""); '
-                f'data["attempt_id"] = "wrong-attempt"; '
-                f'data["status"] = "completed"; '
-                f'data["exit_code"] = 0; '
-                f'data["session_id"] = "mock-session-456"; '
-                f'data["truncated"] = False; '
-                f'data["usage"] = None; '
-                f"print(json.dumps(data))"
+                f'import json; data = json.loads("""{wrong_identity}"""); print(json.dumps(data))'
             )
 
         # Use Python to execute the script
