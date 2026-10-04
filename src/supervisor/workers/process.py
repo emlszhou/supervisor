@@ -104,6 +104,34 @@ def _process_table():
             return None
 
 
+def _windows_read_ready(fd, size):
+    """A sole reader never requests more than the bytes present in its pipe."""
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    peek = kernel.PeekNamedPipe
+    peek.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.c_void_p,
+    ]
+    peek.restype = wintypes.BOOL
+    available = wintypes.DWORD()
+    if not peek(msvcrt.get_osfhandle(fd), None, 0, None, ctypes.byref(available), None):
+        error = ctypes.get_last_error()
+        if error in (109, 232):  # broken/disconnected pipe: EOF
+            return b""
+        raise OSError(error, "pipe readiness failed")
+    if not available.value:
+        raise BlockingIOError()
+    return os.read(fd, min(size, available.value))
+
+
 class ProcessRunner:
     def run(self, request, *, cancel_event=None):
         _validate_request(request)
@@ -232,7 +260,7 @@ class ProcessRunner:
                                 else None
                             )
                         if os.name != "posix":
-                            chunk = os.read(stream.fileno(), min(4096, room + 1))
+                            chunk = _windows_read_ready(stream.fileno(), min(4096, room + 1))
                     except BlockingIOError:
                         stop.wait(0.002)
                         continue
@@ -279,20 +307,6 @@ class ProcessRunner:
                 cleanup = self._terminate_process(process, request)
         finally:
             stop.set()
-            # Cancel Windows synchronous ReadFile before closing raw (unbuffered) pipes.
-            if os.name == "nt":
-                import ctypes
-
-                kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-                kernel.OpenThread.restype = ctypes.c_void_p
-                kernel.OpenThread.argtypes = [ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong]
-                kernel.CancelSynchronousIo.argtypes = [ctypes.c_void_p]
-                kernel.CloseHandle.argtypes = [ctypes.c_void_p]
-                for thread in threads:
-                    handle = kernel.OpenThread(1, False, thread.native_id)
-                    if handle:
-                        kernel.CancelSynchronousIo(handle)
-                        kernel.CloseHandle(handle)
             for thread in threads:
                 thread.join(timeout=request.cancel_grace_seconds / 2)
             if any(thread.is_alive() for thread in threads):
