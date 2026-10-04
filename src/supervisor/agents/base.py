@@ -99,23 +99,44 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
             raise ValueError(f"expected.{field} must be string")
 
     # Gate on actual process status. Real exit_code != 0 -> failed (preserve).
-    # Even with exit_code 0, if status is not "completed" (e.g. output_limit,
-    # truncated, timeout, failed), return failed to override bogus output.
-    if process.exit_code != 0:
-        return AgentResult(
-            status=process.status if process.status != "completed" else "failed",
-            exit_code=process.exit_code,
-            duration_seconds=process.duration_seconds,
-            task_id=expected["task_id"],
-            run_id=expected["run_id"],
-            attempt_id=expected["attempt_id"],
-            role=expected["role"],
-            provider=expected["provider"],
-            session_id=None,
-            truncated=process.truncated,
-            usage=None,
-            error=f"process failed: status={process.status} exit_code={process.exit_code}",
-        )
+        # Even with exit_code 0, if status is not "completed" (e.g. output_limit,
+        # truncated, timeout, failed), return failed to override bogus output.
+        # Non-completed status with exit_code=0 is a "process failed" state per protocol:
+        #   timeout, cancelled, output_limit, environment_failure all require exit_code != 0.
+        # Only "completed" status with exit_code=0 is the legitimate success.
+        if process.exit_code != 0:
+            return AgentResult(
+                status=process.status if process.status != "completed" else "failed",
+                exit_code=process.exit_code,
+                duration_seconds=process.duration_seconds,
+                task_id=expected["task_id"],
+                run_id=expected["run_id"],
+                attempt_id=expected["attempt_id"],
+                role=expected["role"],
+                provider=expected["provider"],
+                session_id=None,
+                truncated=process.truncated,
+                usage=None,
+                error=f"process failed: status={process.status} exit_code={process.exit_code}",
+            )
+
+            # exit_code=0 but non-completed status: process is a "failed" state (timeout/cancelled/output_limit).
+            # Do not interpret as completed.
+            if process.status not in ("completed",):
+                return AgentResult(
+                    status="failed",
+                    exit_code=process.exit_code,
+                    duration_seconds=process.duration_seconds,
+                    task_id=expected["task_id"],
+                    run_id=expected["run_id"],
+                    attempt_id=expected["attempt_id"],
+                    role=expected["role"],
+                    provider=expected["provider"],
+                    session_id=None,
+                    truncated=process.truncated,
+                    usage=None,
+                    error=f"non-completed process status: status={process.status} exit_code={process.exit_code}",
+                )
 
     # Process completed - now parse protocol
     try:
