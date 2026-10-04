@@ -10,8 +10,9 @@
 
 ## 分工
 
-- Codex：规格、任务合同、验收要求和独立审核。
-- Hermes＋本地模型：合同范围内的实现、实现方测试、修复和交付报告。
+- 用户已决定：后续规划、实现、审核、返修、接管和最终验收全部由本地模型承担；云端Codex不再是必需执行角色。
+- 本地Planner准备规格；本地Implementer实现；全新本地Reviewer审核；接管后另起本地Final Verifier。详细执行入口为 `docs/LOCAL-MODEL-EXECUTION-PLAN.md`。
+- 同一模型可顺序承担角色，但审核必须fresh；同供应者不声明independent_provider。
 - A/B 与模型、供应商分离，核心代码不得按 `codex/claude/hermes` 分支调度业务流程。
 - Reviewer 使用全新会话，重新执行检查；自己修改后成为实现者，需要另一个审核会话。
 - 本仓库中 `tests/protected/`、`schemas/`、任务合同和治理文档默认受保护。实现任务若必须改变这些内容，提出具体变更，由协调者另立规格任务。
@@ -20,10 +21,10 @@
 
 用户已明确授权本项目的 Codex/Hermes 使用 commit、fetch、pull 和 push 完成交接，无需每轮重新请求相同授权。范围仅限 `emlszhou/supervisor`；其他仓库、部署或合并仍需各自授权。
 
-- Codex 管理 `main` 上的规格、冻结合同与协调记录；Hermes 在 `hermes/<task>` 实现分支提交和推送。
+- 本地Coordinator/Planner按既有授权管理规格发布；Implementer在 `hermes/<task>` 实现分支提交和推送；本地审核分支使用 `local/<task>-review-*`。历史Codex分支及记录保留。
 - 实现者不向 main 推送、不合并到 main；禁止 force-push、reset、clean 和覆盖既有工作。
 - 拉取使用 `git pull --ff-only`；出现分叉或工作区不干净时保留文件并报告，不擅自重置。
-- 交付报告也是版本化文件，本次 M0 只允许 `deliveries/M0/hermes-report.md`。
+- 交付报告也是版本化文件，具体路径服从当前冻结合同；M1为 `deliveries/M1/hermes-report.md`。
 - 冻结输入由 main 拉取并校验，再导出到实施目录之外。Git、分支约定和只读权限不是 OS sandbox。
 - 凭证、venv、缓存、原始 transcript 和运行日志不进入提交。详细命令见 `docs/git-handoff.md`。
 
@@ -61,3 +62,7 @@ uv build --no-sources
 ## 当前任务 M1
 
 M0R已独立验收接受并合入main。当前M1-integrity-intents使用main的handoffs/M1/v1，新实现分支hermes/m1，报告deliveries/M1/hermes-report.md，审核分支codex/m1-review-*。M1执行输入以该冻结合同为准；旧M0/M0R仅保留历史，不再继续修改。用户本轮已授权合入已验收M0R；后续任务不据此自动合并。
+
+## 全本地路由迁移
+
+用户已授权后续所有模型角色改为本地执行。现有M1冻结包不改字节、API、预算或验收；其中历史Codex供应者选择由本次用户指令覆盖，fresh会话及证据要求不变。后续先完成M1，再按全本地规划逐个发布M2–M4任务；不默认调用云端模型、不自动回退云服务。合并/部署权限仍按具体任务或可信预授权判断。

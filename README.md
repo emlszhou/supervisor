@@ -2,7 +2,7 @@
 
 一个本地优先、跨项目、跨 Agent 的 Coding Supervisor。由确定性程序调度规划、实现、审核和有限返修，模型只承担明确角色。
 
-**当前状态：设计与开发脚手架已准备，工作流、Agent Adapter、隔离和恢复尚未实现。** `doctor` 只检查开发前提，不代表应用或安全机制可用。
+**当前状态：M0核心模块已验收集成，M1完整性与操作意图合同已发布；真实Agent Adapter、隔离、自动工作流和完整恢复尚未实现。** `doctor` 只检查开发前提，不代表应用或安全机制可用。
 
 ## 目标工作流
 
@@ -17,7 +17,7 @@ A 规划 → B 实现 → A-fresh 审核
 
 A/B 是角色绑定，可换 Codex、Claude、Hermes 或其他 Agent。审核均为新会话；同模型的新会话只算上下文独立，不能声称供应商独立。
 
-开发本项目时优先采用：Codex 设计合同与审核，Mac mini 上的 Hermes＋本地模型实现，必要时再切换实现者。
+后续开发全部使用本地模型：规划、实现、fresh审核、返修、接管和最终验收。具体顺序、角色提示词与门禁见 [全本地模型执行规划](docs/LOCAL-MODEL-EXECUTION-PLAN.md)。云端模型不再是必需角色。
 
 ## 开始开发
 
@@ -35,7 +35,7 @@ uv build --no-sources
 
 `uv.lock` 固定依赖；不需要云端模型密钥或 Mac mini 连接即可完成脚手架检查。真实 Agent 的运行是后续显式配置的检查，不纳入当前测试通过结论。Mac/Windows 的说明见 [开发指南](docs/development.md)。
 
-M0 独立行为验收现已加入。执行代码尚未实现，因此完整 `pytest` 应报告 M0 失败，不能用跳过来获得通过。只检查已完成的准备工具时，显式运行 `uv run --frozen pytest tests/test_cli.py tests/protected/test_specs.py tests/protected/test_handoff_verifier.py`；这不替代 M0 验收。交接流程见 [M0 开工步骤](docs/m0-kickoff.md)。
+当前完整项目测试194项通过。M1外部冻结验收42项在基线因缺少M1实现而失败，0跳过；这不是M1功能通过证明。当前开工按 [M1交接入口](handoffs/M1/v1/README.md)，M0及M0R合同保留为历史。
 
 ## 文件入口
 
@@ -48,10 +48,11 @@ M0 独立行为验收现已加入。执行代码尚未实现，因此完整 `pyt
 | [安全模型](docs/security-model.md) | 可信边界、执行限制和能力验证 |
 | [验收规则](docs/verification.md) | 受保护检查、证据和快照绑定 |
 | [路线图](docs/roadmap.md) | M0–M5 的依赖与完成条件 |
-| [Hermes 交接](docs/hermes-handoff.md) | 本地实现与云端审核的具体步骤 |
+| [全本地执行规划](docs/LOCAL-MODEL-EXECUTION-PLAN.md) | M1–M4拆分、角色提示词、Git交接和门禁 |
+| [Hermes 交接](docs/hermes-handoff.md) | 本地实现与全新本地审核的入口 |
 | [Git 交接协议](docs/git-handoff.md) | 已授权的分支、克隆、推拉与报告路径 |
 | [准备验证记录](docs/preparation-status.md) | 当前已验证能力与尚未实现的功能 |
-| [M0 任务包](tasks/M0/README.md) | 第一个可交给实现者的任务草案 |
+| [M1 任务包](tasks/M1/README.md) | 当前源草案；执行使用外部冻结包 |
 | [schemas/](schemas/README.md) | 版本化输入输出格式 |
 | [templates/](templates/README.md) | 后续任务、审核和交付模板 |
 | [examples/](examples/README.md) | 不启动真实 Agent 的示例配置与结果 |

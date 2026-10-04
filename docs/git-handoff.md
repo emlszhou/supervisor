@@ -1,4 +1,4 @@
-# Codex / Hermes 的 Git 交接协议
+# 开发角色的 Git 交接协议
 
 用户已授权双方通过本仓库的 commit、fetch、pull、push 交接，无需每次重新询问。该授权不等于向其他仓库推送、force-push、合并或部署。
 
@@ -66,3 +66,7 @@ snapshot区分代码commit与最终报告tip。代码报告先后提交；每个
 已接受M0R候选f71e94e5f87757b93d659d05e5ef6d6dec144fdd与最终审核4bd68d1c007a8d5b5e88be03fd4cb8672291d6b4已集成main。M1实施基线为集成提交c6e224587b930a5b96c7723009584424f6bc52d5，不含之后发布M1规格的提交。
 新冻结包handoffs/M1/v1，新分支hermes/m1，新报告deliveries/M1/hermes-report.md，预算14文件2800新增+删除行。使用新版导出器--contract-prefix handoffs/M1/v1；不要运行旧M0默认kickoff，不merge main。开工命令见冻结包README。
 M1 runtime工作区snapshot覆盖tracked/untracked/删除/mode，算法与旧交付tracked-commit不同；报告与审核须说明具体算法和精确SHA，不复用旧摘要。
+
+## 当前全本地角色路由
+
+用户已决定后续Planner/Implementer/Reviewer/Repairer/Final Verifier全部使用本地模型，见LOCAL-MODEL-EXECUTION-PLAN.md。上文Codex分支名称描述历史交接，不再要求云端执行；新审核分支使用local/<task>-review-*，其他SHA绑定、fresh、范围、预算和合并授权规则继续适用。现有M1包不重写。
