@@ -1,0 +1,9 @@
+[
+  "src/supervisor/workspace/baseline.py",
+  "src/supervisor/workspace/snapshot.py",
+  "src/supervisor/workspace/bundle.py",
+  "src/supervisor/policy/changes.py",
+  "src/supervisor/storage/intents.py",
+  "tests/unit/test_m1_*.py",
+  "deliveries/M1/hermes-report.md"
+]

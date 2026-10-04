@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "M1-integrity-intents",
+  "revision": 1,
+  "status": "frozen",
+  "baseline_commit": "c6e224587b930a5b96c7723009584424f6bc52d5",
+  "requirements_file": "requirements.md",
+  "allowed_files_file": "allowed_files.json",
+  "forbidden_files_file": "forbidden_files.json",
+  "verification_file": "verification.json",
+  "roles": {
+    "planner": "A",
+    "implementer": "B",
+    "reviewer": "A",
+    "fallback_repairer": "A",
+    "final_verifier": "A"
+  },
+  "budgets": {
+    "max_agent_calls": 7,
+    "max_repair_rounds": 1,
+    "max_takeovers": 1,
+    "max_wall_seconds": 7200,
+    "max_changed_files": 14,
+    "max_diff_lines": 2800,
+    "max_output_bytes": 1048576
+  }
+}

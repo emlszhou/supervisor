@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "M1-integrity-intents",
+  "revision": 1,
+  "baseline_commit": "c6e224587b930a5b96c7723009584424f6bc52d5",
+  "bundle_sha256": "47ea6c51c46570e92f97c89428c9783a90bcc10e301e3e8d6ce38d4fb25dd142",
+  "implementation_branch": "hermes/m1",
+  "coordinator_branch": "main",
+  "previous_accepted_candidate": "f71e94e5f87757b93d659d05e5ef6d6dec144fdd",
+  "previous_final_review": "4bd68d1c007a8d5b5e88be03fd4cb8672291d6b4",
+  "baseline_tests_passed": 194,
+  "independent_acceptance": {
+    "tests": 42,
+    "passed": 0,
+    "failed": 42,
+    "skipped": 0
+  }
+}
