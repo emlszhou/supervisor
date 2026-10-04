@@ -12,6 +12,7 @@ import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -175,24 +176,18 @@ class ProcessRunner:
             env_vars[str(k)] = str(v)
 
         start_time = time.monotonic()
-        process: subprocess.Popen | None = None
         try:
             return self._run_process(request, env_vars, start_time, cancel_event)
         except Exception as e:
-            # Reap if process was started
-            if process is not None:
-                try:
-                    self._close_pipes(process)
-                    process.kill()
-                    process.wait(timeout=0.5)
-                except Exception:
-                    pass
+            # _run_process handles its own exception cleanup via finally blocks
+            # (terminating/reaping the subprocess it started). If an exception
+            # escapes, return environment_failure.
             return ProcessResult(
                 status="environment_failure",
                 exit_code=None,
                 stdout=b"",
                 stderr=b"",
-                duration_seconds=0.0,
+                duration_seconds=time.monotonic() - start_time,
                 truncated=False,
                 tree_cleanup_confirmed=None,
                 error=str(e),
@@ -206,7 +201,8 @@ class ProcessRunner:
         cancel_event: threading.Event | None,
     ) -> ProcessResult:
         """Start process and manage its lifecycle with timeout/cancel/output limits."""
-        # Build popen kwargs - preexec_fn only on POSIX
+        # Build popen kwargs - use start_new_session for safe process group
+        # creation (avoid preexec_fn which is forbidden by frozen contract).
         popen_kwargs: dict = {
             "cwd": str(request.cwd),
             "env": env_vars,
@@ -214,14 +210,31 @@ class ProcessRunner:
             "stderr": subprocess.PIPE,
         }
         if _is_posix() and request.require_tree_cleanup:
-            popen_kwargs["preexec_fn"] = os.setpgrp
+            popen_kwargs["start_new_session"] = True
 
         process = subprocess.Popen(list(request.argv), **popen_kwargs)
 
         try:
             return self._drive_process(process, request, start_time, cancel_event)
-        finally:
+        except Exception:
+            # On any exception during drive, terminate and reap the started process.
+            # Leader must NOT remain alive after exception escapes.
+            try:
+                self._terminate_process(process, request)
+            except Exception:
+                pass
+            try:
+                process.wait(timeout=request.cancel_grace_seconds)
+            except Exception:
+                pass
             self._close_pipes(process)
+            raise
+        finally:
+            # Always close pipes on normal return too
+            try:
+                self._close_pipes(process)
+            except Exception:
+                pass
 
     def _drive_process(
         self,
@@ -231,6 +244,11 @@ class ProcessRunner:
         cancel_event: threading.Event | None,
     ) -> ProcessResult:
         """Drive process: poll for cancel/timeout/output limit, then collect exit."""
+        # On non-POSIX platforms (Windows), select() may not work on pipe FDs.
+        # Use a thread-based concurrent reader that doesn't depend on select().
+        if not _is_posix():
+            return self._drive_process_threads(process, request, start_time, cancel_event)
+
         stdout_chunks: list[bytes] = []
         stderr_chunks: list[bytes] = []
         total_bytes = 0
@@ -289,18 +307,62 @@ class ProcessRunner:
 
                 for fd in ready:
                     if budget_remaining <= 0:
-                        # Budget used up. Check if process has exited.
+                        # Budget used up. We must briefly wait for process to exit
+                        # to determine if there's truly more output (truncation)
+                        # or if the process is just sleeping without emitting more.
+                        # Use a small bounded wait (not the full remaining wall time)
+                        # to avoid letting slow writers escape detection.
+                        wait_deadline = time.monotonic() + 0.05
+                        while time.monotonic() < wait_deadline:
+                            if process.poll() is not None:
+                                # Process exited - break out of wait loop
+                                break
+                            sleep_left = wait_deadline - time.monotonic()
+                            if sleep_left <= 0:
+                                break
+                            time.sleep(min(0.01, sleep_left))
+
                         if process.poll() is not None:
-                            # Process exited. Wait for drain to detect more output.
+                            # Process exited within deadline. Don't kill - let
+                            # main loop's exit-drain detect any extra bytes.
                             break
-                        # Process still running. Wait a tiny bit and re-check
-                        # (poll may not have detected exit yet).
-                        time.sleep(0.01)
-                        if process.poll() is not None:
-                            # Process exited. Wait for drain to detect more output.
+
+                        # Process still running. Check if there's truly more
+                        # data waiting in the pipes via nonblocking peek.
+                        # If no extra byte is available, it's exact-budget completion
+                        # (process is sleeping but already done emitting).
+                        truly_truncated = False
+                        for stream in (process.stdout, process.stderr):
+                            if stream is None:
+                                continue
+                            try:
+                                fd = stream.fileno()
+                                import fcntl as _fcntl
+
+                                flags = _fcntl.fcntl(fd, _fcntl.F_GETFL)
+                                _fcntl.fcntl(fd, _fcntl.F_SETFL, flags | os.O_NONBLOCK)
+                                try:
+                                    extra = os.read(fd, 1)
+                                    if extra:
+                                        truly_truncated = True
+                                        break
+                                finally:
+                                    _fcntl.fcntl(fd, _fcntl.F_SETFL, flags)
+                            except BlockingIOError:
+                                # No data available - exact budget match
+                                continue
+                            except (ValueError, OSError, ImportError):
+                                # Other errors - assume truncated (safer)
+                                truly_truncated = True
+                                break
+
+                        if not truly_truncated:
+                            # No extra byte available - exact budget match.
+                            # Process is just sleeping; don't kill, let main loop
+                            # handle exit-drain on natural process exit.
                             break
-                        # Process still running with more output to come.
-                        # Return output_limit immediately.
+
+                        # Truly truncated - kill and return output_limit
                         truncated = True
                         cleanup_ok = self._terminate_process(process, request)
                         stdout_total = b"".join(stdout_chunks)
@@ -366,9 +428,13 @@ class ProcessRunner:
 
             # Check if process has exited
             if process.poll() is not None:
-                # Drain any remaining buffered output (respecting budget)
+                # Drain any remaining buffered output (respecting budget and wall deadline)
                 drain_truncated = self._drain_output(
-                    process, stdout_chunks, stderr_chunks, request.max_output_bytes - total_bytes
+                    process,
+                    stdout_chunks,
+                    stderr_chunks,
+                    request.max_output_bytes - total_bytes,
+                    wall_deadline=start_time + request.timeout_seconds,
                 )
                 if drain_truncated:
                     truncated = True
@@ -423,54 +489,268 @@ class ProcessRunner:
                 error=f"nonzero exit code: {exit_code}",
             )
 
+    def _drive_process_threads(
+        self,
+        process: subprocess.Popen,
+        request: ProcessRequest,
+        start_time: float,
+        cancel_event: threading.Event | None,
+    ) -> ProcessResult:
+        """Drive process using threads (for non-POSIX / Windows where select
+        on pipes may not work).
+
+        Spawns reader threads for stdout/stderr with bounded memory and a
+        wall-clock deadline. Falls back to thread-based consumption when
+        select-based polling fails.
+        """
+        import queue
+
+        stdout_q: queue.Queue[bytes | None] = queue.Queue()
+        stderr_q: queue.Queue[bytes | None] = queue.Queue()
+
+        def reader(stream: Any, q: queue.Queue) -> None:
+            try:
+                while True:
+                    chunk = stream.read(4096)
+                    if not chunk:
+                        q.put(None)  # EOF sentinel
+                        return
+                    q.put(chunk)
+            except (ValueError, OSError):
+                q.put(None)
+
+        stdout_thread: threading.Thread | None = None
+        stderr_thread: threading.Thread | None = None
+        if process.stdout is not None:
+            stdout_thread = threading.Thread(
+                target=reader, args=(process.stdout, stdout_q), daemon=True
+            )
+            stdout_thread.start()
+        if process.stderr is not None:
+            stderr_thread = threading.Thread(
+                target=reader, args=(process.stderr, stderr_q), daemon=True
+            )
+            stderr_thread.start()
+
+        stdout_chunks: list[bytes] = []
+        stderr_chunks: list[bytes] = []
+        total_bytes = 0
+        truncated = False
+        stdout_done = process.stdout is None
+        stderr_done = process.stderr is None
+
+        while True:
+            elapsed = time.monotonic() - start_time
+            remaining = request.timeout_seconds - elapsed
+
+            if cancel_event is not None and cancel_event.is_set():
+                cleanup_ok = self._terminate_process(process, request)
+                return ProcessResult(
+                    status="cancelled",
+                    exit_code=process.returncode,
+                    stdout=b"".join(stdout_chunks),
+                    stderr=b"".join(stderr_chunks),
+                    duration_seconds=time.monotonic() - start_time,
+                    truncated=truncated,
+                    tree_cleanup_confirmed=cleanup_ok if request.require_tree_cleanup else None,
+                    error="cancelled during execution",
+                )
+
+            if remaining <= 0:
+                cleanup_ok = self._terminate_process(process, request)
+                return ProcessResult(
+                    status="timed_out",
+                    exit_code=process.returncode,
+                    stdout=b"".join(stdout_chunks),
+                    stderr=b"".join(stderr_chunks),
+                    duration_seconds=time.monotonic() - start_time,
+                    truncated=truncated,
+                    tree_cleanup_confirmed=cleanup_ok if request.require_tree_cleanup else None,
+                    error="wall timeout exceeded",
+                )
+
+            # Drain queues (non-blocking via get_nowait)
+            for q, chunks, done_flag in [
+                (stdout_q, stdout_chunks, "stdout"),
+                (stderr_q, stderr_chunks, "stderr"),
+            ]:
+                if done_flag == "stdout" and stdout_done:
+                    continue
+                if done_flag == "stderr" and stderr_done:
+                    continue
+                while True:
+                    try:
+                        item = q.get_nowait()
+                    except queue.Empty:
+                        break
+                    if item is None:
+                        if done_flag == "stdout":
+                            stdout_done = True
+                        else:
+                            stderr_done = True
+                        break
+                    budget_remaining = request.max_output_bytes - total_bytes
+                    if budget_remaining <= 0:
+                        truncated = True
+                        break
+                    if len(item) > budget_remaining:
+                        chunks.append(item[:budget_remaining])
+                        total_bytes += budget_remaining
+                        truncated = True
+                        break
+                    else:
+                        chunks.append(item)
+                        total_bytes += len(item)
+
+            if truncated:
+                cleanup_ok = self._terminate_process(process, request)
+                return ProcessResult(
+                    status="output_limit",
+                    exit_code=process.returncode,
+                    stdout=b"".join(stdout_chunks)[: request.max_output_bytes],
+                    stderr=b"".join(stderr_chunks)[
+                        : max(0, request.max_output_bytes - len(b"".join(stdout_chunks)))
+                    ],
+                    duration_seconds=time.monotonic() - start_time,
+                    truncated=True,
+                    tree_cleanup_confirmed=cleanup_ok if request.require_tree_cleanup else None,
+                    error=None,
+                )
+
+            # Check process exit
+            if process.poll() is not None and stdout_done and stderr_done:
+                break
+
+            time.sleep(0.01)
+
+        # Process exited - finalize
+        exit_code = process.returncode
+        elapsed = time.monotonic() - start_time
+        stdout_final = b"".join(stdout_chunks)
+        stderr_final = b"".join(stderr_chunks)
+        total = len(stdout_final) + len(stderr_final)
+
+        if truncated or total > request.max_output_bytes:
+            return ProcessResult(
+                status="output_limit",
+                exit_code=exit_code,
+                stdout=stdout_final[: request.max_output_bytes],
+                stderr=stderr_final[: max(0, request.max_output_bytes - len(stdout_final))],
+                duration_seconds=elapsed,
+                truncated=True,
+                tree_cleanup_confirmed=None,
+                error=None,
+            )
+
+        if exit_code == 0:
+            return ProcessResult(
+                status="completed",
+                exit_code=exit_code,
+                stdout=stdout_final,
+                stderr=stderr_final,
+                duration_seconds=elapsed,
+                truncated=False,
+                tree_cleanup_confirmed=None,
+                error=None,
+            )
+        else:
+            return ProcessResult(
+                status="failed",
+                exit_code=exit_code,
+                stdout=stdout_final,
+                stderr=stderr_final,
+                duration_seconds=elapsed,
+                truncated=False,
+                tree_cleanup_confirmed=None,
+                error=f"nonzero exit code: {exit_code}",
+            )
+
     def _drain_output(
         self,
         process: subprocess.Popen,
         stdout_chunks: list[bytes],
         stderr_chunks: list[bytes],
         budget: int,
+        wall_deadline: float | None = None,
     ) -> bool:
-        """Drain remaining output after process exit (up to budget). Returns True if truncated."""
-        if budget <= 0:
-            # Check if there's more output (to detect truncation)
-            if process.stdout is not None:
+        """Drain remaining output after process exit (up to budget, bounded time).
+
+        Uses bounded nonblocking reads on raw file descriptors with a wall deadline.
+        Avoids unbounded allocation. Returns True if truncation was detected.
+
+        Args:
+            wall_deadline: absolute monotonic time after which drain must stop.
+                           None means use a small default budget.
+        """
+        # Use os.read with bounded chunk size to avoid unbounded allocation.
+        # Apply the same wall deadline as the rest of the pipeline.
+        CHUNK = 4096
+        deadline = wall_deadline if wall_deadline is not None else time.monotonic() + 0.5
+
+        # First, drain what fits in the budget using bounded reads
+        budget_left = budget
+        if budget_left > 0:
+            for stream_attr in ("stdout", "stderr"):
+                stream = getattr(process, stream_attr)
+                if stream is None:
+                    continue
                 try:
-                    remaining = os.read(process.stdout.fileno(), 1)
-                    if remaining:
-                        return True
-                except (ValueError, OSError, BlockingIOError):
-                    pass
-            if process.stderr is not None:
+                    fd = stream.fileno()
+                except (ValueError, OSError):
+                    continue
+                while budget_left > 0 and time.monotonic() < deadline:
+                    try:
+                        chunk = os.read(fd, min(CHUNK, budget_left))
+                    except (ValueError, OSError, BlockingIOError):
+                        break
+                    if not chunk:
+                        break
+                    if len(chunk) > budget_left:
+                        chunks = stdout_chunks if stream_attr == "stdout" else stderr_chunks
+                        chunks.append(chunk[:budget_left])
+                        budget_left = 0
+                        # There's more data than budget allowed - truncation
+                        # Try to peek for confirmation
+                        try:
+                            extra = os.read(fd, 1)
+                            if extra:
+                                return True
+                        except (ValueError, OSError, BlockingIOError):
+                            pass
+                        break
+                    else:
+                        chunks = stdout_chunks if stream_attr == "stdout" else stderr_chunks
+                        chunks.append(chunk)
+                        budget_left -= len(chunk)
+
+        # If budget exhausted, check if there's more output (to detect truncation)
+        # but only until wall deadline, using nonblocking peek
+        if budget_left <= 0:
+            for stream_attr in ("stdout", "stderr"):
+                stream = getattr(process, stream_attr)
+                if stream is None:
+                    continue
                 try:
-                    remaining = os.read(process.stderr.fileno(), 1)
-                    if remaining:
-                        return True
-                except (ValueError, OSError, BlockingIOError):
+                    fd = stream.fileno()
+                except (ValueError, OSError):
+                    continue
+                # Try to read 1 byte nonblocking - if any byte exists, truncated
+                try:
+                    # Set nonblocking temporarily for the peek
+                    import fcntl
+
+                    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+                    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+                    try:
+                        remaining = os.read(fd, 1)
+                        if remaining:
+                            return True
+                    finally:
+                        fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+                except (ValueError, OSError, BlockingIOError, ImportError):
+                    # On Windows or if fcntl unavailable, skip peek
                     pass
             return False
-        if process.stdout is not None:
-            try:
-                remaining = process.stdout.read()
-                if remaining:
-                    if len(remaining) > budget:
-                        stdout_chunks.append(remaining[:budget])
-                        return True
-                    else:
-                        stdout_chunks.append(remaining)
-                        budget -= len(remaining)
-            except (ValueError, OSError):
-                pass
-        if budget > 0 and process.stderr is not None:
-            try:
-                remaining = process.stderr.read()
-                if remaining:
-                    if len(remaining) > budget:
-                        stderr_chunks.append(remaining[:budget])
-                        return True
-                    else:
-                        stderr_chunks.append(remaining)
-            except (ValueError, OSError):
-                pass
         return False
 
     def _terminate_process(
@@ -482,7 +762,7 @@ class ProcessRunner:
 
         Returns:
             True if cleanup confirmed (process terminated within grace)
-            False if cleanup attempted but failed
+            False if cleanup attempted but failed (group denied, exception, timeout)
             None if tree cleanup not required
         """
         if not request.require_tree_cleanup:
@@ -497,11 +777,14 @@ class ProcessRunner:
         if not _can_cleanup_tree():
             return False
 
-        # POSIX tree cleanup
+        # POSIX tree cleanup. Leader exit is NOT sufficient proof of cleanup -
+        # if group termination is denied or fails, return False even if leader died.
+        group_ok = False
         try:
             pgid = os.getpgid(process.pid)
             os.killpg(pgid, signal.SIGKILL)
-        except (ProcessLookupError, OSError):
+            group_ok = True
+        except (ProcessLookupError, OSError, PermissionError):
             try:
                 process.kill()
             except (ProcessLookupError, OSError):
@@ -509,7 +792,9 @@ class ProcessRunner:
 
         try:
             process.wait(timeout=request.cancel_grace_seconds)
-            return True
+            # If group termination was denied/failed, return False even if leader died.
+            # Leader exit alone is NOT proof of cleanup.
+            return group_ok
         except subprocess.TimeoutExpired:
             return False
         except Exception:

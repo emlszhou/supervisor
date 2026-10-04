@@ -203,7 +203,12 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
         return _make_failed(process, expected, "status type invalid")
     if data["status"] not in _ALLOWED_STATUSES:
         return _make_failed(process, expected, "status enum invalid")
-    if not (data["exit_code"] is None or isinstance(data["exit_code"], int)):
+    # Reject bool explicitly for exit_code and every schema integer field.
+    if (
+        data["exit_code"] is not None
+        and not isinstance(data["exit_code"], int)
+        or isinstance(data["exit_code"], bool)
+    ):
         return _make_failed(process, expected, "exit_code type invalid")
     if not isinstance(data["summary"], str):
         return _make_failed(process, expected, "summary type invalid")
