@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "task_id": "M0-process-adapter",
+  "run_id": "m0-review-1",
+  "attempt_id": "m0-review-1-attempt",
+  "bundle_sha256": "ed298ce414e36deb2cf7a5864d5547bea46d60cbf04ae4ff1de1dc69b0ab5bca",
+  "snapshot_sha256": "1696c043a8420f82728bf52a6f3dfae1ec3b3e61edba0c92ee591fda68704edc",
+  "stage": "review_1",
+  "decision": "return_once",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m0_fresh_review",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "failed",
+  "findings": [
+    {
+      "id": "M0-R1-unit",
+      "severity": "blocking",
+      "description": "Required m0-unit check exits 5: tests/unit collects zero tests. Add meaningful tests/unit/test_m0_*.py covering success and all failure behaviors; zero collection cannot count as pass.",
+      "path": "tests/unit"
+    },
+    {
+      "id": "M0-R1-output",
+      "severity": "blocking",
+      "description": "ProcessRunner.communicate buffers complete output before enforcing max_output_bytes. External child writes 65536 bytes with budget 64 then sleeps: observed timed_out, truncated=false, empty returned output instead of promptly stopping on output_limit. Enforce combined budget during concurrent reads; preserve bounded output and terminate descendants.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R1-parser",
+      "severity": "blocking",
+      "description": "Parser accepts incomplete output with unknown field and status=failed as completed, filling missing identity/schema fields. It also returns completed when actual ProcessResult exit_code=7 or truncated=true. Validate every schema field/type/unknown key and declared status, then independently gate success on actual exit 0 and no truncation. Do not discard valid model/summary/artifacts.",
+      "path": "src/supervisor/agents/base.py"
+    },
+    {
+      "id": "M0-R1-artifact",
+      "severity": "major",
+      "description": "External probe accepts artifact path \"..\" as completed. Current substring checks also permit noncanonical dot/repeated-slash paths, omit artifact hash validation, and can raise TypeError for nonstring path. Reject malformed/noncanonical paths and validate the entire artifact/usage schema without reflecting untrusted raw values in errors.",
+      "path": "src/supervisor/agents/base.py"
+    },
+    {
+      "id": "M0-R1-cleanup",
+      "severity": "major",
+      "description": "Timeout/cancel branches unconditionally report tree_cleanup_confirmed=true even though _kill_process_group suppresses kill errors and wait timeout. No finally closes pipes/reaps process on every exceptional path. Establish actual cleanup evidence and release resources; never claim confirmation after a suppressed failure. Static review; protected POSIX descendant cases passed on this Linux run.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R1-platform",
+      "severity": "major",
+      "description": "Popen unconditionally uses preexec_fn=os.setpgrp, including require_tree_cleanup=false, so Windows normal short processes fail rather than execute as the API requires. Use supported platform-specific launch paths; avoid preexec_fn for thread-safe POSIX startup. Windows runtime not available/tested.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0-R1-report",
+      "severity": "major",
+      "description": "Delivery report has task_id M0 rather than frozen M0-process-adapter, abbreviated baseline, snapshot N/A and code SHA pending commit. Bind corrected report to actual code commit, full baseline/bundle, checks/counts, and truthful unverified platform scope; required unit run missing.",
+      "path": "deliveries/M0/hermes-report.md"
+    }
+  ],
+  "summary": "Fresh independent review of exact candidate bae51958307e784b069eb436f7566ae86afb7973: 57 protected acceptance tests and 96 full tests pass, but required unit check collects zero/exits 5 and independent probes reproduce output-budget and false-success parser defects. One repair requested. Evidence: codex-review-1-evidence.json. Linux only; Mac/Windows and real Agent integrations not run."
+}

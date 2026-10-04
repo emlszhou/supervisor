@@ -1,0 +1,694 @@
+{
+  "candidate_commit": "bae51958307e784b069eb436f7566ae86afb7973",
+  "baseline_commit": "c93c8c5054bd12246676337d37993c3c3adfbfb2",
+  "frozen_main_commit": "29d3ced9a8c1e1b8cd6f7ede89bd4a093d1be095",
+  "bundle_sha256": "ed298ce414e36deb2cf7a5864d5547bea46d60cbf04ae4ff1de1dc69b0ab5bca",
+  "bundle_manifest_and_files_verified": true,
+  "baseline_ancestor": true,
+  "scope_diff": "A\tdeliveries/M0/hermes-report.md\nA\tsrc/supervisor/agents/base.py\nA\tsrc/supervisor/agents/mock.py\nA\tsrc/supervisor/core/events.py\nA\tsrc/supervisor/workers/process.py\n",
+  "protected_inputs_unchanged": true,
+  "snapshot_sha256": "1696c043a8420f82728bf52a6f3dfae1ec3b3e61edba0c92ee591fda68704edc",
+  "snapshot_algorithm": "git ls-tree -rz --full-tree CANDIDATE; reject nonblob/nonregular modes; read each raw blob using git cat-file blob OID; SHA256 blob bytes; sort entries by relative POSIX path; manifest is array of {path,mode,sha256}; canonical UTF-8 JSON ensure_ascii=False, sort_keys=True,separators=(comma,colon), no trailing newline; SHA256 those manifest bytes. Entire candidate tracked Git tree, including implementation report; excludes new reviewer artifacts and ignored environment/evidence outputs.",
+  "snapshot_manifest": [
+    {
+      "path": ".editorconfig",
+      "mode": "100644",
+      "sha256": "227fa6308085d9b5fbddeac82e500ea36504bb3afef65cc819b9febca778dbd0"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "100644",
+      "sha256": "ef2bf9a563e4ce51425e66568b2927b28a127fe91d5a49f4e97adc305775e3e5"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "sha256": "d8749ac21d56427bc5db584389cf8dacc3656800bff03cfa729cf0af81448d6a"
+    },
+    {
+      "path": ".python-version",
+      "mode": "100644",
+      "sha256": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d"
+    },
+    {
+      "path": "AGENTS.md",
+      "mode": "100644",
+      "sha256": "e6effd673bf9da2add1dc165ff1baf497f7c753fbb0cf599d9568995af9a72ef"
+    },
+    {
+      "path": "CLAUDE.md",
+      "mode": "100644",
+      "sha256": "6b802dd82ba3499dfc78c8562ec782cd086635220786f343207d62388aa61f86"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "mode": "100644",
+      "sha256": "a13c87d2c74a4627e16acda3db2b5700d335c9ad4717fff70f51c81d7b417d58"
+    },
+    {
+      "path": "HERMES.md",
+      "mode": "100644",
+      "sha256": "41c29d95091366c4e13ea6c936e57f57f658452dfbbd47e704466e68da3ecdba"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "sha256": "409b9a26e4395c3747fd8952200dceb510237985a0174e6acdea5994cc2989bd"
+    },
+    {
+      "path": "SECURITY.md",
+      "mode": "100644",
+      "sha256": "d204c4e2e2501f9b10fc9dec2d656de4b026894c34616831dfb1725b9754800b"
+    },
+    {
+      "path": "deliveries/M0/hermes-report.md",
+      "mode": "100644",
+      "sha256": "d6d1ea20a7024ac8575e70740e8813b16e901fbe554027078add4dd042f68119"
+    },
+    {
+      "path": "deliveries/README.md",
+      "mode": "100644",
+      "sha256": "7b2b59e16431ac3c874ce4af14517b912082cade281919736a6be5d58bd89a7f"
+    },
+    {
+      "path": "docs/README.md",
+      "mode": "100644",
+      "sha256": "6e21787bc71ed80cfb0a2614760f64f122e3c907ec764227b3b30c4ce379e425"
+    },
+    {
+      "path": "docs/architecture.md",
+      "mode": "100644",
+      "sha256": "fc3c49f1e3f330e5f4a84786daea9b44cef222eebb3054f1001d916960fec3ca"
+    },
+    {
+      "path": "docs/decisions.md",
+      "mode": "100644",
+      "sha256": "05e8326a2d5f0edb11414c10bd78e14af126beb42c9880a8aa952ce0f1de55fd"
+    },
+    {
+      "path": "docs/development.md",
+      "mode": "100644",
+      "sha256": "1e2b4373cfefe837a80a0171e4419f7104574f4aa03f503b69404f52751a0754"
+    },
+    {
+      "path": "docs/git-handoff.md",
+      "mode": "100644",
+      "sha256": "78efc4198823169c29295faf7a06e27e100c33ea459ba7518d242205413ed722"
+    },
+    {
+      "path": "docs/hermes-handoff.md",
+      "mode": "100644",
+      "sha256": "30fc11b928c422a76a2113fb161bb4276cbc8e3d6f5959925d4012d2f7d77af2"
+    },
+    {
+      "path": "docs/interfaces.md",
+      "mode": "100644",
+      "sha256": "0fd7234ba223f7877b94cbd0e373ea64bb3f31ac86eebb07b7356c869ffc4625"
+    },
+    {
+      "path": "docs/m0-kickoff.md",
+      "mode": "100644",
+      "sha256": "9f4a3988d2d04609101d24eb93e4a103b2f20e241cad4ce644cb78df98505ce8"
+    },
+    {
+      "path": "docs/operations.md",
+      "mode": "100644",
+      "sha256": "2c36aaae5863a6a61839e6d76fc841209f946c11bcb485196934b84e454a28f5"
+    },
+    {
+      "path": "docs/preparation-status.md",
+      "mode": "100644",
+      "sha256": "dcd68ff22f1a4739c9a1ed965c814b8a177aa98f025bd2cc2399f27bec131f3c"
+    },
+    {
+      "path": "docs/project-spec.md",
+      "mode": "100644",
+      "sha256": "e3082b2c460193979384e1e6c322a8185ebddd828259e0e7c6ff0002904ae61a"
+    },
+    {
+      "path": "docs/roadmap.md",
+      "mode": "100644",
+      "sha256": "7cc787e04bc98dc858ffeb25507c3ec8da7de6c31237102852aa96983302618e"
+    },
+    {
+      "path": "docs/security-model.md",
+      "mode": "100644",
+      "sha256": "04fd4c8b270119292d303140c94555c79d78a24b58e806093d470fecdcc599a7"
+    },
+    {
+      "path": "docs/verification.md",
+      "mode": "100644",
+      "sha256": "37288050069cdb473ba9dfb6fcd31714dfa1eb17e56baf66d99de57e642c98c0"
+    },
+    {
+      "path": "docs/workflow.md",
+      "mode": "100644",
+      "sha256": "32b1edad2e75f6c70ff02272a9324b46c0d8b29cf669e77a3c2ac20ac2d9bb44"
+    },
+    {
+      "path": "examples/README.md",
+      "mode": "100644",
+      "sha256": "11711dab56ecd4a929a6a00cd5954630a0964d4c782d64343c98b287b5546b06"
+    },
+    {
+      "path": "examples/artifacts/agent-result.json",
+      "mode": "100644",
+      "sha256": "f0d59b340ee4aeef3361fb4bc7b84f1cd24ffe5ca508ffb9fa943c97ba18f704"
+    },
+    {
+      "path": "examples/artifacts/event.json",
+      "mode": "100644",
+      "sha256": "834c899ff6dc75205757d04b63499c08458e97c55f98341a755931fc5f5638c7"
+    },
+    {
+      "path": "examples/artifacts/review.json",
+      "mode": "100644",
+      "sha256": "3d433cdcebe5894d3b365ccbd847f8cb9083a95bc96aca3a0ff35e35b3baa113"
+    },
+    {
+      "path": "examples/artifacts/task.json",
+      "mode": "100644",
+      "sha256": "5eb8cdee2b0aa0c4772dc35ac346c92b2021df9f5c2ed3b8b9d0a57a0a668944"
+    },
+    {
+      "path": "examples/synthetic/README.md",
+      "mode": "100644",
+      "sha256": "81575b54af2ee2325a0f581f2569410f3fcfa9e511c05f017ec9cef690ea7bff"
+    },
+    {
+      "path": "examples/synthetic/calculator.py",
+      "mode": "100644",
+      "sha256": "2802de79d7eb9b74ec9f756a1b98d31367d537261b5c70fa82288ef3e837a918"
+    },
+    {
+      "path": "examples/synthetic/project.toml",
+      "mode": "100644",
+      "sha256": "4a2a7a1433e71c8c7cbc916b9fe292a86685e339090ee97844b2a3ab89839725"
+    },
+    {
+      "path": "examples/synthetic/test_calculator.py",
+      "mode": "100644",
+      "sha256": "df937aa983655c973f36a940b0b33a26b82000c10ac767362daa6a5640c9c944"
+    },
+    {
+      "path": "pyproject.toml",
+      "mode": "100644",
+      "sha256": "8de461375626b3d6eeef5d2f8564b65d831ff674622190875deb3e3fae15e4eb"
+    },
+    {
+      "path": "schemas/README.md",
+      "mode": "100644",
+      "sha256": "df15009ae9253ec741d93d9a29ab73f1c6549688d636f79ac35ef0dd4c56fd90"
+    },
+    {
+      "path": "schemas/agent-result.schema.json",
+      "mode": "100644",
+      "sha256": "a639bfdcc6340da5d1ae965b0ac6c0f28b5e7bff2ef4504967d9ce4ca5df904d"
+    },
+    {
+      "path": "schemas/event.schema.json",
+      "mode": "100644",
+      "sha256": "02ea0757904624700fcaa54bf755d77125fa24e79a3d40106f7564a1ea6a0ffe"
+    },
+    {
+      "path": "schemas/project.schema.json",
+      "mode": "100644",
+      "sha256": "248be25a47d3c00596120729f8921a65e3ac9688aacb06c6913cf4e4f3034262"
+    },
+    {
+      "path": "schemas/review.schema.json",
+      "mode": "100644",
+      "sha256": "de4af9ccfa8a5eb3757bc32a969a1501c284c016aaeaebe43f436d1deb33c365"
+    },
+    {
+      "path": "schemas/task.schema.json",
+      "mode": "100644",
+      "sha256": "1b06ca4bbfc125f0a3f8ef7493eadd1f3bea75b59216481eec6a38f77196ebce"
+    },
+    {
+      "path": "schemas/verification.schema.json",
+      "mode": "100644",
+      "sha256": "9ccd09826cc86b0f0decb1ed2a19f7f95e641035e86d7b041e8bc7be019c4490"
+    },
+    {
+      "path": "scripts/check_specs.py",
+      "mode": "100644",
+      "sha256": "d21433d66e81abfa0311102512439e28594321a9cb73cea776064d1437e06ecf"
+    },
+    {
+      "path": "scripts/prepare_git_handoff.py",
+      "mode": "100644",
+      "sha256": "d16595827146269ed9b7dffc33a29cb110bcd773db4a761afbfe808c666cc5e5"
+    },
+    {
+      "path": "scripts/verify_handoff.py",
+      "mode": "100644",
+      "sha256": "54612421342ef92255796affe5cd869cb8c169a1f25bf4fac24ba9f6583489cf"
+    },
+    {
+      "path": "src/supervisor/__init__.py",
+      "mode": "100644",
+      "sha256": "125da02898e8c49766d428287db3c58b383c9937ca60c20a0a602bd771e751d9"
+    },
+    {
+      "path": "src/supervisor/__main__.py",
+      "mode": "100644",
+      "sha256": "df3fc4261d184ce282ec7b67a62127ebf5c8514e71872753a9de84d0a1f951f7"
+    },
+    {
+      "path": "src/supervisor/agents/README.md",
+      "mode": "100644",
+      "sha256": "b9091e09173151b1577d24a08c107f1d816af98ab8c5d2ec9ac6161693a76213"
+    },
+    {
+      "path": "src/supervisor/agents/__init__.py",
+      "mode": "100644",
+      "sha256": "0d5de1005d459aff587cfb67788f7c5146a36144d64c848cc10361cf35a7a28b"
+    },
+    {
+      "path": "src/supervisor/agents/base.py",
+      "mode": "100644",
+      "sha256": "a5883d1093d92bdabcb20b9ef804bc40bc91d8b85e1feb9921e070c037637e62"
+    },
+    {
+      "path": "src/supervisor/agents/mock.py",
+      "mode": "100644",
+      "sha256": "9f87341273815882c7fd030d3e8502e295c7e405d8daa59143182446b1ec78ab"
+    },
+    {
+      "path": "src/supervisor/cli.py",
+      "mode": "100644",
+      "sha256": "4d15bd9ff7c6ccef3723391a216d85f6f95a0eb0f036ddcadbc40f90a0ff946d"
+    },
+    {
+      "path": "src/supervisor/core/README.md",
+      "mode": "100644",
+      "sha256": "bd403269018d12502cc8f07cc5fe5360b34e5dedcda8453322c29bb8268fdd50"
+    },
+    {
+      "path": "src/supervisor/core/__init__.py",
+      "mode": "100644",
+      "sha256": "be9081006a6aafed14aff1cc48ff16dea24dfd9a9cf158bbe9eccfc18692b319"
+    },
+    {
+      "path": "src/supervisor/core/events.py",
+      "mode": "100644",
+      "sha256": "1e466202174b62c3bba30ffa7e6cb5d92848635d98156936c17bc3f3040d2124"
+    },
+    {
+      "path": "src/supervisor/policy/README.md",
+      "mode": "100644",
+      "sha256": "50af353cd5c133d3beb8368f171bd89550911c99d4bae52faa953852868c5a4a"
+    },
+    {
+      "path": "src/supervisor/policy/__init__.py",
+      "mode": "100644",
+      "sha256": "a12e1deabfcc3fce64a795e1b7a726620eee2e36ae1d7341e791a9efa8edbae9"
+    },
+    {
+      "path": "src/supervisor/storage/README.md",
+      "mode": "100644",
+      "sha256": "cb46f0c9e11366c59e5b6360bf01bb8c6fe0c7e4a28eb4e1ec9cae14f64bd2e5"
+    },
+    {
+      "path": "src/supervisor/storage/__init__.py",
+      "mode": "100644",
+      "sha256": "78b6dbe294a89ffa9607182e06de44f2697e553bb5656b030f94c8f4332a0212"
+    },
+    {
+      "path": "src/supervisor/verification/README.md",
+      "mode": "100644",
+      "sha256": "1210a05aced475c5f6a9503c005fcda8b9248a071d70d46c7c4b5a8a52b84c9c"
+    },
+    {
+      "path": "src/supervisor/verification/__init__.py",
+      "mode": "100644",
+      "sha256": "af7a9f787d256fdabc367bf8e7d03a999ea813e4f0b8f8794c6401bfe8f5136b"
+    },
+    {
+      "path": "src/supervisor/workers/README.md",
+      "mode": "100644",
+      "sha256": "44e1020e2bb2a8a8c1657d0afbc541fb3140a4498eedd77bd0d57b91f377a0f1"
+    },
+    {
+      "path": "src/supervisor/workers/__init__.py",
+      "mode": "100644",
+      "sha256": "38151bf19ac7d26143a85d5a510b4194960891ed7de7ba249e7da06f92cf1bb9"
+    },
+    {
+      "path": "src/supervisor/workers/process.py",
+      "mode": "100644",
+      "sha256": "2f743477ccfda877b86c3d881e22805590839c3aa0f8b2bf8dd9840e3cdde840"
+    },
+    {
+      "path": "src/supervisor/workspace/README.md",
+      "mode": "100644",
+      "sha256": "bc92be0c3cfb237219206199e6aa5ce686e9c39a1ce96bd4a97aec9b71a1b22d"
+    },
+    {
+      "path": "src/supervisor/workspace/__init__.py",
+      "mode": "100644",
+      "sha256": "77f2196b9e9a8af29f974736cf796d5cb52d7291e0e3e2da32db65dc70304246"
+    },
+    {
+      "path": "tasks/M0/HANDOFF.md",
+      "mode": "100644",
+      "sha256": "e60c5c8fecbe8094a46618281679e945d3551524cfcc254f49c5a89a2cf8479a"
+    },
+    {
+      "path": "tasks/M0/README.md",
+      "mode": "100644",
+      "sha256": "492b77b71a6ed440197ff73014c76f29b242556e3011ba94c4b1dbc99b48ba60"
+    },
+    {
+      "path": "tasks/M0/acceptance.md",
+      "mode": "100644",
+      "sha256": "689a862251a16fe82368710e650e8ce36823021f0c571d182b97c0427d6b5420"
+    },
+    {
+      "path": "tasks/M0/allowed_files.json",
+      "mode": "100644",
+      "sha256": "6bfd777b8b19c9d0eca2f45190097ee182c33760214d95b5be0f72d2fb31147a"
+    },
+    {
+      "path": "tasks/M0/api.md",
+      "mode": "100644",
+      "sha256": "d401fbd6ac1b7079810c9883182ebd5efda0d34c889cf25c6b6a64123361bf9e"
+    },
+    {
+      "path": "tasks/M0/forbidden_files.json",
+      "mode": "100644",
+      "sha256": "63b879d548b9041e88b4e417eb8d7af4e5ad565504b3607740366874360132d2"
+    },
+    {
+      "path": "tasks/M0/requirements.md",
+      "mode": "100644",
+      "sha256": "72d26ae06b7ee1798cedf343462cfbcb838740dce1916292ff1af00075cb6a58"
+    },
+    {
+      "path": "tasks/M0/task.json",
+      "mode": "100644",
+      "sha256": "1ebf34e5ce0d346cdc9b31b93ca1604e2082e569bd79f0455c12a50f0836cef0"
+    },
+    {
+      "path": "tasks/M0/verification.json",
+      "mode": "100644",
+      "sha256": "7b8a2f8c8fe891fba3c0884c573b095ac2f480f6c41de0795d50e36190375a6c"
+    },
+    {
+      "path": "tasks/README.md",
+      "mode": "100644",
+      "sha256": "ee1b0c790db325f7ce29ea3a1cd5e5d0bc3d55cd17bfe6a340f09186aad445ff"
+    },
+    {
+      "path": "templates/README.md",
+      "mode": "100644",
+      "sha256": "3221c814921379365730d0dceb5d825f6a89d423a7eccef951901b518ae50681"
+    },
+    {
+      "path": "templates/implementation-report.md",
+      "mode": "100644",
+      "sha256": "5010173a35599176dea5615df891d1d21e78f2bd0d4db558fde870ccb1d571d4"
+    },
+    {
+      "path": "templates/project.toml",
+      "mode": "100644",
+      "sha256": "4a2a7a1433e71c8c7cbc916b9fe292a86685e339090ee97844b2a3ab89839725"
+    },
+    {
+      "path": "templates/review.json",
+      "mode": "100644",
+      "sha256": "3d433cdcebe5894d3b365ccbd847f8cb9083a95bc96aca3a0ff35e35b3baa113"
+    },
+    {
+      "path": "templates/task-contract.md",
+      "mode": "100644",
+      "sha256": "1a88b4b1ce3b45e475c40899860d7b4feb7ce598dbee7fc91d1e101a87b2409a"
+    },
+    {
+      "path": "tests/integration/README.md",
+      "mode": "100644",
+      "sha256": "68dba8528fe4426364caf2d628a733566c405e43cee47b1ad1629c7d703d96a8"
+    },
+    {
+      "path": "tests/protected/README.md",
+      "mode": "100644",
+      "sha256": "0f389d06fc5216745851e8534caf2a8d06cc0f9ad02dc490bbf3a3bffd501bfe"
+    },
+    {
+      "path": "tests/protected/test_handoff_verifier.py",
+      "mode": "100644",
+      "sha256": "a418b1c9ca14d887a94f5913f080fd9cc617ede5e2c5cc6ad7762fde1e65079f"
+    },
+    {
+      "path": "tests/protected/test_m0_acceptance.py",
+      "mode": "100644",
+      "sha256": "a839ee16d30fbeed14fb2acd833157e2c3b080d71e6a23444ffecd3a04d0c06d"
+    },
+    {
+      "path": "tests/protected/test_specs.py",
+      "mode": "100644",
+      "sha256": "7adcef572e4dbc085be783423dbf619f26d9ff5b7fb4c262441136395f074629"
+    },
+    {
+      "path": "tests/test_cli.py",
+      "mode": "100644",
+      "sha256": "96999689beae224b492bc9fa39fe835e2596001ec76b5071714808f42b6c36f0"
+    },
+    {
+      "path": "tests/unit/README.md",
+      "mode": "100644",
+      "sha256": "9ee60002d8fac6ab22917f4fd6ff15597127bf8274d3b8a7181bcb155360bc9f"
+    },
+    {
+      "path": "uv.lock",
+      "mode": "100644",
+      "sha256": "979517f5d671a4b4e71466d3a9bc0c7969ca792b06330892740cb3ff5a3a6590"
+    }
+  ],
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "pytest": "8.4.2",
+    "ruff": "0.14.1",
+    "credentials": "All test/probe subprocesses used explicit environment PATH/PYTHONPATH and optional UV_CACHE_DIR/UV_PYTHON_DOWNLOADS only; no GH_TOKEN or other credential variables inherited. Environment isolation is not an OS sandbox."
+  },
+  "installation": [
+    {
+      "command": "uv sync --frozen --group dev",
+      "exit_code": 2,
+      "result": "PyPI DNS resolution failed"
+    },
+    {
+      "command": "uv sync --offline --frozen --group dev",
+      "exit_code": 0,
+      "result": "Cached locked dependencies installed successfully"
+    }
+  ],
+  "checks": [
+    {
+      "id": "unit",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit",
+        "--junitxml=.supervisor/evidence/M0-unit.xml"
+      ],
+      "cwd": "/tmp/m0-fresh-review",
+      "exit_code": 5,
+      "duration_seconds": 0.5561525821685791,
+      "output_sha256": "95128555d37352476a5e4cd14dbd43025557793d3112d249528ab2d733983384",
+      "counts": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 0
+      },
+      "junit_sha256": "299d8665860c3bc8d07e5168162f617c364e2f56aa037be96fbf63b557852e17"
+    },
+    {
+      "id": "specs",
+      "argv": [
+        "python",
+        "scripts/check_specs.py"
+      ],
+      "cwd": "/tmp/m0-fresh-review",
+      "exit_code": 0,
+      "duration_seconds": 0.3099849224090576,
+      "output_sha256": "b6482ce0716478280ba97acb4a0132c6ece6e9a9ab9b11e6626cd925b50eacf4"
+    },
+    {
+      "id": "independent",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/protected/test_m0_acceptance.py",
+        "--junitxml=.supervisor/evidence/M0-independent.xml"
+      ],
+      "cwd": "/tmp/m0-fresh-review",
+      "exit_code": 0,
+      "duration_seconds": 2.4468822479248047,
+      "output_sha256": "ae546348f9c84d1477023360910d2937121a5cb032dce5e3383e7637b69cb7e5",
+      "counts": {
+        "tests": 57,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 57
+      },
+      "junit_sha256": "b1f52cb4c3cc3b68ae35ae125d4b60423e2a07102c868ba91ba5fe75828a0fe1"
+    },
+    {
+      "id": "lint",
+      "argv": [
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": "/tmp/m0-fresh-review",
+      "exit_code": 0,
+      "duration_seconds": 0.01640605926513672,
+      "output_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "id": "format",
+      "argv": [
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": "/tmp/m0-fresh-review",
+      "exit_code": 0,
+      "duration_seconds": 0.012702226638793945,
+      "output_sha256": "ba72d5ff990b6755459efa6266bf58b9f38733d193f2c3339b32245e476e5994"
+    },
+    {
+      "id": "full",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "--junitxml=.supervisor/evidence/M0-full.xml"
+      ],
+      "cwd": "/tmp/m0-fresh-review",
+      "exit_code": 0,
+      "duration_seconds": 2.735619068145752,
+      "output_sha256": "78b116698564b98b066d40d1cd5bb98373f464f1d64c14b4736ae0a0c2c7c124",
+      "counts": {
+        "tests": 96,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 96
+      },
+      "junit_sha256": "0687e92ceb7187ad1f3269f2660503da273dcd497993115575baf8d66451afa9"
+    }
+  ],
+  "external_probes": [
+    {
+      "probe": "output-over-limit-then-sleep",
+      "status": "timed_out",
+      "truncated": false,
+      "captured": 0,
+      "expected": "output_limit with truncated true promptly after 64 bytes"
+    },
+    {
+      "probe": "incomplete-unknown-schema-output-declares-failed",
+      "result": {
+        "schema_version": 1,
+        "task_id": "M0-process-adapter",
+        "run_id": "review-run",
+        "attempt_id": "review-attempt",
+        "role": "implementer",
+        "provider": "mock",
+        "model": null,
+        "session_id": "session",
+        "status": "completed",
+        "exit_code": 0,
+        "summary": "",
+        "error": null,
+        "usage": null,
+        "artifacts": [],
+        "truncated": false
+      },
+      "expected": "failed: schema missing required fields and unknown field and declared failed"
+    },
+    {
+      "probe": "actual-nonzero-completed",
+      "result": {
+        "schema_version": 1,
+        "task_id": "M0-process-adapter",
+        "run_id": "review-run",
+        "attempt_id": "review-attempt",
+        "role": "implementer",
+        "provider": "mock",
+        "model": null,
+        "session_id": "session",
+        "status": "completed",
+        "exit_code": 0,
+        "summary": "",
+        "error": null,
+        "usage": null,
+        "artifacts": [],
+        "truncated": false
+      },
+      "expected": "failed"
+    },
+    {
+      "probe": "actual-truncated-completed",
+      "result": {
+        "schema_version": 1,
+        "task_id": "M0-process-adapter",
+        "run_id": "review-run",
+        "attempt_id": "review-attempt",
+        "role": "implementer",
+        "provider": "mock",
+        "model": null,
+        "session_id": "session",
+        "status": "completed",
+        "exit_code": 0,
+        "summary": "",
+        "error": null,
+        "usage": null,
+        "artifacts": [],
+        "truncated": false
+      },
+      "expected": "failed"
+    },
+    {
+      "probe": "artifact-dotdot",
+      "result": {
+        "schema_version": 1,
+        "task_id": "M0-process-adapter",
+        "run_id": "review-run",
+        "attempt_id": "review-attempt",
+        "role": "implementer",
+        "provider": "mock",
+        "model": null,
+        "session_id": "session",
+        "status": "completed",
+        "exit_code": 0,
+        "summary": "",
+        "error": null,
+        "usage": null,
+        "artifacts": [],
+        "truncated": false
+      },
+      "expected": "failed"
+    }
+  ],
+  "probe_source": "import json,sys\nfrom pathlib import Path\nfrom dataclasses import replace\nfrom supervisor.workers.process import ProcessRequest,ProcessRunner,ProcessResult\nfrom supervisor.agents.base import parse_agent_result\nroot=Path('/tmp/m0-fresh-review')\nreq=ProcessRequest((sys.executable,'-c','import os,time; os.write(1,b\"x\"*65536); time.sleep(.4)'),root,root,{},timeout_seconds=.15,max_output_bytes=64)\np=ProcessRunner().run(req)\nresults=[{'probe':'output-over-limit-then-sleep','status':p.status,'truncated':p.truncated,'captured':len(p.stdout)+len(p.stderr),'expected':'output_limit with truncated true promptly after 64 bytes'}]\nexpected=dict(task_id='M0-process-adapter',run_id='review-run',attempt_id='review-attempt',role='implementer',provider='mock')\ndata={'schema_version':1,'status':'failed','exit_code':0,'session_id':'session','truncated':False,'unexpected':True}\npr=ProcessResult('completed',0,json.dumps(data).encode(),b'',.01,False,None,None)\nresults.append({'probe':'incomplete-unknown-schema-output-declares-failed','result':parse_agent_result(pr,expected=expected).to_dict(),'expected':'failed: schema missing required fields and unknown field and declared failed'})\nfull={**expected,'schema_version':1,'status':'completed','exit_code':0,'session_id':'session','truncated':False,'model':None,'summary':'','error':None,'usage':None,'artifacts':[]}\nfor label,process in [('actual-nonzero-completed',replace(pr,stdout=json.dumps(full).encode(),exit_code=7)),('actual-truncated-completed',replace(pr,stdout=json.dumps(full).encode(),truncated=True)),('artifact-dotdot',replace(pr,stdout=json.dumps({**full,'artifacts':[{'path':'..','sha256':'a'*64}]}).encode()))]:\n results.append({'probe':label,'result':parse_agent_result(process,expected=expected).to_dict(),'expected':'failed'})\nprint(json.dumps(results,indent=2))\n",
+  "limitations": [
+    "Mac/Windows runtime not tested",
+    "Real Agent and OS sandbox are out of M0 scope",
+    "Cleanup failure and Windows findings based on static inspection; Linux protected descendant checks passed"
+  ]
+}
