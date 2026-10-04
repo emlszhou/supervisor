@@ -1,0 +1,419 @@
+{
+  "candidate_commit": "f71e94e5f87757b93d659d05e5ef6d6dec144fdd",
+  "code_commit": "83bfb4e9efcc94842b167ad01305dc7f245b1332",
+  "baseline_commit": "fc479e760cbcd1e5259e2d62aeddaa6033d2c915",
+  "bundle_sha256": "75f3473029918da8be5ae52dbb0b4ccb06f20d2306bac2a48f248ff7a52d9fe5",
+  "snapshot_sha256": "b4113fd585e73ae071ad98594d395956d116c99ef27be1bc2b9800337e520993",
+  "code_snapshot_sha256": "c9a8ab2ab6451f4201e622b90edd2b2fe21dafddea531b541093415432df09f6",
+  "frozen_hashes_verified": true,
+  "scope": {
+    "files": 5,
+    "added": 706,
+    "deleted": 480,
+    "total": 1186,
+    "numstat": [
+      [
+        "30",
+        "0",
+        "deliveries/M0R/hermes-report.md"
+      ],
+      [
+        "98",
+        "81",
+        "src/supervisor/agents/base.py"
+      ],
+      [
+        "255",
+        "399",
+        "src/supervisor/workers/process.py"
+      ],
+      [
+        "235",
+        "0",
+        "tests/unit/test_m0_review1_regressions.py"
+      ],
+      [
+        "88",
+        "0",
+        "tests/unit/test_m0_takeover.py"
+      ]
+    ],
+    "disallowed": []
+  },
+  "checks": [
+    {
+      "id": "unit",
+      "exit_code": 0,
+      "passed": 98,
+      "failed": 0,
+      "skipped": 0,
+      "output": "........................................................................ [ 73%]\n..........................                                               [100%]\n98 passed in 2.55s\n",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit",
+        "-q"
+      ],
+      "cwd": "/tmp/m0r-final-independent"
+    },
+    {
+      "id": "full-project",
+      "exit_code": 0,
+      "passed": 194,
+      "failed": 0,
+      "skipped": 0,
+      "output": "........................................................................ [ 37%]\n........................................................................ [ 74%]\n..................................................                       [100%]\n194 passed in 4.84s\n",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "cwd": "/tmp/m0r-final-independent"
+    },
+    {
+      "id": "frozen-m0+m0r",
+      "exit_code": 0,
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "output": "........................................................................ [100%]\n72 passed in 2.71s\n",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "/workspace/supervisor/handoffs/M0R/v1/task-bundle/tests/protected/test_m0_acceptance.py",
+        "/workspace/supervisor/handoffs/M0R/v1/task-bundle/tests/protected/test_m0r_acceptance.py",
+        "-q"
+      ],
+      "cwd": "/tmp/m0r-final-independent"
+    },
+    {
+      "id": "specs",
+      "exit_code": 0,
+      "argv": [
+        "python",
+        "scripts/check_specs.py"
+      ],
+      "cwd": "/tmp/m0r-final-independent"
+    },
+    {
+      "id": "lint",
+      "exit_code": 0,
+      "argv": [
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": "/tmp/m0r-final-independent"
+    },
+    {
+      "id": "format",
+      "exit_code": 0,
+      "argv": [
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": "/tmp/m0r-final-independent"
+    }
+  ],
+  "check_environment": "env -i PATH=/usr/bin:/bin; candidate .venv; frozen acceptance outside clone; no credentials",
+  "versions": {
+    "python": "3.12.14",
+    "pytest": "8.4.2",
+    "ruff": "0.14.1",
+    "uv": "0.12.19"
+  },
+  "probes": {
+    "short": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 5,
+      "stderr": 3,
+      "duration_seconds": 0.12707909700111486,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "timed_out"
+    },
+    "inherited": {
+      "status": "timed_out",
+      "exit_code": 0,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.1288035179968574,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "timed_out"
+    },
+    "exact": {
+      "status": "completed",
+      "exit_code": 0,
+      "stdout": 64,
+      "stderr": 0,
+      "duration_seconds": 0.07596163900234387,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": null
+    },
+    "flood": {
+      "status": "output_limit",
+      "exit_code": -9,
+      "stdout": 64,
+      "stderr": 0,
+      "duration_seconds": 0.06739401400045608,
+      "truncated": true,
+      "tree_cleanup_confirmed": true,
+      "error": null
+    },
+    "cancel": {
+      "status": "cancelled",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.056384789997537155,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "cancelled"
+    },
+    "killpg_denied": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.1269293209988973,
+      "truncated": false,
+      "tree_cleanup_confirmed": false,
+      "error": "timed_out"
+    },
+    "drive_exception": {
+      "status": "environment_failure",
+      "exit_code": null,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.00632542099992861,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "process execution failed",
+      "alive": false,
+      "pipes_closed": true
+    },
+    "escaped": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.12540764799996396,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "timed_out",
+      "descendant_state": "Z"
+    },
+    "pipe_select_unavailable": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 5,
+      "stderr": 0,
+      "duration_seconds": 0.12235832299847971,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "timed_out"
+    },
+    "windows_short": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 5,
+      "stderr": 3,
+      "duration_seconds": 0.12311616800070624,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "timed_out"
+    },
+    "windows_inherited": {
+      "status": "timed_out",
+      "exit_code": 0,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.12041010299799382,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "timed_out"
+    },
+    "windows_exact": {
+      "status": "completed",
+      "exit_code": 0,
+      "stdout": 64,
+      "stderr": 0,
+      "duration_seconds": 0.03091552199839498,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": null
+    },
+    "windows_flood": {
+      "status": "output_limit",
+      "exit_code": -9,
+      "stdout": 64,
+      "stderr": 0,
+      "duration_seconds": 0.022805554999649758,
+      "truncated": true,
+      "tree_cleanup_confirmed": null,
+      "error": null
+    },
+    "windows_cancel": {
+      "status": "cancelled",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.04175699400002486,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "cancelled"
+    },
+    "windows_simulation": {
+      "read_calls": 4,
+      "all_reads_within_available": true,
+      "leaked_threads": 0,
+      "native_windows": "not_run"
+    }
+  },
+  "initial_candidate": "8097dfe2986e5d4f7d06761bbe85ecbaf042a563",
+  "initial_results": {
+    "short": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 5,
+      "stderr": 3,
+      "duration_seconds": 0.1263901199999964,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "timed_out"
+    },
+    "inherited": {
+      "status": "timed_out",
+      "exit_code": 0,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.13155936899784137,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "timed_out"
+    },
+    "exact": {
+      "status": "completed",
+      "exit_code": 0,
+      "stdout": 64,
+      "stderr": 0,
+      "duration_seconds": 0.06897940500130062,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": null
+    },
+    "flood": {
+      "status": "output_limit",
+      "exit_code": -9,
+      "stdout": 64,
+      "stderr": 0,
+      "duration_seconds": 0.05575937699904898,
+      "truncated": true,
+      "tree_cleanup_confirmed": true,
+      "error": null
+    },
+    "cancel": {
+      "status": "cancelled",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.06304001300304662,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "cancelled"
+    },
+    "killpg_denied": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.12351649400079623,
+      "truncated": false,
+      "tree_cleanup_confirmed": false,
+      "error": "timed_out"
+    },
+    "drive_exception": {
+      "status": "environment_failure",
+      "exit_code": null,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.006545487001858419,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "process execution failed",
+      "alive": false,
+      "pipes_closed": true
+    },
+    "escaped": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 0,
+      "stderr": 0,
+      "duration_seconds": 0.133585439001763,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "timed_out",
+      "descendant_state": "Z"
+    },
+    "pipe_select_unavailable": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": 5,
+      "stderr": 0,
+      "duration_seconds": 0.122521045999747,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "timed_out"
+    },
+    "windows_cancellation_race": {
+      "result": {
+        "status": "environment_failure",
+        "exit_code": -9,
+        "stdout": 0,
+        "stderr": 0,
+        "duration_seconds": 0.16185549499641638,
+        "truncated": false,
+        "tree_cleanup_confirmed": null,
+        "error": "environment_failure"
+      },
+      "leaked_reader_threads": 2,
+      "scheduling": "read entered after loop stop check; CancelSynchronousIo reports no pending I/O"
+    }
+  },
+  "resolved_finding": "Initial one-shot Windows cancellation race left two reader threads alive; replacement polls PeekNamedPipe then sole-reader reads <= available; independent simulated Win32 readiness branch now passes with no leaked threads.",
+  "bounds": "No queue; aggregate buffers protected by lock and capped at request.max_output_bytes, each read <=4096 and at most one byte beyond observed remaining budget; two temporary read chunks at most8192 bytes. Finite4MB writer with64byte cap returned64/output_limit. Source inspected independently.",
+  "tree_limits": "Linux observed PID start-time identities and ancestry only; escaped-session fixture observed and terminated. Unobserved adversarial fork/reparent races outside M0 capability claim. Native POSIX ps fallback/macOS untested. No OS sandbox; M2 future.",
+  "native_windows": "not_run",
+  "native_macos": "not_run",
+  "reviewer_implementation_edits": false,
+  "recorded_at": "2026-10-04T12:40:34.853380+00:00",
+  "installation": {
+    "argv": [
+      "uv",
+      "sync",
+      "--frozen",
+      "--group",
+      "dev"
+    ],
+    "cache_dir": "/tmp/m0r-final-uv",
+    "exit_code": 0
+  },
+  "frozen_breakdown": {
+    "m0": 57,
+    "m0r": 15,
+    "failed": 0,
+    "skipped": 0
+  }
+}
