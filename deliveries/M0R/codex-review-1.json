@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task_id": "M0R-review2-remediation",
+  "run_id": "m0r-run-1",
+  "attempt_id": "m0r-attempt-1",
+  "bundle_sha256": "75f3473029918da8be5ae52dbb0b4ccb06f20d2306bac2a48f248ff7a52d9fe5",
+  "snapshot_sha256": "6bbb06873b17b2c8001b61a7052a5bdacad537d0cf29607c499f8fcac64289f4",
+  "stage": "review_1",
+  "decision": "return_once",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m0r_fresh_review_1",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "failed",
+  "findings": [
+    {
+      "id": "M0R-R1-drain",
+      "severity": "blocking",
+      "description": "Post-exit _drain_output uses unbounded BufferedReader.read() and blocking os.read(fd,1), without a wall deadline. A leader spawning a bounded .6s inherited-pipe child returned completed after .645s for a .1s timeout. Use bounded nonblocking/concurrent two-pipe reads and enforce the same monotonic deadline during drain; avoid unbounded allocation.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R1-tree",
+      "severity": "blocking",
+      "description": "Injected killpg PermissionError followed by leader kill returns tree_cleanup_confirmed=true. Preserve false/unknown when group termination is denied or otherwise not confirmed; leader exit is insufficient proof.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R1-exception",
+      "severity": "blocking",
+      "description": "Injected _drive_process RuntimeError returns environment_failure while its started leader remains alive. Outer run process variable is never assigned; _run_process finally only closes pipes. Terminate/reap started processes on every execution exception; reviewer explicitly killed/reaped probe leader.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R1-session",
+      "severity": "major",
+      "description": "Popen still uses preexec_fn=os.setpgrp, explicitly prohibited by the frozen contract. Replace with safe start_new_session/process_group mechanism.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R1-boundary",
+      "severity": "major",
+      "description": "64 stdout bytes at budget64 plus stderr EOF while leader sleeps .1s returns output_limit/truncated and kills leader without observing any excess byte. Detect a real extra byte, distinguish EOF, and allow exact-budget completion.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R1-windows",
+      "severity": "major",
+      "description": "Windows path still relies exclusively on select.select of pipe descriptors; swallowed non-socket errors leave pipes unread. Simulated select OSError with require_tree_cleanup=False and bounded 200KB writer returned timed_out with empty captured output. Implement an actually working pipe-consumption path with bounded memory and deadline/cancellation; native Windows remains unrun.",
+      "path": "src/supervisor/workers/process.py"
+    },
+    {
+      "id": "M0R-R1-exit-type",
+      "severity": "major",
+      "description": "Strict parser accepts declared exit_code=False as integer zero and returns completed. Reject bool explicitly for exit_code and every schema integer field; add meaningful regression coverage.",
+      "path": "src/supervisor/agents/base.py"
+    },
+    {
+      "id": "M0R-R1-report",
+      "severity": "major",
+      "description": "Report claims all fixes and unit-test updates although no unit files changed; cleanup, Windows path, safe spawn, drain and exact-budget failures remain reproducible. Correct claims/counts after fixes; retain explicit native Windows unrun limitation.",
+      "path": "deliveries/M0R/hermes-report.md"
+    }
+  ],
+  "summary": "All seven required checks pass (unit86/full182/external57+15); independent failure probes and static review establish unfulfilled frozen requirements. Scope passes:3 files,215 additions+97 deletions=312/1800. Return once for consolidated fixes; native Windows unrun."
+}

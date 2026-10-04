@@ -1,0 +1,237 @@
+{
+  "candidate": "f069361353b64b2a6b577f307108ac15cb505752",
+  "code_commit": "f74bd1666b5bdb9dce4fe941233dfb5abf5db408",
+  "baseline": "fc479e760cbcd1e5259e2d62aeddaa6033d2c915",
+  "frozen_main": "30ec417109ae1af7e4301b36083279fb68dd8d80",
+  "bundle_files_sha256_verified": true,
+  "scope": {
+    "files": 3,
+    "added": 215,
+    "deleted": 97,
+    "total": 312,
+    "allowed": true
+  },
+  "snapshots": [
+    {
+      "commit": "f74bd1666b5bdb9dce4fe941233dfb5abf5db408",
+      "snapshot_sha256": "1e533428963501f7d6fc4ec620c32932e9f84043d08e022d358b13c551f1996a",
+      "tracked_files": 95
+    },
+    {
+      "commit": "f069361353b64b2a6b577f307108ac15cb505752",
+      "snapshot_sha256": "6bbb06873b17b2c8001b61a7052a5bdacad537d0cf29607c499f8fcac64289f4",
+      "tracked_files": 96
+    }
+  ],
+  "checks": [
+    {
+      "name": "unit",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/unit",
+        "--junitxml=/tmp/m0r-review-evidence/unit.xml"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "counts": {
+        "tests": 86,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "output_sha256": "13040046de069cb977a22e0453c2049aad15ec02f131899222f4b08c4b4c6e1a"
+    },
+    {
+      "name": "full",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "--junitxml=/tmp/m0r-review-evidence/full.xml"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "counts": {
+        "tests": 182,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "output_sha256": "98f59841a37c9243f9fb38dc6b4034c5a4c6fae9326f9c3aa9910069a932330e"
+    },
+    {
+      "name": "old57",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "/workspace/supervisor/handoffs/M0R/v1/task-bundle/tests/protected/test_m0_acceptance.py",
+        "--junitxml=/tmp/m0r-review-evidence/old57.xml"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "counts": {
+        "tests": 57,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "output_sha256": "e68446fc38b1216f6e6ff99a2e061024ce2fe6dcf0cd5fa1415dfa1e2dec5d96"
+    },
+    {
+      "name": "new15",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "/workspace/supervisor/handoffs/M0R/v1/task-bundle/tests/protected/test_m0r_acceptance.py",
+        "--junitxml=/tmp/m0r-review-evidence/new15.xml"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "output_sha256": "0a62cd4a2597e93391c8bf08bf7d4d59da09caf53834563f82091c1d4e2b26c5"
+    },
+    {
+      "name": "specs",
+      "argv": [
+        "python",
+        "scripts/check_specs.py"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "output_sha256": "b6482ce0716478280ba97acb4a0132c6ece6e9a9ab9b11e6626cd925b50eacf4"
+    },
+    {
+      "name": "lint",
+      "argv": [
+        "ruff",
+        "check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "output_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "name": "format",
+      "argv": [
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "output_sha256": "7715b02781372f8741fb309aee97a6483e689c9039f0d78081dd910f70b0256e"
+    }
+  ],
+  "probes": {
+    "killpg_denial": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.2015635330008081,
+      "truncated": false,
+      "tree_cleanup_confirmed": true,
+      "error": "wall timeout exceeded"
+    },
+    "drive_exception": {
+      "result": {
+        "status": "environment_failure",
+        "exit_code": null,
+        "stdout": "",
+        "stderr": "",
+        "duration_seconds": 0.0,
+        "truncated": false,
+        "tree_cleanup_confirmed": null,
+        "error": "synthetic drive failure"
+      },
+      "leader_alive_after_return": true,
+      "stdout_closed": true,
+      "stderr_closed": true
+    },
+    "windows_pipe_select": {
+      "status": "timed_out",
+      "exit_code": -9,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.23178188599922578,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": "wall timeout exceeded"
+    },
+    "exact_budget_live_eof": {
+      "status": "output_limit",
+      "exit_code": -9,
+      "stdout": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "stderr": "",
+      "duration_seconds": 0.039718727000945364,
+      "truncated": true,
+      "tree_cleanup_confirmed": true,
+      "error": null
+    },
+    "inherited_pipe_drain": {
+      "status": "completed",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.6452038099996571,
+      "truncated": false,
+      "tree_cleanup_confirmed": null,
+      "error": null
+    },
+    "boolean_exit_code": {
+      "supplied_exit_code": false,
+      "result": {
+        "schema_version": 1,
+        "task_id": "M0R-review2-remediation",
+        "run_id": "m0r-run-1",
+        "attempt_id": "m0r-attempt-1",
+        "role": "implementer",
+        "provider": "mock",
+        "model": null,
+        "session_id": "session",
+        "status": "completed",
+        "exit_code": 0,
+        "summary": "",
+        "error": null,
+        "usage": null,
+        "artifacts": [],
+        "truncated": false
+      }
+    }
+  },
+  "setup": "uv0.12.19; CPython3.12.14; uv sync --offline --frozen --group dev --cache-dir /workspace/.cache/uv succeeded; pytest8.4.2/ruff0.14.1/jsonschema4.25.1",
+  "environment": {
+    "credential_variables_passed": false,
+    "allowlist": [
+      "PATH",
+      "HOME",
+      "PYTHONPATH",
+      "LANG"
+    ],
+    "native_windows": "not_run",
+    "macos": "not_run"
+  },
+  "cleanup": "Probe children bounded to at most2s; captured drive-exception leader killed/reaped by reviewer; inherited-pipe child self-exits after .6s.",
+  "independence": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m0r_fresh_review_1",
+    "fresh_session": true,
+    "independent_provider": false
+  }
+}
