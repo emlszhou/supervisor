@@ -1,8 +1,8 @@
 # M0 Implementation Delivery Report
 
 - task ID / run ID / attempt ID: M0-process-adapter / m0-repair-1 / m0-repair-1-attempt
-- 基线提交 / bundle SHA256 / 候选 snapshot SHA256: c93c8c5054bd12246676337d37993c3c3adfbfb2 / ed298ce414e36deb2cf7a5864d5547bea46d60cbf04ae4ff1de1dc69b0ab5bca / N/A (computed at submission)
-- 代码提交 SHA / 实现分支: hermes/m0 @ 30969f0e20c9ee46353f2531df79c3daef737b83
+- 基线提交 / bundle SHA256 / 候选 snapshot SHA256: c93c8c5054bd12246676337d37993c3c3adfbfb2 / ed298ce414e36deb2cf7a5864d5547bea46d60cbf04ae4ff1de1dc69b0ab5bca / 1696c043a8420f82728bf52a6f3dfae1ec3b3e61edba0c92ee591fda68704edc
+- 代码提交 SHA / 实现分支: hermes/m0 @ 3e5462d278532d253a36cd6d4474afe49c9250e5 (30969f0 返修, bae5195 原始实现)
 - Agent / 模型 / session / Worker / OS 与版本: Hermes Agent / MiniMax-M3 / N/A / M0-repair-1 / macOS 27.0.1 (Darwin 24.6.0)
 - 目标行为与实现方式: 建立 ProcessRunner（并发流读取 + 实时强制输出预算 + POSIX 进程组清理）、严格 agent-result schema v1 解析器、MockAdapter（无外部依赖）和 EventRecorder（连续序列、唯一 event_id、并发安全）。
 - 修改文件与范围说明:
@@ -25,6 +25,7 @@
 | uv run pytest tests/protected/test_m0_acceptance.py --junitxml=.supervisor/evidence/M0-independent.xml (cwd .) | 0 | 57 | 0 | 0 | 全部独立行为验收通过 |
 | uv run ruff check src tests scripts (cwd .) | 0 | N/A | N/A | N/A | All checks passed |
 | uv run ruff format --check src tests scripts (cwd .) | 0 | N/A | N/A | N/A | All files formatted |
+| uv run pytest tests/unit tests/protected/test_m0_acceptance.py --junitxml=.supervisor/evidence/M0-full.xml (cwd .) | 0 | 143 | 0 | 0 | 全部 143 个测试通过（86 单元测试 + 57 独立行为验收） |
 
 ## Review-1 Findings 处置
 
@@ -42,7 +43,7 @@
 
 - Windows 平台未实测；代码路径支持 require_tree_cleanup=False 时普通短进程（preexec_fn 仅 POSIX）。
 - 进程组清理在 POSIX 实施；非 POSIX 平台 require_tree_cleanup=True 会返回 environment_failure 含 "unsupported"。
-- Linux 云环境证据由 Codex 在 review-1 取得；本机 Mac Mini 已通过全部 57 个独立验收 + 86 个单元测试。
+- Linux 云环境证据由 Codex 在 review-1 取得；本机 Mac Mini 已通过全部 143 个测试（86 单元测试 + 57 独立行为验收）。
 - 真实 Agent CLI/模型接入属 M2 范围。
 - review-1-output 探测的 "65536 bytes + sleep" 案例已修复：流式读取会在达到 64 字节预算时立即返回 output_limit，不再触发 timed_out。
 - review-1-parser 探测的 "incomplete unknown schema declared failed" 案例已修复：unknown 顶层字段导致 failed。
