@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "M0R-review2-remediation",
+  "run_id": "m0r-takeover",
+  "attempt_id": "m0r-takeover-1",
+  "bundle_sha256": "75f3473029918da8be5ae52dbb0b4ccb06f20d2306bac2a48f248ff7a52d9fe5",
+  "snapshot_sha256": "b4113fd585e73ae071ad98594d395956d116c99ef27be1bc2b9800337e520993",
+  "stage": "final_verify",
+  "decision": "accept",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m0r_final_verify",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "passed",
+  "findings": [
+    {
+      "id": "native-platforms-unrun",
+      "severity": "info",
+      "description": "Native Windows/macOS and POSIX ps fallback were not run; Windows Win32 readiness branch was independently simulated. Observed Linux descendants are not a sandbox or guarantee against arbitrary reparent races.",
+      "path": "src/supervisor/workers/process.py"
+    }
+  ],
+  "summary": "Accept exact candidate f71e94e5f87757b93d659d05e5ef6d6dec144fdd. Required checks:98 unit/194 full/57+15 frozen passed; specs/lint/format passed. Five allowed files,1186 cumulative changed lines; frozen inputs and protected files unchanged. Independent deadlines/cancel/output bounds/denied killpg/drive exception/escaped observed descendant/Windows readiness probes passed. Initial Windows reader lifecycle finding resolved in revised candidate. Native Windows/macOS not run; no OS sandbox claim. Evidence:codex-final-verify-evidence.json and reviewer probe sources."
+}
