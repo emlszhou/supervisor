@@ -1,6 +1,6 @@
 # 本地 Hermes 开发入口
 
-先遵守 [AGENTS.md](AGENTS.md)，再读 [全本地模型执行规划](docs/LOCAL-MODEL-EXECUTION-PLAN.md)。
+先遵守 [AGENTS.md](AGENTS.md)，再读 [全本地模型执行规划](docs/LOCAL-MODEL-EXECUTION-PLAN.md) 与 [本地运行手册](docs/LOCAL-MODEL-RUNBOOK.md)。
 
 用户已决定后续所有模型角色本地运行。默认Implementer；承担Planner/Reviewer/Repairer/Final Verifier时必须由协调流程明确角色，审核使用全新会话，不审核自己的实现。同供应者fresh不等于provider独立。不要自动切换云模型。
 

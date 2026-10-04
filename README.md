@@ -49,6 +49,7 @@ uv build --no-sources
 | [验收规则](docs/verification.md) | 受保护检查、证据和快照绑定 |
 | [路线图](docs/roadmap.md) | M0–M5 的依赖与完成条件 |
 | [全本地执行规划](docs/LOCAL-MODEL-EXECUTION-PLAN.md) | M1–M4拆分、角色提示词、Git交接和门禁 |
+| [本地运行手册](docs/LOCAL-MODEL-RUNBOOK.md) | 真实会话、命令证据、超时取消、恢复和停止规则 |
 | [Hermes 交接](docs/hermes-handoff.md) | 本地实现与全新本地审核的入口 |
 | [Git 交接协议](docs/git-handoff.md) | 已授权的分支、克隆、推拉与报告路径 |
 | [准备验证记录](docs/preparation-status.md) | 当前已验证能力与尚未实现的功能 |
