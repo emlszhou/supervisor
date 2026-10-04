@@ -12,7 +12,6 @@ import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import IO, Any
 
 
 @dataclass(frozen=True)
@@ -272,32 +271,69 @@ class ProcessRunner:
 
             # Read available output with small timeout (enforce budget in real-time)
             if process.stdout is not None or process.stderr is not None:
-                rlist: list[IO[Any]] = []
+                # Use os.read() with O_NONBLOCK to avoid blocking on buffered reads
+                # (BufferedReader.read() blocks until data available or EOF)
+                rlist: list[int] = []
                 if process.stdout is not None:
-                    rlist.append(process.stdout)
+                    rlist.append(process.stdout.fileno())
                 if process.stderr is not None:
-                    rlist.append(process.stderr)
+                    rlist.append(process.stderr.fileno())
+
                 try:
-                    ready, _, _ = select.select(rlist, [], [], 0.05)
+                    ready, _, _ = select.select(rlist, [], [], min(0.05, remaining))
                 except (ValueError, OSError):
                     ready = []
 
                 budget_remaining = request.max_output_bytes - total_bytes
+                stdout_fileno = process.stdout.fileno() if process.stdout is not None else -1
 
-                for stream in ready:
+                for fd in ready:
                     if budget_remaining <= 0:
+                        # Budget used up. Check if process has exited.
+                        if process.poll() is not None:
+                            # Process exited. Wait for drain to detect more output.
+                            break
+                        # Process still running. Wait a tiny bit and re-check
+                        # (poll may not have detected exit yet).
+                        time.sleep(0.01)
+                        if process.poll() is not None:
+                            # Process exited. Wait for drain to detect more output.
+                            break
+                        # Process still running with more output to come.
+                        # Return output_limit immediately.
                         truncated = True
-                        break
+                        cleanup_ok = self._terminate_process(process, request)
+                        stdout_total = b"".join(stdout_chunks)
+                        stderr_total = b"".join(stderr_chunks)
+                        if len(stdout_total) + len(stderr_total) > request.max_output_bytes:
+                            room = request.max_output_bytes - len(stdout_total)
+                            if room < 0:
+                                stdout_total = stdout_total[: request.max_output_bytes]
+                                stderr_total = b""
+                            else:
+                                stderr_total = stderr_total[:room]
+                        return ProcessResult(
+                            status="output_limit",
+                            exit_code=process.returncode,
+                            stdout=stdout_total,
+                            stderr=stderr_total,
+                            duration_seconds=time.monotonic() - start_time,
+                            truncated=True,
+                            tree_cleanup_confirmed=(
+                                cleanup_ok if request.require_tree_cleanup else None
+                            ),
+                            error=None,
+                        )
                     try:
-                        chunk = stream.read(min(4096, budget_remaining))
-                    except (ValueError, OSError):
+                        chunk = os.read(fd, min(4096, budget_remaining))
+                    except (ValueError, OSError, BlockingIOError):
                         chunk = b""
                     if not chunk:
                         continue
                     if len(chunk) > budget_remaining:
                         chunk = chunk[:budget_remaining]
                         truncated = True
-                    if stream is process.stdout:
+                    if fd == stdout_fileno:
                         stdout_chunks.append(chunk)
                     else:
                         stderr_chunks.append(chunk)
@@ -331,9 +367,11 @@ class ProcessRunner:
             # Check if process has exited
             if process.poll() is not None:
                 # Drain any remaining buffered output (respecting budget)
-                self._drain_output(
+                drain_truncated = self._drain_output(
                     process, stdout_chunks, stderr_chunks, request.max_output_bytes - total_bytes
                 )
+                if drain_truncated:
+                    truncated = True
                 break
 
         # Process exited normally - finalize
@@ -342,9 +380,13 @@ class ProcessRunner:
         stdout_final = b"".join(stdout_chunks)
         stderr_final = b"".join(stderr_chunks)
 
-        # Check output limit after exit
+        # Check output limit after exit (or truncation detected during drain)
         total = len(stdout_final) + len(stderr_final)
-        if total > request.max_output_bytes:
+        if truncated or total > request.max_output_bytes:
+            # If truncated flag is set, it means either:
+            # 1. Budget was exhausted during streaming (process still running)
+            # 2. Drain detected more output after budget exhaustion (process exited)
+            # In both cases, output_limit is appropriate.
             truncated_stdout = stdout_final[: request.max_output_bytes]
             truncated_stderr = stderr_final[: request.max_output_bytes - len(truncated_stdout)]
             return ProcessResult(
@@ -387,19 +429,35 @@ class ProcessRunner:
         stdout_chunks: list[bytes],
         stderr_chunks: list[bytes],
         budget: int,
-    ) -> None:
-        """Drain remaining output after process exit (up to budget)."""
+    ) -> bool:
+        """Drain remaining output after process exit (up to budget). Returns True if truncated."""
         if budget <= 0:
-            return
+            # Check if there's more output (to detect truncation)
+            if process.stdout is not None:
+                try:
+                    remaining = os.read(process.stdout.fileno(), 1)
+                    if remaining:
+                        return True
+                except (ValueError, OSError, BlockingIOError):
+                    pass
+            if process.stderr is not None:
+                try:
+                    remaining = os.read(process.stderr.fileno(), 1)
+                    if remaining:
+                        return True
+                except (ValueError, OSError, BlockingIOError):
+                    pass
+            return False
         if process.stdout is not None:
             try:
                 remaining = process.stdout.read()
                 if remaining:
                     if len(remaining) > budget:
                         stdout_chunks.append(remaining[:budget])
+                        return True
                     else:
                         stdout_chunks.append(remaining)
-                    budget -= min(len(remaining), budget)
+                        budget -= len(remaining)
             except (ValueError, OSError):
                 pass
         if budget > 0 and process.stderr is not None:
@@ -408,10 +466,12 @@ class ProcessRunner:
                 if remaining:
                     if len(remaining) > budget:
                         stderr_chunks.append(remaining[:budget])
+                        return True
                     else:
                         stderr_chunks.append(remaining)
             except (ValueError, OSError):
                 pass
+        return False
 
     def _terminate_process(
         self,

@@ -99,44 +99,44 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
             raise ValueError(f"expected.{field} must be string")
 
     # Gate on actual process status. Real exit_code != 0 -> failed (preserve).
-        # Even with exit_code 0, if status is not "completed" (e.g. output_limit,
-        # truncated, timeout, failed), return failed to override bogus output.
-        # Non-completed status with exit_code=0 is a "process failed" state per protocol:
-        #   timeout, cancelled, output_limit, environment_failure all require exit_code != 0.
-        # Only "completed" status with exit_code=0 is the legitimate success.
-        if process.exit_code != 0:
-            return AgentResult(
-                status=process.status if process.status != "completed" else "failed",
-                exit_code=process.exit_code,
-                duration_seconds=process.duration_seconds,
-                task_id=expected["task_id"],
-                run_id=expected["run_id"],
-                attempt_id=expected["attempt_id"],
-                role=expected["role"],
-                provider=expected["provider"],
-                session_id=None,
-                truncated=process.truncated,
-                usage=None,
-                error=f"process failed: status={process.status} exit_code={process.exit_code}",
-            )
+    # Even with exit_code 0, if status is not "completed" (e.g. output_limit,
+    # truncated, timeout, failed), return failed to override bogus output.
+    # Non-completed status with exit_code=0 is a "process failed" state per protocol:
+    #   timeout, cancelled, output_limit, environment_failure all require exit_code != 0.
+    # Only "completed" status with exit_code=0 is the legitimate success.
+    if process.exit_code != 0:
+        return AgentResult(
+            status=process.status if process.status != "completed" else "failed",
+            exit_code=process.exit_code,
+            duration_seconds=process.duration_seconds,
+            task_id=expected["task_id"],
+            run_id=expected["run_id"],
+            attempt_id=expected["attempt_id"],
+            role=expected["role"],
+            provider=expected["provider"],
+            session_id=None,
+            truncated=process.truncated,
+            usage=None,
+            error=f"process failed: status={process.status} exit_code={process.exit_code}",
+        )
 
-            # exit_code=0 but non-completed status: process is a "failed" state (timeout/cancelled/output_limit).
-            # Do not interpret as completed.
-            if process.status not in ("completed",):
-                return AgentResult(
-                    status="failed",
-                    exit_code=process.exit_code,
-                    duration_seconds=process.duration_seconds,
-                    task_id=expected["task_id"],
-                    run_id=expected["run_id"],
-                    attempt_id=expected["attempt_id"],
-                    role=expected["role"],
-                    provider=expected["provider"],
-                    session_id=None,
-                    truncated=process.truncated,
-                    usage=None,
-                    error=f"non-completed process status: status={process.status} exit_code={process.exit_code}",
-                )
+    # exit_code=0 but non-completed status: process is a "failed" state.
+    # Do not interpret as completed.
+    if process.status not in ("completed",):
+        return AgentResult(
+            status=process.status,
+            exit_code=process.exit_code,
+            duration_seconds=process.duration_seconds,
+            task_id=expected["task_id"],
+            run_id=expected["run_id"],
+            attempt_id=expected["attempt_id"],
+            role=expected["role"],
+            provider=expected["provider"],
+            session_id=None,
+            truncated=process.truncated,
+            usage=None,
+            error=f"non-completed status: status={process.status}",
+        )
 
     # Process completed - now parse protocol
     try:
@@ -174,7 +174,9 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
         if field not in data:
             return _make_failed(process, expected, "missing required field")
 
-    # Validate schema_version
+    # Validate schema_version - must be exactly integer 1, not bool
+    if not isinstance(data["schema_version"], int) or isinstance(data["schema_version"], bool):
+        return _make_failed(process, expected, "schema_version type invalid")
     if data["schema_version"] != 1:
         return _make_failed(process, expected, "unsupported schema_version")
 
@@ -261,7 +263,9 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
         if not (isinstance(data["error"], str) and data["error"]):
             return _make_failed(process, expected, "error required when not completed")
 
-    # Validate usage
+    # Validate usage - must be object or null, not any other type
+    if not (data["usage"] is None or isinstance(data["usage"], dict)):
+        return _make_failed(process, expected, "usage type invalid")
     if data["usage"] is not None:
         if not isinstance(data["usage"], dict):
             return _make_failed(process, expected, "usage type invalid")
@@ -272,49 +276,48 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
             return _make_failed(process, expected, "usage missing field")
         for key in _ALLOWED_USAGE_KEYS:
             v = data["usage"][key]
-            if not (v is None or isinstance(v, int)):
+            if not (v is None or (isinstance(v, int) and not isinstance(v, bool))):
                 return _make_failed(process, expected, "usage field type invalid")
             if isinstance(v, int) and v < 0:
                 return _make_failed(process, expected, "usage field negative")
 
-    # Validate artifacts - strictly enforce canonical paths and hash format
-    if data["artifacts"] is not None:
-        if not isinstance(data["artifacts"], list):
-            return _make_failed(process, expected, "artifacts type invalid")
-        for artifact in data["artifacts"]:
-            if not isinstance(artifact, dict):
-                return _make_failed(process, expected, "artifact type invalid")
-            unknown_art = set(artifact.keys()) - _ALLOWED_ARTIFACT_KEYS
-            if unknown_art:
-                return _make_failed(process, expected, "artifact unknown field")
-            if not _ALLOWED_ARTIFACT_KEYS.issubset(artifact.keys()):
-                return _make_failed(process, expected, "artifact missing field")
-            path = artifact["path"]
-            sha = artifact["sha256"]
-            if not isinstance(path, str):
-                return _make_failed(process, expected, "artifact path type invalid")
-            if not isinstance(sha, str):
-                return _make_failed(process, expected, "artifact sha type invalid")
-            # Path must be non-empty, canonical, no absolute, no parent refs,
-            # no dot components, no double slashes, no backslashes.
-            if not path or path != path.strip():
+    # Validate artifacts - must be array (not null, not any other type)
+    if not isinstance(data["artifacts"], list):
+        return _make_failed(process, expected, "artifacts type invalid")
+    for artifact in data["artifacts"]:
+        if not isinstance(artifact, dict):
+            return _make_failed(process, expected, "artifact type invalid")
+        unknown_art = set(artifact.keys()) - _ALLOWED_ARTIFACT_KEYS
+        if unknown_art:
+            return _make_failed(process, expected, "artifact unknown field")
+        if not _ALLOWED_ARTIFACT_KEYS.issubset(artifact.keys()):
+            return _make_failed(process, expected, "artifact missing field")
+        path = artifact["path"]
+        sha = artifact["sha256"]
+        if not isinstance(path, str):
+            return _make_failed(process, expected, "artifact path type invalid")
+        if not isinstance(sha, str):
+            return _make_failed(process, expected, "artifact sha type invalid")
+        # Path must be non-empty, canonical, no absolute, no parent refs,
+        # no dot components, no double slashes, no backslashes.
+        if not path or path != path.strip():
+            return _make_failed(process, expected, "artifact path invalid")
+        if path.startswith("/") or "\\" in path:
+            return _make_failed(process, expected, "artifact path invalid")
+        if path == "..":
+            return _make_failed(process, expected, "artifact path invalid")
+        # Split into components and check each
+        if "//" in path:
+            return _make_failed(process, expected, "artifact path invalid")
+        parts = path.split("/")
+        for part in parts:
+            if not part or part in (".", ".."):
                 return _make_failed(process, expected, "artifact path invalid")
-            if path.startswith("/") or "\\" in path:
+            if not _ARTIFACT_PATH_PATTERN.match(part):
                 return _make_failed(process, expected, "artifact path invalid")
-            if path == "..":
-                return _make_failed(process, expected, "artifact path invalid")
-            # Split into components and check each
-            if "//" in path:
-                return _make_failed(process, expected, "artifact path invalid")
-            parts = path.split("/")
-            for part in parts:
-                if not part or part in (".", ".."):
-                    return _make_failed(process, expected, "artifact path invalid")
-                if not _ARTIFACT_PATH_PATTERN.match(part):
-                    return _make_failed(process, expected, "artifact path invalid")
-            # Hash format check
-            if not _SHA256_PATTERN.match(sha):
-                return _make_failed(process, expected, "artifact sha format invalid")
+        # Hash format check
+        if not _SHA256_PATTERN.match(sha):
+            return _make_failed(process, expected, "artifact sha format invalid")
 
     # Now: if status is failed/timed_out/cancelled/output_limit/environment_failure,
     # the output itself is asserting a failure but the process succeeded; this is
@@ -351,6 +354,9 @@ def parse_agent_result(process, *, expected: dict[str, str]) -> AgentResult:
         truncated=False,
         usage=data["usage"],
         error=None,
+        model=data["model"],
+        summary=data["summary"],
+        artifacts=data["artifacts"],
     )
 
 
@@ -371,6 +377,9 @@ class AgentResult:
         truncated: bool,
         usage: dict | None,
         error: str | None,
+        model: str | None = None,
+        summary: str = "",
+        artifacts: list[dict] | None = None,
     ):
         self.status = status
         self.exit_code = exit_code
@@ -384,6 +393,9 @@ class AgentResult:
         self.truncated = truncated
         self.usage = usage
         self.error = error
+        self.model = model
+        self.summary = summary
+        self.artifacts = artifacts if artifacts is not None else []
 
     def to_dict(self) -> dict:
         """Convert to dict for serialization."""
@@ -394,13 +406,13 @@ class AgentResult:
             "attempt_id": self.attempt_id,
             "role": self.role,
             "provider": self.provider,
-            "model": None,
+            "model": self.model,
             "session_id": self.session_id,
             "status": self.status,
             "exit_code": self.exit_code,
-            "summary": "",
+            "summary": self.summary,
             "error": self.error,
             "usage": self.usage,
-            "artifacts": [],
+            "artifacts": self.artifacts,
             "truncated": self.truncated,
         }
