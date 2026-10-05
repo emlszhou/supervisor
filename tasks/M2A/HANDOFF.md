@@ -1,8 +1,8 @@
-# 草案交接，暂不实施
+# 源规格交接与执行边界
 
 先读 README、requirements、acceptance 和本仓库架构/接口/安全规则。
 
-冻结前由协调者补齐实际 M1 main 集成基线、用户 M2 路由决定、规格独立审核、完整 manifest 与 Git 分支。不能拿 draft 自行宣布冻结。
+M1 main 集成基线和用户 MiniMax 路由许可已确认；协调者完成全新规格审核、外部包冻结与完整 manifest 后发布执行交接。不能拿源 draft 自行宣布冻结。
 
 正式实施时在 `hermes/m2a` 提交且只写：
 
