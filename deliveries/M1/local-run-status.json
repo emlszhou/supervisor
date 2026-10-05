@@ -3,181 +3,273 @@
   "task_id": "M1-integrity-intents",
   "run_id": "m1-overnight-2026-10-05",
   "attempt_id": "attempt-1",
-  "generated_utc": "2026-10-05T14:03:15Z",
-  "generated_local": "2026-10-05T22:03:15+08:00",
-  "operator_session": "hermes-coordinator (coordinator role, parent of delegate_task subagents)",
-  "host": {
-    "os": "Darwin 27.0.1",
-    "arch": "arm64",
-    "hostname_redacted": true
+  "updated_at_local": "2026-10-05T22:32+08:00",
+  "updated_at_utc": "2026-10-05T14:32Z",
+  "previous_evidence_commit": "2e7e49ab05a109b0622a83ade6bddc0c678ca227",
+  "this_evidence_commit": "PENDING (this revision)",
+
+  "routing_supplement_decision": {
+    "current_effective_decision_local": "2026-10-05 22:30 user switch note + 22:30 user supplement: this round authorizes MiniMax-M3 (minimax.cn) for ongoing M1 coordination/evidence work. Earlier LOCAL-RECOVERY.md §2/§4/§6 originally required live local smoke and local-only providers; user 2026-10-05 supplements override that for this round (see origin/codex/m1-local-recovery:handoffs/M1/LOCAL-RECOVERY.md preamble: '当前生效的路由补充决定: 2026-10-05 用户在收到...允许本机 Hermes 使用实际 MiniMax 云模型完成 M1 协调、一次接管和全新最终审核').",
+    "cloud_fallback_disabled_in_tooling": false,
+    "active_provider_observed_via_log": "minimax-cn (MiniMax-M3)",
+    "active_base_url_observed_via_log": "https://api.minimaxi.com/anthropic",
+    "active_session_id_observed": "20261005_193638_282edb",
+    "cloud_minimax_calls_in_main_session_so_far": "294 completed API call #1..#294 (19:37:33 → 22:32:12 Asia/Shanghai); source: ~/.hermes/logs/agent.log",
+    "mlx_process_alive_at_session_start": false,
+    "hermes_managed_llamacpp_alive_at_session_start": false,
+    "route_smoke_section_2_5_2_7": "not_run (preconditions not met AND this-round policy override makes them not applicable for this evidence session)"
   },
-  "model_backends": {
-    "intended_local": {
-      "provider": "llamacpp (hermes-managed)",
-      "host": "127.0.0.1",
-      "configured_port": 18434,
-      "listening_at_session_start": false,
-      "configured_base_url_via_env": "ANTHROPIC_BASE_URL=http://127.0.0.1:<local_proxy_port>",
-      "managed_llamacpp_state_file": "~/.hermes/runtimes/llamacpp/server.json (PID stale from 2026-10-04 16:49; PIDs <redacted>)",
-      "endpoint_kind": "OpenAI-compatible (router mode)",
-      "model_files_present_on_disk": [
-        "GLM-4.7-Flash-Q8_0.gguf (~32 GB)",
-        "Ling-3.0-tiny-Q6_K.gguf (~6.5 GB)",
-        "Qwen3.8-27B-TurboFCFusion-735-882-Here-Uncen-NEO-CODER-MAX-MTP-Q8_0.gguf (~30 GB)",
-        "Qwen3.8-27B-UD-Q4_K_M.gguf (~16 GB)"
-      ],
-      "hermes_binary_present": "~/.hermes/tools/llamacpp-metal-10964-darwin-arm64/ (llama-server <version redacted>)",
-      "router_touch_prompt_configured": "Reply with exactly one word: the capital of France."
-    },
-    "user_mlx_path": {
-      "model_path": "/Users/william/mlx_models/Qwen3.8-27B-8bit",
-      "model_dir_present": true,
-      "model_size_bytes": "57,678,856",
-      "expected_launcher_port": 15721,
-      "listening_at_session_start": false,
-      "mlx_log_files_present": [
-        "/Users/william/AI/logs/mlx-server.log (last modified 2026-09-26 23:55, 0 bytes)",
-        "/Users/william/AI/logs/mlx-server-error.log (last modified 2026-09-28 13:00, 2,172 bytes)",
-        "/Users/william/.hermes/logs/mlx-server.log (last modified 2026-10-04 18:56, 0 bytes)",
-        "/Users/william/.hermes/logs/mlx-server-error.log (last modified 2026-10-05 15:48, 310,858 bytes, stale)"
-      ],
-      "mlx_process_alive_at_session_start": false,
-      "mlx_binary_search_result": [
-        "/opt/homebrew/bin/mlx.distributed_config",
-        "/opt/homebrew/bin/mlx.launch"
-      ]
-    },
-    "actual_session_provider": {
-      "provider_name": "minimax (cloud, MiniMax CN endpoint)",
-      "selection_reason": "Session inherited from prior M1 coordinator run; hermes fallback chain resolved to minimax-cn because configured `custom` provider at 127.0.0.1:15721 was not listening. Coordinator did NOT flip model mid-session; this is prior-session state.",
-      "explicit_user_authorization_for_continuing": "User 2026-10-05 supplementary message: '如果没启动，请你继续用 minimax-m3 模型完成后续工作' (if MLX is not started, continue with minimax-m3). Authorization scope: ongoing coordination/evidence delivery. Authorization does NOT extend to writing M1 implementation code (M1-13 blocking finding still holds for that role).",
-      "cloud_fallback_disabled_in_tooling": "no — hermes config retains fallback_providers: [{provider: llamacpp, model: Ling-3.0-tiny-Q6_K}]; however, since llamacpp endpoint not listening, fallback chain ended at cloud minimax-cn. Disabling cloud fallback at tooling level would prevent THIS session from running."
-    }
+
+  "agent_calls_audit": {
+    "max_agent_calls_per_contract_budgets": 7,
+    "source": "handoffs/M1/v1/task-bundle/task.json budgets.max_agent_calls = 7",
+    "definition": "Per LOCAL-RECOVERY.md §3: count distinct Agent sessions started/resumed/delegated by the coordinator for this task chain. Each session = one Agent call. Multiple Agent sessions are NOT collapsed into one. Model token requests (API call #N) are NOT counted as Agent calls.",
+    "calls_sessions": [
+      {
+        "n": 1,
+        "role": "implementer+coordinator (single chained session)",
+        "session_id": "20261005_193638_282edb",
+        "session_id_source": "~/.hermes/logs/agent.log first turn_context line for session, 2026-10-05 19:37:22 Asia/Shanghai, model=clawdb; provider=custom; session opened by user kickoff '你负责自主推进 emlszhou/supervisor ...'",
+        "fresh_session": false,
+        "started_at_local": "2026-10-05T19:37:22+08:00",
+        "started_at_utc": "2026-10-05T11:37:22Z",
+        "ended_at_local": null,
+        "ended_at_utc": null,
+        "ended_status": "still_running (latest API call #18 in current response chain at 22:32:45 Asia/Shanghai)",
+        "model_initial_configured": "clawdb (configured but not running)",
+        "model_resolved_via_fallback_chain": "minimax-cn (MiniMax-M3)",
+        "evidence_path": "~/.hermes/logs/agent.log",
+        "notes": "Same session is currently still active and producing turn responses. This same session covers implementer writes, repair round, and coordination steps. Cannot be counted as a fresh session for any review/takeover role."
+      },
+      {
+        "n": 2,
+        "role": "reviewer-1 (independent M1 contract verification)",
+        "delegation_id": "deleg_7d36bbf0",
+        "subagent_task_id": "sa-0-f1ae60ef",
+        "session_id": "deleg_7d36bbf0 task-0",
+        "session_id_source": "~/.hermes/cache/delegation/live/deleg_7d36bbf0/task-0.log header",
+        "fresh_session": true,
+        "started_at_local": "2026-10-05T20:01:43+08:00",
+        "started_at_utc": "2026-10-05T12:01:43Z",
+        "ended_at_local": "2026-10-05T20:09:50+08:00",
+        "ended_at_utc": "2026-10-05T12:09:50Z",
+        "ended_status": "completed",
+        "duration_seconds": 486.23,
+        "model": "minimax-cn (MiniMax-M3) — same chain, separate fresh session context",
+        "verdict": "REQUEST_REPAIR (see hermes/m1/deliveries/M1/review-1.md, 354 lines; raised 2 major findings + surfaced SQLite race)",
+        "evidence_path": "~/.hermes/cache/delegation/live/deleg_7d36bbf0/task-0.log"
+      },
+      {
+        "n": 3,
+        "role": "reviewer-2 / hermes-side final verifier (8 decisive commands)",
+        "delegation_id": "deleg_c7338817",
+        "subagent_task_id": "sa-0-7d08a99c",
+        "session_id": "deleg_c7338817 task-0",
+        "session_id_source": "~/.hermes/cache/delegation/live/deleg_c7338817/task-0.log header",
+        "fresh_session": true,
+        "started_at_local": "2026-10-05T20:22:37+08:00",
+        "started_at_utc": "2026-10-05T12:22:35Z",
+        "ended_at_local": "2026-10-05T20:24:13+08:00",
+        "ended_at_utc": "2026-10-05T12:24:13Z",
+        "ended_status": "completed",
+        "duration_seconds": 96.59,
+        "model": "minimax-cn (MiniMax-M3) — same chain, separate fresh session context",
+        "verdict": "ACCEPT (8/8 decisive commands PASS; hermes-side only — superseded by cloud audit below)",
+        "evidence_path": "~/.hermes/cache/delegation/live/deleg_c7338817/task-0.log"
+      }
+    ],
+    "verified_consumed": 3,
+    "verified_consumed_basis": "All three sessions are documented in agent.log and delegation live logs with timestamps, IDs, durations, and verdicts.",
+    "external_calls_not_in_7_items": [
+      {
+        "n": "X (NOT in max_agent_calls=7)",
+        "role": "Codex cloud independent audit (openai)",
+        "session_id": "m1_fresh_review_1 (per origin/codex/m1-review-2:deliveries/M1/codex-review-2.json reviewer.session_id)",
+        "decision": "blocked",
+        "findings_count": "12 major + 2 blocking + 1 minor = 15",
+        "source_of_truth": "origin/codex/m1-review-2 commit 9c4abdb46d3dfa75353bec9be71ba0a3175124ad",
+        "evidence_path": "origin/codex/m1-review-2:deliveries/M1/codex-review-2.json (fetched into local clone)",
+        "why_not_counted_in_7": "Per LOCAL-RECOVERY.md §3: '云审核根会话与 fresh Reviewer 分别说明来源和计数归属'. This Codex audit is the EXTERNAL cloud audit defined at the contract level for M1 review_2; it is not a session the coordinator delegated. It is single-counted in the per-task allowance only if and when the contract owner re-runs it from a Hermes/MiniMax session. Per evidence this run only, the audit exists in codex/m1-review-2 with decision=blocked."
+      }
+    ],
+    "remaining_agent_calls_after_this_revision": 4,
+    "remaining_for_takeover": 1,
+    "remaining_for_final_verify": "at least 1 fresh session must exist, allocated separately",
+    "verified": true,
+    "correction_from_previous_evidence": "Previous evidence at 2e7e49a estimated ~5/7 calls and described wall as 4890/5760s. Both numbers are wrong. Real agent calls = 3 (verified per agent.log and delegation live logs). Wall = 10490s (over budget). Both corrections made explicitly in this revision."
   },
-  "route_smoke_validation": {
-    "step_2_5_local_endpoint_health": {
-      "executed": false,
-      "reason": "No local endpoint (18434 or 15721) was listening at session start. Cannot run liveness/health probe against a non-listening socket.",
-      "evidence": "lsof -nP -iTCP:18434 -sTCP:LISTEN → empty; lsof -nP -iTCP:15721 -sTCP:LISTEN → empty; ps aux | grep llama-server → no match"
-    },
-    "step_2_6_claude_cli_real_local_inference": {
-      "executed": false,
-      "reason": "Precondition (local endpoint up + healthy) not met; would otherwise run `claude` CLI with a non-tool side-effect smoke prompt and capture the actual model identifier from the response."
-    },
-    "step_2_7_failure_then_close_probe": {
-      "executed": false,
-      "reason": "Precondition not met; cannot run failure-detection test when there is no service to take down and bring back."
-    },
-    "conclusion": "ENVIRONMENT_FAILURE on local-routing prerequisite. Coordinator explicitly does NOT mark route smoke as passed. No smoke evidence is fabricated. Claude CLI local inference is not independently demonstrated in this session."
+
+  "wall_seconds_audit": {
+    "max_wall_seconds_per_contract_budgets": 7200,
+    "source": "handoffs/M1/v1/task-bundle/task.json budgets.max_wall_seconds = 7200",
+    "definition": "Per LOCAL-RECOVERY.md §3: M1 cumulative use time from the original run start. Cannot re-allocate 2 hours for a new session. Same session continuation does NOT reset the clock.",
+    "wall_events": [
+      {
+        "label": "M1 main session start (kickoff turn)",
+        "started_at_local": "2026-10-05T19:37:22+08:00",
+        "started_at_utc": "2026-10-05T11:37:22Z",
+        "evidence": "~/.hermes/logs/agent.log first turn_context entry for session 20261005_193638_282edb, model=clawdb, msg=user kickoff '你负责自主推进 emlszhou/supervisor ...'"
+      },
+      {
+        "label": "Reviewer-1 subagent wall (sequential, after main session)",
+        "started_at_local": "2026-10-05T20:01:43+08:00",
+        "ended_at_local": "2026-10-05T20:09:50+08:00",
+        "duration_seconds": 486.23,
+        "evidence": "~/.hermes/cache/delegation/live/deleg_7d36bbf0/task-0.log final status=completed duration=486.23s"
+      },
+      {
+        "label": "Reviewer-2 subagent wall (sequential)",
+        "started_at_local": "2026-10-05T20:22:37+08:00",
+        "ended_at_local": "2026-10-05T20:24:13+08:00",
+        "duration_seconds": 96.59,
+        "evidence": "~/.hermes/cache/delegation/live/deleg_c7338817/task-0.log final status=completed duration=96.59s"
+      },
+      {
+        "label": "Codex cloud audit (concurrent with main session; external)",
+        "started_at_local": "after 20:24, ended_at unknown to coordinator",
+        "duration_seconds": null,
+        "evidence": "Only commit hash on remote origin/codex/m1-review-2 = 9c4abdb46d3dfa75353bec9be71ba0a3175124ad. Wall unknown from coordinator side."
+      },
+      {
+        "label": "M1 main session still running at this revision time",
+        "ended_at_local": null,
+        "ended_at_utc": null,
+        "evidence": "~/.hermes/logs/agent.log latest API call #18 at 22:32:45 during this turn's fetch/LOCAL-RECOVERY read."
+      }
+    ],
+    "wall_computation_methodology": "Wall is the elapsed time from the first M1 main-session kickoff (19:37:22 Asia/Shanghai) to the latest observed activity in the chain. Subagent wall is reported by deleg_*.log duration= field and is included in the main-session wall because main session is concurrent during the same M1 task period; subagent wall does NOT add separately (it is overlap wall, not serial wall). For conservative reporting, total wall uses last-seen activity timestamp.",
+    "wall_at_revision_local": "2026-10-05T22:32:12+08:00",
+    "wall_at_revision_utc": "2026-10-05T14:32:12Z",
+    "wall_elapsed_seconds_observed": 10490,
+    "wall_elapsed_hours_observed": 2.91,
+    "wall_vs_budget_seconds": 3290,
+    "wall_over_budget_minutes": 54.8,
+    "wall_verdict": "OVER_BUDGET_BY_3290s",
+    "wall_explanation": "M1 main session started 19:37:22 Asia/Shanghai and is still active at 22:32:12 (latest activity observed). Same-session continuation does not reset per LOCAL-RECOVERY.md §3 '不能给新会话重新分配 2 小时'. Subagent walls (Reviewer-1 + Reviewer-2) are NOT added separately because they ran concurrent with the main session chain. Codex cloud audit wall is unknown. The 3,290-second overage (54.8 min) cannot be eliminated retroactively; this evidence records it honestly. wall_verdict = over_budget, NOT verified.",
+    "correction_from_previous_evidence": "Previous evidence at 2e7e49a gave 'wall~5760' or '4890' depending on file; both were wrong. Real wall = 10490s (2.91h). Over budget by 3290s. Documented honestly."
   },
-  "allowance_audit": {
-    "source_of_truth": "origin/codex/m1-review-2:deliveries/M1/codex-review-2.json (Codex 2026-10-05 cloud audit, decision=blocked)",
-    "repairs": {
-      "limit": 1,
-      "consumed": 1,
-      "events": [
-        {
-          "commit": "97a5bb9db3a37ca0da4bbf72487388330dd7f1c4",
-          "subject": "M1: fix concurrent IntentStore init race on PRAGMA journal_mode=WAL",
-          "utc_time": "2026-10-05T12:16:16Z",
-          "triggered_by": "Review-1 surfaced indirect SQLite race; repair emitted",
-          "category": "repair"
-        },
-        {
-          "commit": "6e227d05c71a9e78cd085d2d660f7245a50c44e7",
-          "subject": "M1: correct 'pytest tests/unit' count in implementation report",
-          "utc_time": "2026-10-05T12:19:21Z",
-          "triggered_by": "Review-1 finding 1 (report clarity) — bundled into same repair round",
-          "category": "repair_followup"
-        },
-        {
-          "commit": "7f301ea72f759e4ec87128af68deb3e6dd8c9c45",
-          "subject": "M1: refresh code commit / snapshot SHA in implementation report",
-          "utc_time": "2026-10-05T12:21:11Z",
-          "triggered_by": "Hash freshness after race fix; same repair round",
-          "category": "repair_followup"
-        },
-        {
-          "commit": "3f61b9b5da472c50272db0f178297b51dc47c4f1",
-          "subject": "M1: post-reviewer updates (review-1, review-1-response, report corrections)",
-          "utc_time": "2026-10-05T12:17:59Z",
-          "triggered_by": "First attempt to address review-1; produced review-1.md + review-1-response.md",
-          "category": "repair_attempt_over_budget"
-        },
-        {
-          "commit": "ddde3c422436cc19533e0422c829964f0b7acf53",
-          "subject": "Revert 'M1: post-reviewer updates ...'",
-          "utc_time": "2026-10-05T12:18:34Z",
-          "triggered_by": "Found 3f61b9b violated allowed-files allow-list (review-1.md not in allowed_files.json) AND line count exceeded 2800. Revert restores contract compliance. Revert does NOT reset repair counter (M1-14 blocking finding).",
-          "category": "repair_correction"
-        }
-      ],
-      "interpretation": "Per Codex M1-14: 'review_1 and subsequent repair prevent granting another return_once'. Repair counter saturated at 1/1. Any further code repair requires either (a) explicitly authorized one-time override from contract owner, or (b) takeover pathway (LOCAL-RECOVERY.md §4) which itself consumes the 1/1 takeover budget."
-    },
-    "takeovers": {
-      "limit": 1,
-      "consumed": 0,
-      "events": [],
-      "interpretation": "No takeover has occurred in this run. LOCAL-RECOVERY.md §4 authorizes one takeover under specific preconditions (route smoke green + allowance reconciled + no orphan writes). Preconditions currently NOT met (route smoke blocked)."
-    },
-    "model_calls": {
-      "limit": 7,
-      "estimated_consumed": 5,
-      "events_with_provenance": [
-        {"role": "implementer (coordinator)", "model": "minimax-cn cloud", "calls": 1, "scope": "M1 implementation work (this session)"},
-        {"role": "Reviewer-1 subagent", "model": "minimax-cn cloud", "calls": 1, "scope": "Frozen acceptance re-run + spot-checks", "delegation_id": "deleg_7d36bbf0", "task_id": "sa-0-f1ae60ef"},
-        {"role": "Reviewer-2 / final verifier subagent", "model": "minimax-cn cloud", "calls": 1, "scope": "8 decisive commands", "delegation_id": "deleg_c7338817", "task_id": "sa-0-7d08a99c"},
-        {"role": "Codex cloud audit (independent)", "model": "openai", "calls": 1, "scope": "Cloud-fresh independent audit by Codex", "source": "origin/codex/m1-review-2:deliveries/M1/codex-review-2.json"},
-        {"role": "coordinator (this evidence-drafting session)", "model": "minimax-cn cloud", "calls": 1, "scope": "LOCAL-RECOVERY.md evidence drafting"}
-      ],
-      "interpretation": "5/7 used. Cloud audit by Codex is single-counted (independent provenance). Coordinator continuing on minimax-m3 per explicit user authorization is single-counted. Remaining 2 calls budget allows one more subagent dispatch and one direct edit session."
-    },
-    "wall_clock_seconds": {
-      "limit": 7200,
-      "estimated_consumed": 5760,
-      "first_implementer_commit_utc": "2026-10-05T11:59:45Z (commit fcc7013, baseline c6e2245 → tip 7f301ea span ~22 min)",
-      "last_audit_pushed_utc": "2026-10-05T12:21:11Z (7f301ea pushed)",
-      "codex_cloud_audit_window_utc": "between 12:21 and this evidence-drafting session; duration unknown from coordinator side",
-      "this_local_recovery_session_start_utc": "2026-10-05T~13:55Z (this session opened for LOCAL-RECOVERY evidence)",
-      "this_session_so_far_seconds": "~480",
-      "interpretation": "Wall is conservative: the M1 implementer + reviewer + audit cycle plus this local-recovery evidence session. Total ≈ 96 min, well under 7200 s limit. Wall reset on contract owner approval; not requested by coordinator."
-    },
-    "files_and_diff": {
-      "limit_files": 14,
-      "limit_lines": 2800,
-      "current_files": 11,
-      "current_lines_inserted": 2509,
-      "current_lines_deleted": 0,
-      "headline_files": [
-        "deliveries/M1/hermes-report.md (72 lines, allowed)",
-        "src/supervisor/policy/changes.py (137 lines, allowed)",
-        "src/supervisor/storage/intents.py (415 lines, allowed)",
-        "src/supervisor/workspace/baseline.py (141 lines, allowed)",
-        "src/supervisor/workspace/bundle.py (543 lines, allowed)",
-        "src/supervisor/workspace/snapshot.py (199 lines, allowed)",
-        "tests/unit/test_m1_baseline.py (105 lines, allowed)",
-        "tests/unit/test_m1_bundle.py (212 lines, allowed)",
-        "tests/unit/test_m1_changes.py (223 lines, allowed)",
-        "tests/unit/test_m1_intents.py (283 lines, allowed)",
-        "tests/unit/test_m1_snapshot.py (179 lines, allowed)"
-      ],
-      "interpretation": "Within budget. Any new takeover work must recompute net scope from c6e2245 baseline and respect the limit (rewriting or removing current added code can reduce net scope per M1-14)."
-    }
+
+  "repair_audit": {
+    "max_repair_rounds_per_contract_budgets": 1,
+    "source": "handoffs/M1/v1/task-bundle/task.json budgets.max_repair_rounds = 1",
+    "events": [
+      {
+        "commit": "97a5bb9db3a37ca0da4bbf72487388330dd7f1c4",
+        "utc_time": "2026-10-05T12:16:16Z",
+        "subject": "M1: fix concurrent IntentStore init race on PRAGMA journal_mode=WAL",
+        "triggered_by": "Reviewer-1 surfaced indirect SQLite race (test_concurrent_reservations_single_durable_intent flaked 4/10 before fix; stable 15/15 after fix)",
+        "category": "primary_repair"
+      },
+      {
+        "commit": "6e227d05c71a9e78cd085d2d660f7245a50c44e7",
+        "utc_time": "2026-10-05T12:19:21Z",
+        "subject": "M1: correct 'pytest tests/unit' count in implementation report",
+        "triggered_by": "Reviewer-1 finding 1 (report clarity) — bundled into same repair round",
+        "category": "repair_followup"
+      },
+      {
+        "commit": "7f301ea72f759e4ec87128af68deb3e6dd8c9c45",
+        "utc_time": "2026-10-05T12:21:11Z",
+        "subject": "M1: refresh code commit / snapshot SHA in implementation report",
+        "triggered_by": "Hash freshness after race fix; same repair round",
+        "category": "repair_followup"
+      },
+      {
+        "commit": "3f61b9b5da472c50272db0f178297b51dc47c4f1",
+        "utc_time": "2026-10-05T12:17:59Z",
+        "subject": "M1: post-reviewer updates (review-1, review-1-response, report corrections)",
+        "triggered_by": "First attempt to address review-1; produced review-1.md + review-1-response.md",
+        "category": "repair_attempt_violating_allow_list"
+      },
+      {
+        "commit": "ddde3c422436cc19533e0422c829964f0b7acf53",
+        "utc_time": "2026-10-05T12:18:34Z",
+        "subject": "Revert 3f61b9b (review-1.md not in allowed-files, line count exceeded 2800)",
+        "triggered_by": "Found 3f61b9b violated allowed-files allow-list (review-1.md not in allowed_files.json) AND line count exceeded 2800. Revert restores contract compliance. Revert does NOT reset repair counter per M1-14 blocking finding.",
+        "category": "repair_correction"
+      }
+    ],
+    "consumed_rounds": 1,
+    "remaining_rounds": 0,
+    "reset_allowed": false,
+    "rationale_per_M1_14": "Historical session freshness/provider provenance cannot be certified from reports alone. Coordinator must reconcile consumed repair/takeover/call/wall allowance before further work. This audit grants no new repair allowance.",
+    "verified": true
   },
-  "findings_blocking_further_implementation": [
-    {
-      "id": "M1-13",
-      "severity": "blocking",
-      "summary": "Cloud minimax fallback was used for M1 implementation; LOCAL-RECOVERY.md requires route restored before subsequent implementation roles."
+
+  "takeover_audit": {
+    "max_takeovers_per_contract_budgets": 1,
+    "source": "handoffs/M1/v1/task-bundle/task.json budgets.max_takeovers = 1",
+    "git_history_checked": "git log origin/hermes/m1 c6e2245..origin/hermes/m1 (no takeover branch present, no local/m1-takeover branch exists locally or on origin).",
+    "consumed_takeovers": 0,
+    "remaining_takeovers": 1,
+    "reset_allowed": false,
+    "verified": true
+  },
+
+  "files_and_lines_audit": {
+    "max_changed_files_per_contract_budgets": 14,
+    "max_diff_lines_per_contract_budgets": 2800,
+    "source": "handoffs/M1/v1/task-bundle/task.json budgets.max_changed_files = 14, max_diff_lines = 2800",
+    "candidate_baseline": "c6e224587b930a5b96c7723009584424f6bc52d5",
+    "candidate_tip_hermes_m1": "7f301ea72f759e4ec87128af68deb3e6dd8c9c45",
+    "files": [
+      "deliveries/M1/hermes-report.md",
+      "src/supervisor/policy/changes.py",
+      "src/supervisor/storage/intents.py",
+      "src/supervisor/workspace/baseline.py",
+      "src/supervisor/workspace/bundle.py",
+      "src/supervisor/workspace/snapshot.py",
+      "tests/unit/test_m1_baseline.py",
+      "tests/unit/test_m1_bundle.py",
+      "tests/unit/test_m1_changes.py",
+      "tests/unit/test_m1_intents.py",
+      "tests/unit/test_m1_snapshot.py"
+    ],
+    "files_count": 11,
+    "diff_lines_inserted": 2509,
+    "diff_lines_deleted": 0,
+    "within_budget": true,
+    "verified": true
+  },
+
+  "findings_audit": {
+    "source": "origin/codex/m1-review-2:deliveries/M1/codex-review-2.json (commit 9c4abdb46d3dfa75353bec9be71ba0a3175124ad)",
+    "reviewer_session_id": "m1_fresh_review_1",
+    "reviewer_provider": "openai",
+    "reviewer_fresh_session": true,
+    "reviewer_independent_provider": false,
+    "decision": "blocked",
+    "verification_status": "failed",
+    "summary_quote": "Fresh cloud audit explicitly requested by user, independently inspected exact candidate 7f301ea72f759e4ec87128af68deb3e6dd8c9c45 in isolated clone, no implementation edits. Frozen tracked-code snapshot algorithm bound to 97a5bb9, distinct from M1 runtime snapshot. Historical review_1 and subsequent repair prevent granting another return_once; review_2 blocked pending honest local-route/allowance reconciliation. Required Linux unit151/164 and full247/260 fail13 hardcoded-path tests; frozen external42/42, specs/lint/format pass. Bounded independent probes reveal major integrity and policy defects beyond frozen coverage. Mac execution not rerun, admitted Mac failure remains unresolved. SQLite eight-connection identical reserve and injected reserve/complete COMMIT rollback passed; no remote model endpoint verification performed.",
+    "finding_counts": {
+      "major": 12,
+      "blocking": 2,
+      "minor": 1,
+      "total": 15
     },
-    {
-      "id": "M1-14",
-      "severity": "blocking",
-      "summary": "Repair counter saturated at 1/1. Historical session freshness cannot be re-certified. Coordinator must reconcile allowance before further work; this sidecar does so."
-    }
-  ],
-  "next_minimal_actions": [
-    "If contract owner (Codex) approves restart of local routing AND explicitly grants one-time override for re-entering implementation: bring up hermes-managed llamacpp on 18434 with one of the present GGUF models (Ling-3.0-tiny-Q6_K is fastest to load), confirm /v1/models 200, run route-smoke + close-probe before any code work.",
-    "Otherwise: stay blocked. Do NOT enter §4 takeover (LOCAL-RECOVERY.md §4 preconditions not met). Do NOT modify implementation branches. Do NOT claim ACCEPT."
+    "finding_ids": ["M1-01", "M1-02", "M1-03", "M1-04", "M1-05", "M1-06", "M1-07", "M1-08", "M1-09", "M1-10", "M1-11", "M1-12", "M1-13", "M1-14", "M1-15"],
+    "blocking_finding_ids": ["M1-13", "M1-14"],
+    "correction_from_previous_evidence": "Previous evidence at 2e7e49a miscounted findings as '13 major + 2 blocking + 1 minor = 16'. Real count per codex-review-2.json: 12 major + 2 blocking + 1 minor = 15. This revision uses the correct count."
+  },
+
+  "preflight_decision": {
+    "routing_authorized_for_this_round": "minimax-cn (MiniMax-M3) per user 2026-10-05 supplement (see origin/codex/m1-local-recovery preamble)",
+    "agent_calls_verified_remaining": 4,
+    "wall_verdict": "over_budget_by_3290s (54.8 min over 7200s budget; cannot reset per LOCAL-RECOVERY.md §3)",
+    "takeover_remaining": 1,
+    "repair_remaining_remaining": 0,
+    "active_session_for_this_revision": "session=20261005_193638_282edb (M1 main coordinator session — NOT a fresh session)",
+    "active_writes_at_revision_time": "this turn is writing 2e7e49a → (pending revision) on branch local/m1-recovery-evidence; no writes on hermes/m1 this turn",
+    "conclusion": "BLOCKED. Reason: wall is over budget; cannot reset per contract; same session is the coordinator and cannot act as a fresh takeover session. Per LOCAL-RECOVERY.md §2 / §4 / §6, takeover preconditions (route smoke green + allowance reconciled + no orphan writes + fresh capability) are not met. Coordinator explicitly does NOT enter local/m1-takeover. Deliverables: (1) this corrected evidence, (2) honest accounting of wall / calls / repair / findings, (3) explicit blocked reason, (4) required operator-side actions to unblock."
+  },
+
+  "required_operator_actions_to_unblock": [
+    "Stop the active M1 main session (current chat turn is its last response). Coordinator cannot kill itself from inside; the operator must end the chat session.",
+    "Start a fresh Hermes/MiniMax session in a separate chat to act as coordinator for the takeover.",
+    "The fresh coordinator session: reads this evidence + origin/codex/m1-local-recovery + origin/codex/m1-review-2 + origin/hermes/m1 (7f301ea) + origin/main (b90e884).",
+    "The fresh coordinator session: opens local/m1-takeover from origin/hermes/m1 tip 7f301ea (verifier must decide whether to start from hermes/m1 or origin/main based on whether the candidate diff stays in allowed-files and within budget after repair).",
+    "The fresh coordinator session: dispatches a repairer subagent (1 Agent call, fresh session, model=MiniMax-M3) which fixes all 15 findings (12 major + 2 blocking + 1 minor) per LOCAL-RECOVERY.md §4 repair order.",
+    "After repair, fresh coordinator dispatches a final-verifier subagent (1 Agent call, fresh session, model=MiniMax-M3) which runs §5 final-verify checks and writes local/m1-final-verify.",
+    "Wall remains over budget across sessions unless the operator explicitly authorizes a wall re-allocate in writing. LOCAL-RECOVERY.md §3 explicitly forbids re-allocating without contract-owner authorization."
   ]
 }

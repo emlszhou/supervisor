@@ -1,8 +1,9 @@
-# M1 Local-Recovery Evidence — 2026-10-05
+# M1 Local-Recovery Evidence — 2026-10-05 (revision 2)
 
 > Branch: `local/m1-recovery-evidence` (off `0f61d07` / `origin/main`)
 > Scope: route + allowance audit only. **No implementation work in this branch.**
 > Companion machine-readable sidecar: `deliveries/M1/local-run-status.json`.
+> Previous revision: `2e7e49ab05a109b0622a83ade6bddc0c678ca227`. This revision supersedes it on three points explicitly called out in `origin/codex/m1-local-recovery:handoffs/M1/LOCAL-RECOVERY.md` §6 prompt and §3 audit: (a) findings count corrected to 12 major + 2 blocking + 1 minor = 15; (b) wall reconciled from 4890/5760 estimate to the actual observed 10,490 s (over budget by 3,290 s = 54.8 min); (c) calls reconciled from "~5/7" estimate to 3 verified (the main M1 coordinator session is NOT a fresh session; the two hermes-side subagents are verified; Codex cloud audit is the external codex/m1-review-2 audit, documented separately).
 
 This file is the human-readable counterpart to `local-run-status.json`. It records what the local-routing check actually found at the start of the LOCAL-RECOVERY session, what allowance counters are at, and which Codex findings gate further implementation. It does **not** declare ACCEPT; it does **not** modify any implementation file. Secrets, raw transcripts, complete env vars, and contents of `~/.hermes/.env` / `~/.hermes/auth.json` are deliberately excluded.
 
@@ -92,27 +93,37 @@ Conclusion: `ENVIRONMENT_FAILURE` on the routing prerequisite. No smoke evidence
 
 **Takeover budget: 0/1. LOCAL-RECOVERY.md §4 grants one takeover under specific preconditions; those preconditions (route-smoke green + allowance reconciled + no orphan writes) are not currently satisfied.**
 
-### 3.3 Model-call budget (limit 7)
+### 3.3 Model-call budget (limit 7) — **RECONCILED**
 
-| # | Role | Provider | Provenance / ref | Single-counted as |
-| --- | --- | --- | --- | --- |
-| 1 | Implementer (coordinator) | minimax-cn cloud | M1 implementation in this session | implementer |
-| 2 | Reviewer-1 subagent | minimax-cn cloud | `deleg_7d36bbf0` / `sa-0-f1ae60ef`; wrote `deliveries/M1/review-1.md` | review_1 |
-| 3 | Reviewer-2 / final verifier subagent | minimax-cn cloud | `deleg_c7338817` / `sa-0-7d08a99c`; wrote `deliveries/M1/review-2.md` (verdict ACCEPT on hermes side; see §4 for caveat about Codex cloud audit) | review_2 |
-| 4 | Codex cloud audit | openai | `origin/codex/m1-review-2:deliveries/M1/codex-review-2.json` (decision **blocked**) | independent cloud audit |
-| 5 | Coordinator (this evidence-drafting session) | minimax-cn cloud | LOCAL-RECOVERY.md evidence delivery, this branch only | coordinator (post-audit continuation) |
+Per LOCAL-RECOVERY.md §3, "Agent 调用" = distinct Agent sessions (each session = 1 Agent call). API token requests (API call #N in agent.log) are NOT counted. Multiple Agent sessions are NOT collapsed.
 
-**Model-call budget: ~5/7 used. Remaining 2 calls can support one more subagent dispatch plus a small direct-edit session, or one larger continuation. Not authorized to be reset.**
+| # | Role | Session ID | Provider | Provenance | Single-counted |
+| --- | --- | --- | --- | --- | --- |
+| 1 | implementer+coordinator (single chained session) | `20261005_193638_282edb` | minimax-cn (MiniMax-M3) — resolved via fallback chain (initial configured `custom` @ 127.0.0.1:18080 unreachable; `llamacpp` @ 127.0.0.1:18080 unreachable; resolved to `minimax-cn` for every API call) | `~/.hermes/logs/agent.log`, first turn_context at 19:37:22 Asia/Shanghai, last API call #18 at 22:32:45 during this turn's fetch + LOCAL-RECOVERY read | yes (1/7) |
+| 2 | Reviewer-1 subagent | `deleg_7d36bbf0` task-0 / `sa-0-f1ae60ef` | minimax-cn (MiniMax-M3), separate fresh session context | `~/.hermes/cache/delegation/live/deleg_7d36bbf0/task-0.log`; 20:01:43 → 20:09:50 (486.23 s); verdict REQUEST_REPAIR (review-1.md, 354 lines) | yes (2/7) |
+| 3 | Reviewer-2 / hermes-side final verifier subagent | `deleg_c7338817` task-0 / `sa-0-7d08a99c` | minimax-cn (MiniMax-M3), separate fresh session context | `~/.hermes/cache/delegation/live/deleg_c7338817/task-0.log`; 20:22:37 → 20:24:13 (96.59 s); verdict ACCEPT (review-2.md, hermes-side) — superseded by codex/m1-review-2 | yes (3/7) |
+| (X) | Code review-2 cloud audit | `m1_fresh_review_1` (per `origin/codex/m1-review-2:deliveries/M1/codex-review-2.json` `reviewer.session_id`) | openai | external; not a session the coordinator delegated. Decision **blocked**, 12 major + 2 blocking + 1 minor = 15 findings. | NOT in the 7 — separate audit provenance |
 
-### 3.4 Wall clock (limit 7200 s)
+**Model-call budget: 3/7 verified. Remaining = 4 (1 for takeover repair + 1 for final-verify + 2 buffer).**
 
-| Phase | UTC window | Elapsed (s, est.) |
-| --- | --- | --- |
-| Implementer | 11:59:45Z → 12:21:11Z | ~1,290 |
-| Codex cloud audit (independent) | after 12:21:11Z, end unknown to coordinator | unknown from coordinator side; counted conservatively as ~3,000 |
-| This local-recovery evidence session | ~13:55Z → 14:05Z | ~600 |
+Correction from previous evidence: 2e7e49a estimated `~5/7` calls. That was wrong — the main M1 coordinator session was double-counted (as "implementer" + as "coordinator continuing") and the Codex cloud audit was incorrectly assigned to the local 7-call pool. Corrected to 3.
 
-**Wall budget: ~4,890 / 7,200 used. Coordinator has not requested wall reset.**
+### 3.4 Wall clock (limit 7200 s) — **RECONCILED, OVER BUDGET**
+
+Per LOCAL-RECOVERY.md §3, wall = cumulative use time from the original M1 run start. Same-session continuation does NOT reset the clock.
+
+| Phase | Local time window (Asia/Shanghai) | Elapsed (s) | Evidence |
+| --- | --- | --- | --- |
+| M1 main session start (kickoff turn) | 19:37:22 → ongoing | (counted in elapsed) | `~/.hermes/logs/agent.log` first turn_context entry for session `20261005_193638_282edb`, model=clawdb, msg=user kickoff '你负责自主推进 emlszhou/supervisor ...' |
+| Reviewer-1 subagent (sequential) | 20:01:43 → 20:09:50 | 486.23 | `~/.hermes/cache/delegation/live/deleg_7d36bbf0/task-0.log` final status=completed duration=486.23s. Wall is overlap with main session, NOT additive. |
+| Reviewer-2 subagent (sequential) | 20:22:37 → 20:24:13 | 96.59 | `~/.hermes/cache/delegation/live/deleg_c7338817/task-0.log` final status=completed duration=96.59s. Wall is overlap with main session, NOT additive. |
+| Codex cloud audit | after 20:24, end unknown to coordinator | null | Only commit hash on remote `origin/codex/m1-review-2 = 9c4abdb46d3dfa75353bec9be71ba0a3175124ad`. Wall unknown. |
+| M1 main session still running at this revision time | still active | (ongoing) | `~/.hermes/logs/agent.log` latest API call #18 at 22:32:45 during this turn's fetch + LOCAL-RECOVERY read. |
+| **Total elapsed (observed, this revision's wall)** | 19:37:22 → 22:32:12 Asia/Shanghai | **10,490 s = 2.91 h** | `~/.hermes/logs/agent.log` first vs latest entries |
+
+**Wall budget: 10,490 / 7,200 used. OVER BUDGET by 3,290 s (54.8 min). Cannot reset per LOCAL-RECOVERY.md §3 ("不能给新会话重新分配 2 小时"). wall_verdict = over_budget.**
+
+Correction from previous evidence: 2e7e49a gave wall as `~5760` (MD) and `~4890` (JSON), neither correct. Real wall = 10,490 s. Honest reconciliation made in this revision.
 
 ### 3.5 File / line budget (limit 14 / 2800)
 
@@ -142,13 +153,15 @@ tests/unit/test_m1_snapshot.py        179
 
 LOCAL-RECOVERY.md §4 conditions for entering takeover:
 
-1. "本地路由 smoke + 失败关闭探测通过" — **NOT MET** (§2.4 above).
-2. "额度明确" — **MET** (§3 above; reconciliation on the record).
+1. "本地路由 smoke + 失败关闭探测通过" — **N/A this round**: user 2026-10-05 routing-supplement explicitly authorizes MiniMax-M3 cloud for this round, overriding §2's local-smoke prerequisite (see preamble of `origin/codex/m1-local-recovery:handoffs/M1/LOCAL-RECOVERY.md`). Not the same as smoke-passing; smoke is not claimed.
+2. "额度明确" — **RECONCILED, NOT VERIFIED GREEN**: this revision corrects the prior estimate. Real agent calls = 3 verified (1 main session + 2 hermes-side subagents; Codex cloud audit counted separately as external). Real wall = **10,490 s**, which is **OVER BUDGET by 3,290 s (54.8 min)** vs 7,200 s budget. Cannot reset per LOCAL-RECOVERY.md §3 ("不能给新会话重新分配 2 小时"). wall_verdict = `over_budget`.
 3. "无未知运行副作用" — partial (no orphan writes from coordinator, but the `3f61b9b → ddde3c4` revert pair remains in history on `hermes/m1` and is documented; Codex M1-15 acknowledges this is not a protected-file touch).
 
-Two of three conditions hold. The first does not. Per the same document §4: "前提缺失不能写成已满足." Coordinator therefore does **not** initiate a takeover on this branch. The branch is purely audit.
+Additionally, the **same-session constraint**: the current M1 main coordinator session (`20261005_193638_282edb`) is still active and produced this very revision's response. Per LOCAL-RECOVERY.md §4 ("协调者才能记录解除环境阻塞并进入一次 takeover") + §5 ("未参与接管...全新本地 Final Verifier"), the coordinator and the takeover role must be in different sessions. The current session cannot simultaneously be coordinator and takeover; doing so would also break the single-writer rule.
 
-If contract owner (Codex) wants to grant a one-time override for route smoke to be deferred and a takeover to be authorized anyway, that decision is theirs to record on `codex/m1-local-recovery` or on `main` — not the coordinator's to take.
+**Conclusion**: preconditions are NOT met. Wall is over budget; same-session constraint blocks the role split. Per the same document §4: "前提缺失不能写成已满足" and §6: "不能证明剩余额度或缺少 fresh 能力时保持 blocked, 只交付证据与最小缺失条件". Coordinator therefore does **not** initiate a takeover on this branch. The branch is purely audit.
+
+If contract owner (Codex) wants to grant a one-time override that explicitly re-allocates wall AND splits roles by ending this session and starting a fresh coordinator, that decision is theirs to record on `codex/m1-local-recovery` or on `main` — not the coordinator's to take from inside this same chain.
 
 ---
 
@@ -174,7 +187,7 @@ From `origin/codex/m1-review-2:deliveries/M1/codex-review-2.json`:
 | M1-14 | **blocking** | `deliveries/M1/hermes-report.md` | Repair allowance consumed; reconciliation required before further work; no new repair allowance granted |
 | M1-15 | minor | `deliveries/M1/hermes-report.md` | Net scope 11/2509 within budget; `3f61b9b → ddde3c4` reversion removes net diff but intermediate scope violation remains in history; no protected files touched |
 
-The reviewer-2 verdict **ACCEPT** recorded by the hermes-side final-verifier subagent (`deliveries/M1/review-2.md` on `hermes/m1`) is **superseded** by this Codex cloud audit's **blocked** verdict. The hermes-side ACCEPT treated the macOS case-collision as a known platform limitation; the Codex audit (running on Linux) additionally reports 13 hard-coded-path unit-test failures and a longer list of policy and integrity defects. Coordinator acknowledges the supersession and does not advance work on that basis.
+The reviewer-2 verdict **ACCEPT** recorded by the hermes-side final-verifier subagent (`deliveries/M1/review-2.md` on `hermes/m1`) is **superseded** by this Codex cloud audit's **blocked** verdict. The hermes-side ACCEPT treated the macOS case-collision as a known platform limitation; the Codex audit (running on Linux) additionally reports 13 hard-coded-path unit-test failures and a longer list of policy and integrity defects. The actual count is **12 major + 2 blocking + 1 minor = 15 findings** (M1-01..M1-15); the prior evidence revision's count of "13 major" was wrong and is corrected in this revision. Coordinator acknowledges the supersession and does not advance work on that basis.
 
 ---
 
@@ -190,12 +203,16 @@ The reviewer-2 verdict **ACCEPT** recorded by the hermes-side final-verifier sub
 
 ## 7. Next minimal actions (operator decision needed)
 
-1. **Restore local routing** (user-side action, not coordinator):
-   - Either start MLX on `127.0.0.1:15721` pointing at `/Users/william/mlx_models/Qwen3.8-27B-8bit`, OR
-   - Start hermes-managed llamacpp on `127.0.0.1:18434` with one of the present GGUF presets (Ling-3.0-tiny-Q6_K fastest to load), OR
-   - Authorize the coordinator to start one of the above.
-2. **Run LOCAL-RECOVERY §2.5–§2.7 sequence** in a fresh session (route-smoke + close-probe).
-3. **Decide** whether to grant a one-time override so §4 takeover can begin on the existing `7f301ea` candidate with the 15 Codex findings addressed, OR to issue a new contract amendment closing the macOS case-collision gap and re-baselining scope.
-4. **Record decision** on `codex/m1-local-recovery` or `main`, not on `hermes/m1`.
+1. **End this M1 main coordinator session** (user-side action, not coordinator). The current chat turn is the last response from `20261005_193638_282edb`. Coordinator cannot kill itself from inside.
 
-Until those four are done, the coordinator remains blocked per LOCAL-RECOVERY.md §2.8 and Codex M1-13 / M1-14.
+2. **Open a fresh Hermes/MiniMax session in a separate chat** to act as coordinator for the takeover. The fresh session must:
+   - read this evidence (deliveries/M1/local-recovery-evidence.md and local-run-status.json on `local/m1-recovery-evidence`) + `origin/codex/m1-local-recovery:handoffs/M1/LOCAL-RECOVERY.md` + `origin/codex/m1-review-2:deliveries/M1/codex-review-2.json` + `origin/hermes/m1` (tip `7f301ea72f759e4ec87128af68deb3e6dd8c9c45`) + `origin/main` (`b90e884`).
+   - open `local/m1-takeover` from `origin/hermes/m1` tip `7f301ea` (or `origin/main` `b90e884` — verifier must decide based on whether the hermes/m1 candidate diff stays in allowed-files and within budget after repair).
+   - dispatch a repairer subagent (1 Agent call, fresh session, model=MiniMax-M3) which fixes all 15 findings (12 major + 2 blocking + 1 minor) per LOCAL-RECOVERY.md §4 repair order, **respecting the 1 repair round already consumed**.
+   - after repair, dispatch a final-verifier subagent (1 Agent call, fresh session, model=MiniMax-M3) which runs §5 final-verify checks and writes `local/m1-final-verify`.
+
+3. **Local routing / MLX / llamacpp start** is **NOT required this round** per user 2026-10-05 routing supplement. The fresh coordinator may continue on minimax-cn / MiniMax-M3. If the contract owner insists on local-only for the takeover role, restore MLX or hermes-managed llamacpp first and re-verify smoke per LOCAL-RECOVERY §2.5–§2.7 **in that fresh session** (not this one).
+
+4. **Wall re-allocation**: this revision establishes wall = 10,490 s (over budget by 3,290 s = 54.8 min). Per LOCAL-RECOVERY.md §3, wall cannot be re-allocated without explicit contract-owner authorization. If the contract owner authorizes re-allocation in writing on `codex/m1-local-recovery` or `main`, the fresh coordinator can proceed; otherwise, the fresh coordinator must also report blocked at the same step.
+
+5. **Until those four are resolved, no takeover is started**, no main merge is attempted, and the coordinator remains blocked per LOCAL-RECOVERY.md §2.8, §4, §6, and Codex M1-13 / M1-14.
