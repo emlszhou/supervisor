@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "M1-integrity-intents",
+  "run_id": "m1-overnight-2026-10-05",
+  "attempt_id": "attempt-1",
+  "bundle_sha256": "47ea6c51c46570e92f97c89428c9783a90bcc10e301e3e8d6ce38d4fb25dd142",
+  "snapshot_sha256": "f21de31f07fc8c8197ff8bc80f0d8a9faa6212e5f687d51be56c8153616a16eb",
+  "stage": "final_verify",
+  "decision": "reject",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m1_fallback_final_verify",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "failed",
+  "findings": [
+    {
+      "id": "M1-FINAL-01",
+      "severity": "major",
+      "path": "src/supervisor/workspace/baseline.py",
+      "description": "Exact candidate 73244f79c00e0ae5218d4cc1209949eb7670ad2a accepts dirty tracked bytes hidden by assume-unchanged/skip-worktree and mode changes hidden by core.filemode=false. Snapshot is read, but never compared with HEAD content/modes."
+    },
+    {
+      "id": "M1-FINAL-02",
+      "severity": "major",
+      "path": "src/supervisor/workspace/snapshot.py",
+      "description": "Shared _git honors repository core.fsmonitor executable. Independent disposable-repo marker probe demonstrates snapshot and baseline launch configured command. Baseline contract prohibits hooks/Agent commands; disable fsmonitor per invocation without modifying config."
+    }
+  ],
+  "summary": "Historical rejection of exact first Codex fallback candidate 73244f79c00e0ae5218d4cc1209949eb7670ad2a, code b6cc97f0564d734b2977e32c9ec5a58953a80004. Full295/unit199/frozen42 pass; specs/lint/format/build pass; tracked digest confirmed179files. Net12files2589lines within frozen budget. Independent probes reveal two remaining major boundaries. This fresh reviewer made no implementation edits and requested fixes from coordinator; later corrected candidate requires exact renewed verification. Session id source is actual orchestrator canonical task /root/m1_fallback_final_verify; model is unexposed, same provider as implementer. Mac/Windows not run; previous Mac failure and historical wall/repair/call facts preserved; Linux pass does not accept Mac."
+}
