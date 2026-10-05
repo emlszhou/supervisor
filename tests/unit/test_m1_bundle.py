@@ -15,9 +15,34 @@ import pytest
 
 from supervisor.workspace.bundle import freeze_bundle, verify_bundle
 
-CONTRACT_ROOT = Path(
-    "/Users/william/Public/AI project/supervisor/supervisor-M1-contract/task-bundle"
-)
+
+def _resolve_contract_root() -> Path:
+    """Find the frozen contract root, honouring ``M1_CONTRACT_ROOT`` if set.
+
+    The default looks for a sibling ``supervisor-M1-contract/task-bundle``
+    relative to the supervisor-M1 worktree. Test runners on a clean checkout
+    may override the location with the ``M1_CONTRACT_ROOT`` env var so the
+    bundle unit tests do not depend on a developer-specific absolute path.
+    """
+    override = os.environ.get("M1_CONTRACT_ROOT")
+    if override:
+        return Path(override)
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "supervisor-M1-contract" / "task-bundle"
+        if candidate.is_dir():
+            return candidate
+    # Final fallback: relative to cwd.
+    cwd_candidate = Path.cwd() / "supervisor-M1-contract" / "task-bundle"
+    if cwd_candidate.is_dir():
+        return cwd_candidate
+    raise FileNotFoundError(
+        "M1 contract root not found; set M1_CONTRACT_ROOT or clone the "
+        "supervisor-M1-contract repo next to supervisor-M1"
+    )
+
+
+CONTRACT_ROOT = _resolve_contract_root()
 TASK_PATH = CONTRACT_ROOT / "task.json"
 REQUIREMENTS_PATH = CONTRACT_ROOT / "requirements.md"
 ALLOWED_PATH = CONTRACT_ROOT / "allowed_files.json"

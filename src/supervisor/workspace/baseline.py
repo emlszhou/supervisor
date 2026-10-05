@@ -31,13 +31,13 @@ def _is_git_root(root: Path) -> bool:
     return out.strip() == "true"
 
 
-def _head_sha(root: Path) -> str | None:
+def _git_toplevel(root: Path) -> str | None:
     try:
-        out = _git(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
+        out = _git(root, "rev-parse", "--show-toplevel")
     except (subprocess.CalledProcessError, OSError):
         return None
-    sha = out.strip()
-    return sha if len(sha) in (40, 64) else None
+    s = out.strip()
+    return s or None
 
 
 def _in_progress(root: Path) -> bool:
@@ -52,6 +52,15 @@ def _in_progress(root: Path) -> bool:
         if (root / ".git" / marker).exists():
             return True
     return False
+
+
+def _head_sha(root: Path) -> str | None:
+    try:
+        out = _git(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    sha = out.strip()
+    return sha if len(sha) in (40, 64) else None
 
 
 def _tracked_paths(root: Path) -> list[str]:
@@ -108,6 +117,16 @@ def inspect_baseline(repo: Path) -> str:
         raise ValueError("baseline root must be a directory")
     if not _is_git_root(root):
         raise ValueError("not a Git working tree")
+    toplevel = _git_toplevel(root)
+    if toplevel is None:
+        raise ValueError("could not resolve Git top-level")
+    # Refuse to inspect any subdirectory of the work tree — the control
+    # root must equal the actual Git top-level so an attacker cannot
+    # narrow scope by handing us a subdir.
+    if Path(toplevel).resolve(strict=False) != root.resolve(strict=False):
+        raise ValueError(
+            f"baseline root must be Git top-level; got {root}, top-level is {toplevel}"
+        )
     if _in_progress(root):
         raise ValueError("merge/rebase in progress")
 
@@ -122,8 +141,10 @@ def inspect_baseline(repo: Path) -> str:
 
     tracked = _tracked_paths(root)
     untracked = _untracked_paths(root)
-    # `.gitignore` cannot widen the controlled root: ignored untracked files are
-    # not allowed unless they fall under a fixed artifact dir (see _EXCLUDED_DIRS).
+    # `.gitignore` cannot widen the controlled root: ignored untracked files
+    # are not allowed unless they fall under a fixed artifact dir (see
+    # _EXCLUDED_DIRS). Note: tracked *ignored* paths (git add -f) ARE
+    # included in `tracked` and ARE controlled by the contract.
     ignored = _ignored_untracked_paths(root)
 
     # Reject symlinks / hardlinks / case collisions under the control root.

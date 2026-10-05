@@ -188,7 +188,15 @@ def _realpath_no_symlinks(p: Path) -> Path:
 
 
 def _validate_source_no_links(source: Path) -> None:
-    """Reject any symlink, hardlink, case collision, or path traversal in source."""
+    """Reject any symlink, hardlink, case collision, or path traversal in source.
+
+    Walks every directory entry and every file inside the source tree.
+    Directories are checked for symlinks (an ancestor link would escape
+    the control root) but are NOT checked for ``nlink>1``: a normal
+    directory has ``nlink>=2`` because of the ``.`` self-entry and the
+    parent link, and rejecting that would make any nested-directory
+    input unprocessable.
+    """
     real_root = _realpath_no_symlinks(source)
     if real_root != Path(os.path.realpath(source)):
         raise ValueError("source path must not be a symlink itself")
@@ -196,7 +204,24 @@ def _validate_source_no_links(source: Path) -> None:
     for dirpath, dirnames, filenames in os.walk(source, followlinks=False):
         if _is_symlink(Path(dirpath)):
             raise ValueError(f"source directory must not be a symlink: {dirpath}")
-        for name in list(dirnames) + list(filenames):
+        for dname in list(dirnames):
+            full = Path(dirpath) / dname
+            if _is_symlink(full):
+                raise ValueError(f"source must not contain symlinks: {full}")
+            try:
+                st = full.lstat()
+            except OSError as e:
+                raise ValueError(f"source entry not statable: {full}: {e}") from e
+            if stat.S_ISLNK(st.st_mode):
+                raise ValueError(f"source must not contain symlinks: {full}")
+            # Resolve the directory's real path; reject ancestor links
+            # that would escape the control root.
+            try:
+                if Path(os.path.realpath(full)) != real_root / full.relative_to(source):
+                    raise ValueError(f"source directory escapes control root: {full}")
+            except OSError as e:
+                raise ValueError(f"source directory not resolvable: {full}: {e}") from e
+        for name in list(filenames):
             full = Path(dirpath) / name
             if _is_symlink(full):
                 raise ValueError(f"source must not contain symlinks: {full}")
@@ -208,6 +233,12 @@ def _validate_source_no_links(source: Path) -> None:
                 raise ValueError(f"source must not contain symlinks: {full}")
             if st.st_nlink > 1:
                 raise ValueError(f"source must not contain hardlinks: {full}")
+            # Refuse any link that resolves outside the source tree.
+            try:
+                if Path(os.path.realpath(full)) != real_root / full.relative_to(source):
+                    raise ValueError(f"source file escapes control root: {full}")
+            except OSError as e:
+                raise ValueError(f"source file not resolvable: {full}: {e}") from e
             rel = full.relative_to(source).as_posix()
             _validate_relative_posix(rel)
             cf = rel.casefold()
@@ -232,6 +263,20 @@ def _validate_output_does_not_overlap(source: Path, output: Path, workdir: Path)
         str(real_source) + os.sep
     ):
         raise ValueError("output path must not be inside source")
+    # Reject any ancestor of `output` that is a symlink, including the
+    # full chain from `output.parent` up to filesystem root. The walk is
+    # bounded by symlink detection: if a link is observed mid-chain,
+    # raise before reaching it.
+    chain = output.parent
+    while chain != chain.parent:
+        try:
+            if chain.is_symlink() or os.path.islink(str(chain)):
+                raise ValueError(f"output ancestor must not be a symlink: {chain}")
+        except OSError as e:
+            raise ValueError(f"output ancestor not statable: {chain}") from e
+        if chain == Path("/"):
+            break
+        chain = chain.parent
 
 
 # ---------- Freeze ----------
@@ -414,7 +459,15 @@ def _read_only_inventory(root: Path) -> tuple[set[str], set[int], set[str]]:
         rel_dir = os.path.relpath(dirpath, root)
         if _is_symlink(Path(dirpath)) and dirpath != str(root):
             raise ValueError(f"bundle directory must not be a symlink: {dirpath}")
-        for name in list(dirnames) + list(filenames):
+        for dname in list(dirnames):
+            full = Path(dirpath) / dname
+            if _is_symlink(full):
+                raise ValueError(f"bundle must not contain symlinks: {full}")
+            try:
+                full.lstat()
+            except OSError as e:
+                raise ValueError(f"bundle entry not statable: {full}: {e}") from e
+        for name in list(filenames):
             full = Path(dirpath) / name
             if _is_symlink(full):
                 raise ValueError(f"bundle must not contain symlinks: {full}")
@@ -424,7 +477,11 @@ def _read_only_inventory(root: Path) -> tuple[set[str], set[int], set[str]]:
                 raise ValueError(f"bundle entry not statable: {full}: {e}") from e
             if stat.S_ISLNK(st.st_mode):
                 raise ValueError(f"bundle must not contain symlinks: {full}")
-            if st.st_nlink > 1:
+            # nlink>1 is meaningful for regular files (a second directory
+            # entry links to the same inode); directories routinely have
+            # nlink>=2 because of `.` and `..`, so we don't apply the check
+            # to them.
+            if stat.S_ISREG(st.st_mode) and st.st_nlink > 1:
                 raise ValueError(f"bundle must not contain hardlinks: {full}")
             rel = (Path(rel_dir) / name).as_posix() if rel_dir else name
             _validate_relative_posix(rel)

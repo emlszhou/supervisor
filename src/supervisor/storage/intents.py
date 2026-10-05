@@ -24,6 +24,7 @@ mutating state.
 
 from __future__ import annotations
 
+import os
 import re
 import sqlite3
 import time
@@ -63,31 +64,20 @@ class IntentStore:
         # multi-statement BEGIN IMMEDIATE transactions below; this keeps
         # each reserve/complete atomic without depending on python-level
         # context managers that might be left half-committed on exception.
+        # Pre-open safety: refuse any DB / sidecar / sidecar-ancestor
+        # that is a symlink, has nlink>1 on a regular file, or escapes
+        # via an ancestor link. Doing this BEFORE sqlite3.connect means
+        # the database engine never touches a path we have not first
+        # classified as safe.
+        for suffix in ("", "-wal", "-shm", "-journal"):
+            sidecar = Path(str(self._path) + suffix)
+            self._check_name_chain(sidecar, suffix=suffix)
         self._conn = sqlite3.connect(
             str(self._path),
             timeout=30.0,
             isolation_level=None,
             check_same_thread=False,
         )
-        # Reject any existing symlink at the DB or WAL/SHM sidecar locations.
-        # These checks are best-effort: they run on open and may race with
-        # external FS activity. The contract accepts that; M2 provides real
-        # isolation. We never *trust* these checks as a sandbox.
-        for suffix in ("", "-wal", "-shm", "-journal"):
-            sidecar = Path(str(self._path) + suffix)
-            if sidecar.exists() and sidecar.is_symlink():
-                self._safe_close()
-                raise ValueError(f"refusing to open symlinked sidecar: {sidecar}")
-            # Refuse hardlinks (nlink>1) on plain files; multiple directory
-            # entries pointing at the same inode bypass intent durability.
-            if sidecar.exists() and sidecar.is_file():
-                try:
-                    st = sidecar.lstat()
-                except OSError:
-                    st = None
-                if st is not None and st.st_nlink > 1 and suffix == "":
-                    self._safe_close()
-                    raise ValueError(f"refusing to open hardlinked db: {sidecar}")
         # Pragmas: WAL gives concurrent readers + single writer; foreign
         # keys / busy_timeout provide the contract's "no silent loss"
         # guarantee without leaking partial state on conflict.
@@ -128,6 +118,56 @@ class IntentStore:
         parent = path.parent
         if parent.exists() and parent.is_symlink():
             raise ValueError(f"db parent must not be a symlink: {parent}")
+
+    def _check_name_chain(self, sidecar: Path, *, suffix: str = "") -> None:
+        """Walk every ancestor of `sidecar` and reject any link escape.
+
+        The contract requires sqlite3 never to touch a path whose
+        DB or sidecar (or any directory between it and the file system
+        root) is a symlink, hardlink, or otherwise unclassified. This
+        rejects the open before any engine code touches the path.
+        """
+        # The path itself must not be a dangling symlink, a symlink, or
+        # a hardlinked regular file. `dangling` (relying `exists()` would
+        # follow a symlink) is detected by lstat; we use lstat semantics
+        # to see the link itself rather than its target.
+        if sidecar.exists() or os.path.lexists(str(sidecar)):
+            try:
+                st = sidecar.lstat()
+            except OSError as e:
+                self._safe_close()
+                raise ValueError(f"sidecar not statable: {sidecar}: {e}") from e
+            if stat.S_ISLNK(st.st_mode):
+                self._safe_close()
+                raise ValueError(f"refusing to open symlinked sidecar: {sidecar}")
+            if stat.S_ISREG(st.st_mode) and st.st_nlink > 1:
+                self._safe_close()
+                raise ValueError(f"refusing to open hardlinked sidecar: {sidecar}")
+            try:
+                target_real = Path(os.path.realpath(sidecar))
+            except OSError:
+                self._safe_close()
+                raise ValueError(f"sidecar not resolvable: {sidecar}") from None
+            db_real = Path(os.path.realpath(self._path))
+            if target_real.parent != db_real.parent:
+                # The sidecar lives outside the DB directory after
+                # resolving all ancestor links; reject.
+                self._safe_close()
+                raise ValueError(f"sidecar escapes db directory: {sidecar} -> {target_real}")
+        # Reject every ancestor directory between the file system root
+        # and the DB parent if any of them is a symlink.
+        chain = self._path.parent
+        while chain != chain.parent:
+            try:
+                if chain.is_symlink() or os.path.islink(str(chain)):
+                    self._safe_close()
+                    raise ValueError(f"db ancestor must not be a symlink: {chain}")
+            except OSError as e:
+                self._safe_close()
+                raise ValueError(f"db ancestor not statable: {chain}: {e}") from e
+            if chain == Path("/"):
+                break
+            chain = chain.parent
 
     def _safe_close(self) -> None:
         try:
