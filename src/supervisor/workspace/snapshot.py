@@ -17,7 +17,19 @@ _EXCLUDED_DIRS = {".venv", ".supervisor", ".pytest_cache", ".ruff_cache", "__pyc
 
 
 def _git(root: Path, *args: str) -> str:
-    raw = subprocess.check_output(["git", "-C", str(root), *args], stderr=subprocess.PIPE)
+    raw = subprocess.check_output(
+        [
+            "git",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "core.hooksPath=/dev/null",
+            "-C",
+            str(root),
+            *args,
+        ],
+        stderr=subprocess.PIPE,
+    )
     try:
         return raw.decode()
     except UnicodeDecodeError as e:

@@ -24,7 +24,6 @@ mutating state.
 
 from __future__ import annotations
 
-import os
 import re
 import sqlite3
 import stat
@@ -117,10 +116,12 @@ class IntentStore:
         from supervisor.workspace.snapshot import _check_ancestors
 
         _check_ancestors(sidecar)
-        if os.path.lexists(sidecar):
+        try:
             st = sidecar.lstat()
-            if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
-                raise ValueError(f"DB or sidecar must be an unlinked regular file: {sidecar}")
+        except FileNotFoundError:
+            return
+        if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+            raise ValueError(f"DB or sidecar must be an unlinked regular file: {sidecar}")
 
     def _safe_close(self) -> None:
         conn = getattr(self, "_conn", None)

@@ -28,24 +28,31 @@ def inspect_baseline(repo: Path) -> str:
         sha = _git(root, "rev-parse", "--verify", "HEAD^{commit}").strip()
     except subprocess.CalledProcessError as e:
         raise ValueError("no resolvable HEAD commit") from e
-    status = _git(root, "status", "--porcelain=v1", "--untracked-files=no")
-    if status.strip():
-        raise ValueError("dirty tracked files")
+    index = _git(root, "ls-files", "--stage", "-z")
     snapshot = capture_snapshot(root, baseline_commit=sha)
 
-    expected = []
+    expected, head_index = [], {}
     for row in filter(None, _git(root, "ls-tree", "-r", "-z", sha).split("\0")):
         header, rel = row.split("\t", 1)
         mode, kind, oid = header.split()
         if kind != "blob" or mode not in ("100644", "100755"):
             raise ValueError("unsupported baseline tree file")
+        head_index[rel] = (mode, oid, "0")
         data = subprocess.check_output(
             ["git", "-C", str(root), "cat-file", "blob", oid], stderr=subprocess.PIPE
         )
         expected.append({"path": rel, "mode": mode, "sha256": hashlib.sha256(data).hexdigest()})
+    actual_index = {}
+    for row in filter(None, index.split("\0")):
+        header, rel = row.split("\t", 1)
+        if rel in actual_index:
+            raise ValueError("unresolved index")
+        actual_index[rel] = tuple(header.split())
+    if actual_index != head_index:
+        raise ValueError("dirty tracked index")
     if snapshot["deleted"] or snapshot["files"] != sorted(expected, key=lambda f: f["path"]):
         raise ValueError("dirty tracked files or untracked file present")
-    if _git(root, "status", "--porcelain=v1", "--untracked-files=no") != status:
+    if _git(root, "ls-files", "--stage", "-z") != index:
         raise ValueError("baseline changed during inspection")
     if _git(root, "rev-parse", "HEAD").strip() != sha:
         raise ValueError("HEAD changed during inspection")

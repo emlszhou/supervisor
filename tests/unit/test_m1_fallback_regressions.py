@@ -348,3 +348,53 @@ def test_baseline_compares_head_bytes_and_modes_despite_git_status_masks(repo, m
     assert git("status", "--porcelain", "--untracked-files=no") == ""
     with pytest.raises(ValueError, match="dirty tracked"):
         inspect_baseline(root)
+
+
+def test_git_configured_monitor_and_clean_filter_are_not_executed(repo, tmp_path):
+    root, sha, git = repo
+    marker = tmp_path / "executed"
+    command = tmp_path / "command"
+    command.write_text('#!/bin/sh\nprintf unsafe > "' + str(marker) + '"\ncat\n')
+    command.chmod(0o755)
+    git("config", "core.fsmonitor", str(command))
+    assert inspect_baseline(root) == sha
+    snapshot.capture_snapshot(root, baseline_commit=sha)
+    assert not marker.exists()
+    # Dirty content with attributes must also not execute a clean filter.
+    git("config", "core.fsmonitor", "false")
+    (root / ".gitattributes").write_text("a.txt filter=unsafe\n")
+    git("add", ".gitattributes")
+    git("commit", "-qm", "attributes")
+    git("config", "filter.unsafe.clean", str(command))
+    (root / "a.txt").write_text("dirty")
+    with pytest.raises(ValueError):
+        inspect_baseline(root)
+    assert not marker.exists()
+
+
+def test_baseline_rejects_staged_blob_with_working_bytes_restored(repo):
+    root, _, git = repo
+    (root / "a.txt").write_text("staged")
+    git("add", "a.txt")
+    (root / "a.txt").write_text("baseline")
+    with pytest.raises(ValueError, match="index"):
+        inspect_baseline(root)
+
+
+def test_sqlite_sidecar_disappearing_between_prechecks_is_normal(tmp_path, monkeypatch):
+    db = tmp_path / "db"
+    with IntentStore(db):
+        pass
+    journal = Path(str(db) + "-journal")
+    journal.write_bytes(b"")
+    original = Path.lstat
+
+    def lstat(self, *args, **kwargs):
+        result = original(self, *args, **kwargs)
+        if self == journal:
+            journal.unlink()
+        return result
+
+    monkeypatch.setattr(Path, "lstat", lstat)
+    with IntentStore(db) as store:
+        assert store.get("missing") is None
