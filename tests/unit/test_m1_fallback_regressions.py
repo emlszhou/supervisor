@@ -334,3 +334,17 @@ def test_trusted_manifest_missing_task_rejected(tmp_path):
     (root / "manifest.json").write_bytes(raw)
     with pytest.raises(ValueError, match="required"):
         bundle.verify_bundle(root, hashlib.sha256(raw).hexdigest())
+
+
+@pytest.mark.parametrize("mask", ["assume-unchanged", "skip-worktree", "filemode"])
+def test_baseline_compares_head_bytes_and_modes_despite_git_status_masks(repo, mask):
+    root, _, git = repo
+    if mask == "filemode":
+        git("config", "core.filemode", "false")
+        (root / "a.txt").chmod(0o755)
+    else:
+        git("update-index", "--" + mask, "a.txt")
+        (root / "a.txt").write_text("hidden dirty content")
+    assert git("status", "--porcelain", "--untracked-files=no") == ""
+    with pytest.raises(ValueError, match="dirty tracked"):
+        inspect_baseline(root)
