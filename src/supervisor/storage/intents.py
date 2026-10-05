@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
@@ -90,10 +91,25 @@ class IntentStore:
         # Pragmas: WAL gives concurrent readers + single writer; foreign
         # keys / busy_timeout provide the contract's "no silent loss"
         # guarantee without leaking partial state on conflict.
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA synchronous=NORMAL")
-        self._conn.execute("PRAGMA foreign_keys=ON")
-        self._conn.execute("PRAGMA busy_timeout=30000")
+        # The PRAGMA journal_mode = WAL write is itself a write that
+        # acquires the writer lock; multiple connections initialising in
+        # parallel can race here on macOS/Linux even with busy_timeout
+        # set. Retry with exponential backoff until the pragma lands.
+        deadline = time.monotonic() + 5.0
+        delay = 0.005
+        while True:
+            try:
+                self._conn.execute("PRAGMA journal_mode=WAL")
+                self._conn.execute("PRAGMA synchronous=NORMAL")
+                self._conn.execute("PRAGMA foreign_keys=ON")
+                self._conn.execute("PRAGMA busy_timeout=30000")
+                break
+            except sqlite3.OperationalError as e:
+                if "locked" not in str(e).lower() or time.monotonic() >= deadline:
+                    self._safe_close()
+                    raise
+                time.sleep(delay)
+                delay = min(delay * 2, 0.1)
         self._create_schema()
 
     @staticmethod
