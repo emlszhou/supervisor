@@ -35,6 +35,7 @@ def report():
         agent=dict(binary="fixture", version="unknown"),
         route=dict(provider="unknown", model="unknown", inference_location="unknown"),
         checks=checks,
+        fresh_sessions=[],
         adapter_readiness="blocked",
         limitations=["Not runtime evidence"],
     )

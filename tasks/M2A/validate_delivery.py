@@ -46,6 +46,7 @@ def validate(report: object, baseline: str) -> None:
         "agent",
         "route",
         "checks",
+        "fresh_sessions",
         "adapter_readiness",
         "limitations",
     }
@@ -144,6 +145,29 @@ def validate(report: object, baseline: str) -> None:
             and check["session_id"] is None
         ):
             raise ValueError("fresh check requires real session evidence")
+    route_check = next(c for c in checks if c["id"] == "model_route")
+    if route_check["status"] == "passed" and (
+        report["route"]["inference_location"] != "cloud"
+        or report["route"]["provider"].casefold() not in ("minimax", "minimax-cn")
+    ):
+        raise ValueError("passed model route must match authorized MiniMax cloud")
+    sessions = report["fresh_sessions"]
+    if not isinstance(sessions, list):
+        raise ValueError("fresh_sessions must be a list")
+    session_ids = set()
+    for session in sessions:
+        if not isinstance(session, dict) or set(session) != {"id", "source"}:
+            raise ValueError("fresh session requires identity and evidence source")
+        if not all(isinstance(v, str) and v for v in session.values()):
+            raise ValueError("invalid fresh session evidence")
+        if session["id"] in session_ids:
+            raise ValueError("duplicate fresh session identity")
+        session_ids.add(session["id"])
+    fresh = next(c for c in checks if c["id"] == "fresh_session")
+    if fresh["status"] == "passed" and (
+        len(sessions) < 2 or fresh["session_id"] not in session_ids
+    ):
+        raise ValueError("fresh capability requires two distinct real starts")
     if report["adapter_readiness"] not in ("ready", "blocked"):
         raise ValueError("invalid readiness")
     if report["adapter_readiness"] == "ready" and any(
