@@ -1,0 +1,207 @@
+[
+  {
+    "name": "clean_baseline",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "index_only_dirty_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "reject_assume_unchanged_dirty",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "reject_skip_worktree_dirty",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "reject_unreported_mode_dirty",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "ignored_controlled",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "excluded_links_ignored",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "baseline_staged_deletion",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "snapshot_observed_mutation_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "parent_symlink_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "lfs_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "forbidden_globstar_root",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "forged_snapshot_bool_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "bundle_all_nested_and_zero_budget",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "bundle_extra_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "bundle_requirements_mutation_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_dangling_db",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_dangling_-wal",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_dangling_-shm",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_dangling_-journal",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_eight_connections",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_reserve_commit_rollback",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_complete_commit_rollback",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_hardlink_db",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_hardlink_-wal",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_hardlink_-shm",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "sqlite_hardlink_-journal",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "unsupported_os_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "case_insensitive_storage_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "submodule_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "snapshot_hardlink_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "snapshot_case_collision_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "bundle_output_race_rejected",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "bundle_output_race_preserved",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "permission_failure_not_success",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "malicious_manifest_schema_version",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "malicious_manifest_task_id",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "malicious_manifest_baseline_commit",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "malicious_manifest_files",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "git_fsmonitor_command_not_executed",
+    "result": true,
+    "exception": null
+  },
+  {
+    "name": "baseline_clean_filter_not_executed",
+    "result": true,
+    "exception": null
+  }
+]

@@ -1,0 +1,171 @@
+[
+  {
+    "name": "sync",
+    "argv": [
+      "uv",
+      "sync",
+      "--frozen",
+      "--group",
+      "dev"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:50:49.227203+00:00",
+    "finished_at": "2026-10-05T15:50:49.243397+00:00",
+    "exit_code": 0,
+    "output_sha256": "5e9797526a4f1c056ae3fec5de026eabc392329ad727504856ff55948e296c5e",
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "unit",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "pytest",
+      "tests/unit",
+      "-q"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:50:49.243454+00:00",
+    "finished_at": "2026-10-05T15:50:54.584275+00:00",
+    "exit_code": 0,
+    "output_sha256": "186129e4f3b0af7a23b36523e9dd6e8a0aa56307e84b2c3a2ff2d84d0beb74f3",
+    "collected": 205,
+    "passed": 205,
+    "failed": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "full",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "pytest",
+      "-q"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:50:54.584631+00:00",
+    "finished_at": "2026-10-05T15:51:03.020547+00:00",
+    "exit_code": 0,
+    "output_sha256": "286796c72a5e296a9eb7cca56efd51acfb4dde2b56f7eb98e136641c9e83ad1b",
+    "collected": 301,
+    "passed": 301,
+    "failed": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "frozen",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "python",
+      "-B",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "/tmp/m1-final-pristine-contract/tests/protected/test_m1_acceptance.py",
+      "-q"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:51:03.020619+00:00",
+    "finished_at": "2026-10-05T15:51:04.844127+00:00",
+    "exit_code": 0,
+    "output_sha256": "2a5b26522064e89b1264a5e203553abeb6b8793d8fabadf8e8e7e0c7c70c9935",
+    "collected": 42,
+    "passed": 42,
+    "failed": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "specs",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "python",
+      "scripts/check_specs.py"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:51:04.844696+00:00",
+    "finished_at": "2026-10-05T15:51:05.128903+00:00",
+    "exit_code": 0,
+    "output_sha256": "b6482ce0716478280ba97acb4a0132c6ece6e9a9ab9b11e6626cd925b50eacf4",
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "lint",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "ruff",
+      "check",
+      "."
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:51:05.129107+00:00",
+    "finished_at": "2026-10-05T15:51:05.215059+00:00",
+    "exit_code": 0,
+    "output_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "format",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "ruff",
+      "format",
+      "--check",
+      "."
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:51:05.215199+00:00",
+    "finished_at": "2026-10-05T15:51:05.258298+00:00",
+    "exit_code": 0,
+    "output_sha256": "7df18b42c43329c0833da621f67724dca7a56dfff20a450ae0336efb05e24f06",
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "build",
+    "argv": [
+      "uv",
+      "build",
+      "--no-sources",
+      "--out-dir",
+      "/tmp/m1-final-dist"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:51:05.258353+00:00",
+    "finished_at": "2026-10-05T15:51:07.268269+00:00",
+    "exit_code": 0,
+    "output_sha256": "6a72be0397766db4a248118b1960933182905b9126eb259d8077563168e6a728",
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  },
+  {
+    "name": "probes",
+    "argv": [
+      "uv",
+      "run",
+      "--frozen",
+      "python",
+      "/tmp/m1-final-probes.py"
+    ],
+    "cwd": "/tmp/m1-fallback-final-verify",
+    "started_at": "2026-10-05T15:51:07.268312+00:00",
+    "finished_at": "2026-10-05T15:51:08.361929+00:00",
+    "exit_code": 0,
+    "output_sha256": "f4cf15f5a5f876d1136c27bdfcaf169ee71509546ce696c9c27bdf91899adf13",
+    "candidate_commit": "e1e8af230da58595645f13d886ae9788a06863aa"
+  }
+]

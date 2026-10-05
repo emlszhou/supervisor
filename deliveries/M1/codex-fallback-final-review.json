@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "M1-integrity-intents",
+  "run_id": "m1-overnight-2026-10-05",
+  "attempt_id": "attempt-1",
+  "bundle_sha256": "47ea6c51c46570e92f97c89428c9783a90bcc10e301e3e8d6ce38d4fb25dd142",
+  "snapshot_sha256": "523edae5a181b86336bee1627026e50bb6af1cc6c17c72ed2773de176f7849b6",
+  "stage": "final_verify",
+  "decision": "accept",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m1_fallback_final_verify",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "passed",
+  "findings": [
+    {
+      "id": "M1-FINAL-HISTORY",
+      "severity": "info",
+      "path": "deliveries/M1/hermes-report.md",
+      "description": "Historical original repair/wall/call ambiguity, failed Hermes takeover and macOS required-test failure remain recorded. Explicit later user authorization enables Codex cloud fallback; Linux acceptance does not establish macOS/Windows acceptance or local inference."
+    }
+  ],
+  "summary": "Accept precise corrected candidate e1e8af230da58595645f13d886ae9788a06863aa, code2050cafa0832561f3e9fd41a24bad62a78d5a7d2. Fresh independent verifier remained reviewer-only through coordinator fixes and made no implementation edits. Full301/unit205/frozen42 pass, zero skips/xfails, specs/lint/format/build pass;41bounded independent integrity/race/SQLite rollback probes pass. Frozen25inputfiles and manifest exactinventory/digests rechecked. Net12allowedfiles2684lines<=14/2800; production standard library and protected/dependency files unchanged. Code digest uses frozen tracked-tree algorithm,179files; runtime snapshot is distinct. Earlier73244f7 rejection is preserved separately, its two major findings are resolved. Actual orchestrator task/session m1_fallback_final_verify, model unexposed, provideropenai; context independent but provider not independent. macOS/Windows and real Agent/OS sandbox not run or claimed."
+}
