@@ -1,0 +1,89 @@
+{
+  "record_type": "independent_specification_review",
+  "schema_version": 1,
+  "source_commit": "77475e312d440ce77fd51c6f912ec563194d683c",
+  "implementation_baseline": "35f948fd40a6bf3e63982fd884422206cbffd28a",
+  "decision": "accept",
+  "reviewer": {
+    "session_id": "m2a_spec_review",
+    "session_id_source": "platform delegated fresh reviewer task",
+    "provider": "openai",
+    "model": null,
+    "fresh_session": true,
+    "independent_provider": false,
+    "runtime_review": false
+  },
+  "previous_review_commit": "c3a1f2537c80092f8b6505714575ebb89084437c",
+  "findings": [],
+  "resolved_findings": [
+    {
+      "id": "S1",
+      "resolution": "Explicit shared start accounting and reservation resolve allocation ambiguity: recommended five starts, remaining two can fund repair/re-review; no eighth start or guaranteed full path."
+    },
+    {
+      "id": "S2",
+      "resolution": "Two distinct fresh identities now required and check identity linked. Passed route requires authorized MiniMax cloud. Reviewer truth checklist explicitly covers private hashes/logs, trusted tools-disabled evidence, actual route, fresh sessions and future environment gate. Structural success remains intentionally insufficient for runtime accept."
+    }
+  ],
+  "checks": [
+    {
+      "id": "protected_gate",
+      "exit_code": 0,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "argv": [
+        "uv",
+        "run",
+        "--frozen",
+        "python",
+        "-B",
+        "-m",
+        "pytest",
+        "tasks/M2A/tests/protected",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ]
+    },
+    {
+      "id": "m2a_direct_schemas",
+      "exit_code": 0,
+      "targets": [
+        "tasks/M2A/task.json",
+        "tasks/M2A/verification.json"
+      ]
+    },
+    {
+      "id": "adversarial_structure",
+      "exit_code": 0,
+      "rejected": [
+        "wrong provider with passed route",
+        "local inference with passed route",
+        "one fresh identity",
+        "duplicate fresh identity",
+        "fresh check identity absent from session inventory"
+      ],
+      "accepted": [
+        "authorized synthetic structural fixture, not runtime evidence"
+      ]
+    },
+    {
+      "id": "m2a_lint",
+      "exit_code": 0
+    },
+    {
+      "id": "m2a_format",
+      "exit_code": 0
+    }
+  ],
+  "limitations": [
+    "No Hermes, MiniMax, Mac or model endpoint invocation occurred. No runtime capability or unattended safety acceptance is issued.",
+    "Protected gate tests use synthetic fixtures and are not runtime evidence.",
+    "Original read-only default uv cache failure resolved with UV_CACHE_DIR=/tmp/m2a-review-uv-cache; frozen installation succeeded.",
+    "Independent clone under /tmp; source specifications and production files unchanged.",
+    "Full production test suite was not run for this evidence-only specification review.",
+    "Source task remains draft and baseline null; external freeze and manifest publication remain coordinator work.",
+    "Permissions inventory is read-only; enforced boundary unknown absent trusted adversarial proof, and M2-C remains future work."
+  ]
+}

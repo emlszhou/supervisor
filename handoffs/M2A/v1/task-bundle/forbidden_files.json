@@ -1,0 +1,13 @@
+[
+  "src/**",
+  "tests/**",
+  "scripts/**",
+  "schemas/**",
+  "tasks/**",
+  "handoffs/**",
+  "docs/**",
+  "AGENTS.md",
+  "pyproject.toml",
+  "uv.lock",
+  "deliveries/M1/**"
+]

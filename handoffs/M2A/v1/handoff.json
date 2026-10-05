@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "task_id": "M2A-hermes-capabilities",
+  "revision": 1,
+  "baseline_commit": "35f948fd40a6bf3e63982fd884422206cbffd28a",
+  "bundle_sha256": "0ba0619747c246174f966ecc8efe4c7ba60b158df346fb0fd41bdfc83144b739",
+  "implementation_branch": "hermes/m2a",
+  "coordinator_branch": "main",
+  "source_spec_commit": "77475e312d440ce77fd51c6f912ec563194d683c",
+  "spec_review_commit": "0df900aab9063d01240edcec93d5c83df5d6dab1",
+  "baseline_tests_passed": 301
+}

@@ -70,3 +70,11 @@ M0R已独立验收接受并合入main。当前M1-integrity-intents使用main的h
 ## 本地运行与恢复
 
 所有本地角色开工须读docs/LOCAL-MODEL-RUNBOOK.md。不得在同一对话中模拟fresh审核或编造命令证据；单目录单写入者；断线/崩溃先核对副作用，不重启同一未知操作。故障状态sidecar示例在templates/local-run-status.json，仅为人工协调模板，不声称已实现恢复引擎。
+
+## 当前授权与任务 M2-A
+
+用户已明确批准 M1 集成 main（35f948fd40a6bf3e63982fd884422206cbffd28a），M1 精确接受候选 e1e8af230da58595645f13d886ae9788a06863aa，最终审核 b56bc0ba333689853cd275c27cec6f7a5bde39a7。旧 M1 已结束，原失败、预算超额与接管历史保留。
+
+用户也明确批准 M2 继续使用 Hermes + MiniMax 云模型，覆盖上文本地推理默认要求；不得宣称全本地或隐式换其他供应者。当前 M2A-hermes-capabilities 仅调查和证据交付，不实现 Adapter/Worker。权威冻结输入见 handoffs/M2A/v1；实施分支 hermes/m2a，两个允许交付文件见冻结 allowed_files，审核分支 local/m2a-review-*。共用 14400 秒与 7 次 Agent 启动，角色与真实 probe 启动共同计数，额度不足停止，不能保证返修和接管全部可用。
+
+M2-C 真正边界验证前，Agent smoke 必须已核验禁用工具并在无秘密合成目录执行；不能保证则不运行，报告 unsupported。Reviewer 必须真正 fresh，结构 validator 不证明运行真实性。普通推拉已授权；M2 实现合并 main 与部署没有自动授权。规格发布由协调流程管理，不把角色报告当授权。
