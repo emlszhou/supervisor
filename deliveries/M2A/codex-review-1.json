@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "task_id": "M2A-hermes-capabilities",
+  "verdict": "blocked",
+  "candidate_commit": "63c6c5f55506553c5c0b20f95d15e5f01255a0bb",
+  "baseline_commit": "35f948fd40a6bf3e63982fd884422206cbffd28a",
+  "bundle_sha256": "0ba0619747c246174f966ecc8efe4c7ba60b158df346fb0fd41bdfc83144b739",
+  "review_type": "external coordinator audit; not a Mac runtime attestation",
+  "checks": {
+    "scope": {
+      "passed": true,
+      "changed_files": 2,
+      "insertions": 449,
+      "deletions": 0
+    },
+    "validator": {
+      "exit_code": 0,
+      "meaning": "structure only"
+    },
+    "pytest_linux": {
+      "exit_code": 0,
+      "passed": 301,
+      "failed": 0,
+      "skipped": 0
+    },
+    "specs": {
+      "exit_code": 0
+    },
+    "ruff_check": {
+      "exit_code": 0
+    },
+    "ruff_format": {
+      "exit_code": 0
+    },
+    "mac_private_evidence": "not accessible",
+    "hermes_live_probes": "not run by this audit",
+    "fresh_hermes_review_branch": "not found at fetch"
+  },
+  "findings": [
+    {
+      "id": "M2A-R1-tools",
+      "severity": "blocking",
+      "status": "open",
+      "title": "缺少 smoke 前禁用工具及无秘密合成目录的控制证据",
+      "detail": "所有模型 argv 只有 --in /tmp，实际 cwd 为项目目录；没有已核验工具禁用配置、隔离目录清单或外部 120 秒/64KiB 限额证据。普通提示词、--oneshot、--max-turns 不是工具禁用证明。不能反推过去调用安全；保留既有事实，无法核实则标 unknown/blocked，不追加 smoke。"
+    },
+    {
+      "id": "M2A-R1-budget",
+      "severity": "blocking",
+      "status": "open",
+      "title": "共享启动账本未完成核对",
+      "detail": "报告列 6 个 probe，却省略继续参与本轮的 coordinator。合同将角色、probe、恢复启动共同计数；至少需核对调查角色和六个 probe，不能据此声称还剩一次 Reviewer。未见审核分支；本次外部审计也须在账本中据实际启动范围明确分类，不能自动豁免或重置。无确证前不得新增模型调用。"
+    },
+    {
+      "id": "M2A-R1-timeout",
+      "severity": "major",
+      "status": "open",
+      "title": "实际执行的 timeout 被写为 not_run",
+      "detail": "JSON reason 与报告 §8 明确说运行 --run-budget 1 并等待约15秒响应，预算账本也列对应 probe；却全部运行字段为 null。需从现有私有日志恢复 argv/UTC/exit/hash/identity，并按真实观察记录 failed 或有理由的结果，不能将执行过的探测写成未执行。"
+    },
+    {
+      "id": "M2A-R1-cancel",
+      "severity": "major",
+      "status": "open",
+      "title": "取消退出码与回收结论证据不足",
+      "detail": "ps 进程消失和空文件不能证明 wait 返回码为0或整树回收；需要本轮实际 wait/signal/进程身份和存活核对日志。未知时撤回 passed/enforced=yes 的过度结论，不编造退出码。"
+    },
+    {
+      "id": "M2A-R1-enforced",
+      "severity": "major",
+      "status": "open",
+      "title": "observed 与 enforced 混用",
+      "detail": "noninteractive/model_route/fresh_session/cancellation 标 enforced=yes，但现有证据主要是一次正常结果。合同要求可信控制边界或强制拒绝证据；应区分观察、配置声明与强制保证，路由必须绑定具体 probe 的实际后端，不能仅引用 coordinator 的 agent.log。"
+    },
+    {
+      "id": "M2A-R1-evidence",
+      "severity": "major",
+      "status": "open",
+      "title": "私有摘要未获 fresh Reviewer 核验",
+      "detail": "没有 local/m2a-review-* 远端分支；报告只提供私有文件路径与 SHA 字符串。云端无法核对本机文件，结构 validator 通过不证明运行真实性。需要真实 fresh 审核核对精确 candidate 与私有原始日志，但先解决额度，不允许在同会话模拟。"
+    },
+    {
+      "id": "M2A-R1-completeness",
+      "severity": "major",
+      "status": "open",
+      "title": "加长调查必需交付缺失",
+      "detail": "未提供最小环境变量名称、创建/续接差异、可确认峰值内存/输出字节或明确 unknown、已有 VM/容器/受限账户只读能力比较，以及后续候选文件/API 与完整有限故障用例。只能用既有证据补充；无法测得写 unknown，不安装或扩大权限。"
+    },
+    {
+      "id": "M2A-R1-report",
+      "severity": "major",
+      "status": "open",
+      "title": "项目失败归因及最终预算未闭环",
+      "detail": "Linux 独立检出精确候选 301 passed，源码/tests/配置与基线相同。macOS 55 failed/245 passed/1 skipped 的原因未附失败摘要，不能断言通用基线继承缺陷。需保留平台、Python/依赖/文件系统与各失败类别及命令真实退出码，预算写实际结束时间、启动身份清单、449 diff行和精确候选；TBD/约3分钟不是最终账本。"
+    }
+  ]
+}
