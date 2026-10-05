@@ -1,0 +1,49 @@
+[
+  {
+    "probe": "snapshot_ignored_parentlink_read",
+    "observed": [
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "sha256": "a9294fcd1dbc598ec49a7879ba2d0702c9bf1ba7a0fe2d7881707cbbda36f50b"
+      },
+      {
+        "path": "sub/x",
+        "mode": "100644",
+        "sha256": "31207a2065f46a5b948fce6fe5c13e85abaf5631e2f894b47dcd4fce14f6c57b"
+      }
+    ]
+  },
+  {
+    "probe": "missing_task",
+    "exception": "FileNotFoundError",
+    "message": "[Errno 2] No such file or directory: '/tmp/tmpkyfxdoh8/missing_task/task.json'"
+  },
+  {
+    "probe": "nested_manifest",
+    "exception": "ValueError",
+    "message": "manifest.json files key invalid: 'docs/a.md'"
+  },
+  {
+    "probe": "sqlite_8_connections_same_binding",
+    "observed": [
+      "pending",
+      "pending",
+      "pending",
+      "pending",
+      "pending",
+      "pending",
+      "pending",
+      "pending"
+    ]
+  },
+  {
+    "probe": "freeze_source_mutation_success",
+    "observed": "9442e6203af59fe1cdd4ad8ac63e554bbcdb4b3014ae8a4d29dbb5aacdb8521a"
+  },
+  {
+    "probe": "verify_mutation_output",
+    "exception": "ValueError",
+    "message": "digest mismatch for requirements.md"
+  }
+]

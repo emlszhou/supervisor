@@ -1,0 +1,115 @@
+[
+  {
+    "probe": "baseline_git_subdirectory",
+    "observed": "cbe5b1abe6e344a391b122e8553156be627ba064"
+  },
+  {
+    "probe": "snapshot_ignored_missing",
+    "observed": true
+  },
+  {
+    "probe": "snapshot_nonignored_artifact_included",
+    "observed": true
+  },
+  {
+    "probe": "baseline_valid_excluded_venv",
+    "exception": "ValueError",
+    "message": "link or hardlink not supported: .venv/python"
+  },
+  {
+    "probe": "snapshot_staged_baseline_deletion",
+    "observed": []
+  },
+  {
+    "probe": "capture_mutation_not_rejected",
+    "observed": "a483fd3dabeb4a7b18c04b997ca3e0e7e422d9ab3dd750bb4e565250d0dcbe8f"
+  },
+  {
+    "probe": "snapshot_parent_symlink_reads_external",
+    "exception": "ValueError",
+    "message": "symlink not supported: sub"
+  },
+  {
+    "probe": "baseline_LFS_pointer_accepted",
+    "observed": "3c5a3289590ef2fc2585f9984d9791d1db2baf62"
+  },
+  {
+    "probe": "globstar_zero_segment_allowed",
+    "exception": "ValueError",
+    "message": "change not in allowed patterns: x.py"
+  },
+  {
+    "probe": "globstar_zero_segment_forbidden",
+    "observed": {
+      "changed_files": [
+        "x.py"
+      ],
+      "changed_count": 1,
+      "diff_lines": 1
+    }
+  },
+  {
+    "probe": "policy_forged_case_type_mode_hash",
+    "observed": {
+      "changed_files": [
+        "X.py",
+        "x.py"
+      ],
+      "changed_count": 2,
+      "diff_lines": 1
+    }
+  },
+  {
+    "probe": "snapshot_invalid_path_exception",
+    "exception": "AttributeError",
+    "message": "'int' object has no attribute 'startswith'"
+  },
+  {
+    "probe": "freeze_invalid_pattern_and_extra",
+    "observed": "1e39033dbb0efc0388d34423bb99966e0e453db2a8b0cb8c62c353d1947a1611"
+  },
+  {
+    "probe": "freeze_drops_extra",
+    "observed": true
+  },
+  {
+    "probe": "freeze_schema_valid_zero_repairs",
+    "exception": "ValueError",
+    "message": "task.json budgets.max_repair_rounds must be >= 1"
+  },
+  {
+    "probe": "freeze_regular_directory",
+    "exception": "ValueError",
+    "message": "source must not contain hardlinks: /tmp/m1-probes-170r4_2m/draft/nested"
+  },
+  {
+    "probe": "freeze_output_ancestor_link",
+    "observed": "60aad2e2fd209d6961a46329797ae34cca3c449ed3220559c67b73ce04f2cf4f"
+  },
+  {
+    "probe": "sqlite_hardlinked_journal_accepted",
+    "observed": null
+  },
+  {
+    "probe": "sqlite_parent_ancestor_link",
+    "observed": null
+  },
+  {
+    "probe": "sqlite_commit_failure",
+    "exception": "OperationalError",
+    "message": "injected commit failure"
+  },
+  {
+    "probe": "sqlite_commit_failure_rollback",
+    "observed": null
+  },
+  {
+    "probe": "sqlite_complete_commit_failure",
+    "exception": "OperationalError",
+    "message": "injected commit failure"
+  },
+  {
+    "probe": "sqlite_complete_rollback_status",
+    "observed": "pending"
+  }
+]

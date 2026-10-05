@@ -1,0 +1,25 @@
+{
+  "candidate_commit": "7f301ea72f759e4ec87128af68deb3e6dd8c9c45",
+  "baseline_commit": "c6e224587b930a5b96c7723009584424f6bc52d5",
+  "code_commit": "97a5bb9db3a37ca0da4bbf72487388330dd7f1c4",
+  "snapshot_algorithm": "frozen snapshot.py tracked-code commit tree",
+  "bundle_inventory_verified_files": 25,
+  "scope": {
+    "files": 11,
+    "insertions": 2509,
+    "deletions": 0,
+    "max_files": 14,
+    "max_lines": 2800
+  },
+  "environment": {
+    "os": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "python": "3.12.14",
+    "minimal_environment": true,
+    "secrets_injected": false,
+    "installation": "uv sync --offline --frozen --group dev; exit0; cache /workspace/.cache/uv"
+  },
+  "historical_review_provenance": "Git artifact 3f61b9b; claims fresh, no independently verified native session identity",
+  "review_schema_valid": true,
+  "macOS": "not_run_here; historical implementation report 41pass/1fail retained as unresolved",
+  "no_push": true
+}

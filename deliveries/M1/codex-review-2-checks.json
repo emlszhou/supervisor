@@ -1,0 +1,119 @@
+[
+  {
+    "argv": [
+      "python",
+      "-m",
+      "pytest",
+      "tests/unit",
+      "--junitxml=/tmp/m1-unit.xml",
+      "-q"
+    ],
+    "cwd": "/tmp/m1-fresh-review-1",
+    "exit_code": 1,
+    "duration_seconds": 5.622,
+    "summary": "s\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/Users/william/Public/AI project/supervisor/supervisor-M1-contract/task-bundle/task.json'\n\n/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1013: FileNotFoundError\n--------------------- generated xml file: /tmp/m1-unit.xml ---------------------\n=========================== short test summary info ============================\nFAILED tests/unit/test_m1_bundle.py::test_freeze_then_verify_round_trip - Fil...\nFAILED tests/unit/test_m1_bundle.py::test_outputs_are_read_only_0444 - FileNo...\nFAILED tests/unit/test_m1_bundle.py::test_source_unchanged_after_freeze - Fil...\nFAILED tests/unit/test_m1_bundle.py::test_existing_output_rejected - FileNotF...\nFAILED tests/unit/test_m1_bundle.py::test_source_with_manifest_rejected - Fil...\nFAILED tests/unit/test_m1_bundle.py::test_wrong_identity_rejected - FileNotFo...\nFAILED tests/unit/test_m1_bundle.py::test_invalid_baseline_commit_shape_rejected\nFAILED tests/unit/test_m1_bundle.py::test_missing_required_input_rejected - F...\nFAILED tests/unit/test_m1_bundle.py::test_broken_json_rejected - FileNotFound...\nFAILED tests/unit/test_m1_bundle.py::test_verify_rejects_bad_digest - FileNot...\nFAILED tests/unit/test_m1_bundle.py::test_verify_rejects_malformed_manifest_encoding\nFAILED tests/unit/test_m1_bundle.py::test_verify_rejects_modified_file - File...\nFAILED tests/unit/test_m1_bundle.py::test_freeze_writes_sorted_canonical_manifest\n13 failed, 151 passed in 4.93s\n",
+    "started_utc": "2026-10-05T12:45:01.546847+00:00",
+    "ended_utc": null,
+    "counts": {
+      "collected": 164,
+      "passed": 151,
+      "failed": 13,
+      "errors": 0,
+      "skipped": 0
+    },
+    "junit_sha256": "a956f3eb524302ee3037e07a24fe3f1082ff95ee4be77f6bb019ab092240108a"
+  },
+  {
+    "argv": [
+      "python",
+      "-B",
+      "-m",
+      "pytest",
+      "/workspace/supervisor/handoffs/M1/v1/task-bundle/tests/protected/test_m1_acceptance.py",
+      "--junitxml=/tmp/m1-independent.xml",
+      "-p",
+      "no:cacheprovider",
+      "-q"
+    ],
+    "cwd": "/tmp/m1-fresh-review-1",
+    "exit_code": 0,
+    "duration_seconds": 1.949,
+    "summary": "..........................................                               [100%]\n----------------- generated xml file: /tmp/m1-independent.xml ------------------\n42 passed in 1.38s\n",
+    "started_utc": "2026-10-05T12:45:07.061430+00:00",
+    "ended_utc": null,
+    "counts": {
+      "collected": 42,
+      "passed": 42,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "junit_sha256": "8e41bcaf6a0da2f3540c7412e012ebb5d95ae481e66126da2cf4dde82de2b5c5"
+  },
+  {
+    "argv": [
+      "python",
+      "-m",
+      "pytest",
+      "--junitxml=/tmp/m1-full.xml",
+      "-q"
+    ],
+    "cwd": "/tmp/m1-fresh-review-1",
+    "exit_code": 1,
+    "duration_seconds": 8.73,
+    "summary": "s\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/Users/william/Public/AI project/supervisor/supervisor-M1-contract/task-bundle/task.json'\n\n/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py:1013: FileNotFoundError\n--------------------- generated xml file: /tmp/m1-full.xml ---------------------\n=========================== short test summary info ============================\nFAILED tests/unit/test_m1_bundle.py::test_freeze_then_verify_round_trip - Fil...\nFAILED tests/unit/test_m1_bundle.py::test_outputs_are_read_only_0444 - FileNo...\nFAILED tests/unit/test_m1_bundle.py::test_source_unchanged_after_freeze - Fil...\nFAILED tests/unit/test_m1_bundle.py::test_existing_output_rejected - FileNotF...\nFAILED tests/unit/test_m1_bundle.py::test_source_with_manifest_rejected - Fil...\nFAILED tests/unit/test_m1_bundle.py::test_wrong_identity_rejected - FileNotFo...\nFAILED tests/unit/test_m1_bundle.py::test_invalid_baseline_commit_shape_rejected\nFAILED tests/unit/test_m1_bundle.py::test_missing_required_input_rejected - F...\nFAILED tests/unit/test_m1_bundle.py::test_broken_json_rejected - FileNotFound...\nFAILED tests/unit/test_m1_bundle.py::test_verify_rejects_bad_digest - FileNot...\nFAILED tests/unit/test_m1_bundle.py::test_verify_rejects_malformed_manifest_encoding\nFAILED tests/unit/test_m1_bundle.py::test_verify_rejects_modified_file - File...\nFAILED tests/unit/test_m1_bundle.py::test_freeze_writes_sorted_canonical_manifest\n13 failed, 247 passed in 8.01s\n",
+    "started_utc": "2026-10-05T12:45:09.103949+00:00",
+    "ended_utc": null,
+    "counts": {
+      "collected": 260,
+      "passed": 247,
+      "failed": 13,
+      "errors": 0,
+      "skipped": 0
+    },
+    "junit_sha256": "ca7aa04dd0a839c4cde356948cb6df65b3d4b3130d7dec441d2b4649c7ae42e4"
+  },
+  {
+    "argv": [
+      "python",
+      "scripts/check_specs.py"
+    ],
+    "cwd": "/tmp/m1-fresh-review-1",
+    "exit_code": 0,
+    "duration_seconds": 0.298,
+    "summary": "Validated 6 schemas, sample artifacts/configs and M0 draft.\nRuntime behavior, task freezing, agent execution and isolation remain unverified.\n",
+    "started_utc": null,
+    "ended_utc": null
+  },
+  {
+    "argv": [
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/tmp/m1-fresh-review-1",
+    "exit_code": 0,
+    "duration_seconds": 0.021,
+    "summary": "All checks passed!\n",
+    "started_utc": null,
+    "ended_utc": null
+  },
+  {
+    "argv": [
+      "ruff",
+      "format",
+      "--check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "/tmp/m1-fresh-review-1",
+    "exit_code": 0,
+    "duration_seconds": 0.019,
+    "summary": "37 files already formatted\n",
+    "started_utc": null,
+    "ended_utc": null
+  }
+]

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "task_id": "M1-integrity-intents",
+  "run_id": "m1-overnight-2026-10-05",
+  "attempt_id": "attempt-1",
+  "bundle_sha256": "47ea6c51c46570e92f97c89428c9783a90bcc10e301e3e8d6ce38d4fb25dd142",
+  "snapshot_sha256": "6212c137963a2a97b506e4a1d67efd79adfd6c0e10cd87f14d3b7139c04e0a42",
+  "stage": "review_2",
+  "decision": "blocked",
+  "reviewer": {
+    "provider": "openai",
+    "model": null,
+    "session_id": "m1_fresh_review_1",
+    "fresh_session": true,
+    "independent_provider": false
+  },
+  "verification_status": "failed",
+  "findings": [
+    {
+      "id": "M1-01",
+      "severity": "major",
+      "path": "tests/unit/test_m1_bundle.py",
+      "description": "Lines 17-24 hardcode a developer macOS contract path. On clean Linux checkout unit: exit 1, 151 passed/13 failed; full: exit 1, 247 passed/13 failed. Use portable frozen input or self-contained fixtures; do not recreate developer filesystem paths to hide this."
+    },
+    {
+      "id": "M1-02",
+      "severity": "major",
+      "path": "src/supervisor/workspace/snapshot.py",
+      "description": "Lines 54-56,111-127 omit ignored controlled files and include nonignored fixed artifact files. Derive controlled inventory from tracked plus all untracked with only trusted fixed artifact exclusions; tracked artifacts remain controlled."
+    },
+    {
+      "id": "M1-03",
+      "severity": "major",
+      "path": "src/supervisor/workspace/snapshot.py",
+      "description": "Lines 117,125 derive deleted from current index rather than supplied baseline. git rm a baseline file produces deleted=[]; derive baseline file inventory from baseline_commit, preserving staged/index deletions."
+    },
+    {
+      "id": "M1-04",
+      "severity": "major",
+      "path": "src/supervisor/workspace/snapshot.py",
+      "description": "Lines 88-123 check only leaf links and hash without identity/size/mtime/inventory rechecks. With an ignored symlink directory replacing tracked sub/, capture hashes outside-root sub/x. Mutation immediately after hash is accepted. Reject ancestor links and observed file/inventory mutation; do not claim OS sandbox."
+    },
+    {
+      "id": "M1-05",
+      "severity": "major",
+      "path": "src/supervisor/workspace/baseline.py",
+      "description": "Lines 28-33 accept any Git subdirectory as actual root; lines 129-132 inspect excluded .venv symlinks before exclusion and reject a normal valid uv environment. No LFS pointer/submodule checks exist. Verify actual repository root, exclude only untracked fixed artifacts first, and reject unsupported tracked formats and unsupported platform capabilities."
+    },
+    {
+      "id": "M1-06",
+      "severity": "major",
+      "path": "src/supervisor/policy/changes.py",
+      "description": "Lines 58-67 compile ** as .* between mandatory slashes. **/*.py misses root x.py and src/**/x.py misses src/x.py. A forbidden **/*.py therefore permits forbidden root changes. Implement whole-segment globstar matching zero or more directories."
+    },
+    {
+      "id": "M1-07",
+      "severity": "major",
+      "path": "src/supervisor/policy/changes.py",
+      "description": "Lines 17-40 accept rehashed snapshots with schema_version=true, invalid mode/hash, duplicate or casefold-colliding paths, unsorted entries and contradictory inventories. Dictionary conversion lines 107-110 silently collapses duplicates. Strictly validate all snapshot structure and digest types before policy decisions; snapshot._validate_expected also produces AttributeError for int paths rather than ValueError."
+    },
+    {
+      "id": "M1-08",
+      "severity": "major",
+      "path": "src/supervisor/workspace/bundle.py",
+      "description": "Lines 347-390 copy only five required files and silently discard extra source files. Lines 218-219 reject ordinary nested directories as hardlinks because directories normally have nlink>1; lines 465-466 reject valid nested manifest paths using ID regex. Preserve every regular input file with canonical relative paths and include all output bytes in manifest; do not treat directory nlink as regular-file hardlink."
+    },
+    {
+      "id": "M1-09",
+      "severity": "major",
+      "path": "src/supervisor/workspace/bundle.py",
+      "description": "Lines 353-387 hash source and later reread for output with no capture consistency check. Deterministic source mutation returns a successful freeze whose verify immediately fails. Line 246 only checks immediate output parent; linked/sub/output writes through symlink ancestor. Lines 397-398 os.replace can replace an output created after precheck. Reject ancestry links and observed source mutation, and never overwrite concurrent pre-existing output."
+    },
+    {
+      "id": "M1-10",
+      "severity": "major",
+      "path": "src/supervisor/workspace/bundle.py",
+      "description": "Lines 134-140 reject schema-valid max_repair_rounds/max_takeovers=0. Lines 179-181 accept ../escape patterns. schema_version=true accepted by equality checks; verification bool schemas likewise. Missing task in trusted canonical manifest leaks FileNotFoundError. Enforce exact schema v1, valid pattern syntax, SHA256 length64 and required manifest inventory; normalize invalid input to ValueError."
+    },
+    {
+      "id": "M1-11",
+      "severity": "major",
+      "path": "src/supervisor/storage/intents.py",
+      "description": "Lines 79-102 inspect sidecars after sqlite connect, skip dangling symlinks via exists(), and explicitly check nlink only when suffix==empty. A hardlinked -journal is accepted; lines 152-155 check only immediate parent, allowing ancestor link writes. Validate DB and all sidecars/ancestors before SQLite consumes them, rejecting ordinary-file hardlinks and dangling symlinks."
+    },
+    {
+      "id": "M1-12",
+      "severity": "major",
+      "path": "deliveries/M1/hermes-report.md",
+      "description": "Line 53 falsely records pytest exit0 with 1 failed test; pytest test failures exit1, corroborated historical reviewer record. Lines 16/68 conflict on reviewer completion, line 56 stale prior code snapshot, line 34 stale line count. macOS 41/42 is an unresolved required failure, not cleared by this Linux 42/42 run. Correct real evidence and implement honest capability rejection where unsupported."
+    },
+    {
+      "id": "M1-13",
+      "severity": "blocking",
+      "path": "deliveries/M1/hermes-report.md",
+      "description": "Lines 13,64,70 admit cloud minimax fallback despite local-only implementation authorization. Direct tools do not establish absence of model inference; cloud session provenance remains admitted, not independently observed remotely. Current cloud review is explicitly user-authorized only; verify and restore local routing before subsequent implementation roles."
+    },
+    {
+      "id": "M1-14",
+      "severity": "blocking",
+      "path": "deliveries/M1/hermes-report.md",
+      "description": "Historical 3f61b9b contains claimed fresh review_1 REQUEST_REPAIR, later reverted. Concurrent-init repair 97a5bb9 and report corrections exist after initial code/report; do not reset repair allowance because review files disappeared. Historical session freshness/provider provenance cannot be certified from reports alone. Coordinator must reconcile consumed repair/takeover/call/wall allowance before further work. Current net baseline-to-candidate diff is 2509/2800 lines; any authorized takeover must recompute final net scope, and rewriting/removing current added code can reduce it. This audit grants no new repair allowance."
+    },
+    {
+      "id": "M1-15",
+      "severity": "minor",
+      "path": "deliveries/M1/hermes-report.md",
+      "description": "Net candidate scope is allowed 11 files/2509 insertions<=14/2800. Historical 3f61b9b created review-1.md and review-1-response.md outside implementation allowed files and ddde3c4 reverted them. Reversion removes net diff but does not erase intermediate scope violation; no protected files were touched."
+    }
+  ],
+  "summary": "Fresh cloud audit explicitly requested by user, independently inspected exact candidate 7f301ea72f759e4ec87128af68deb3e6dd8c9c45 in isolated clone, no implementation edits. Frozen tracked-code snapshot algorithm bound to 97a5bb9, distinct from M1 runtime snapshot. Historical review_1 and subsequent repair prevent granting another return_once; review_2 blocked pending honest local-route/allowance reconciliation. Required Linux unit151/164 and full247/260 fail13 hardcoded-path tests; frozen external42/42, specs/lint/format pass. Bounded independent probes reveal major integrity and policy defects beyond frozen coverage. Mac execution not rerun, admitted Mac failure remains unresolved. SQLite eight-connection identical reserve and injected reserve/complete COMMIT rollback passed; no remote model endpoint verification performed."
+}
