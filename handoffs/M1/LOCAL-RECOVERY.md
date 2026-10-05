@@ -2,6 +2,26 @@
 
 协调日期：2026-10-05（Asia/Shanghai）。这是一份协调交接，不修改 M1/v1 冻结合同，不证明本机服务已恢复，也不授予额外返修、调用或时间预算。
 
+## 当前生效的路由补充决定
+
+2026-10-05 用户在收到“允许 Hermes + MiniMax 云模型执行 M1 接管及最终审核”的选项后要求继续下一步。本轮按这一范围执行：允许本机 Hermes 使用实际 MiniMax 云模型完成 M1 协调、一次接管和全新最终审核。此决定覆盖下文原先的全本地模型路由前置要求、§2 本地 smoke 和 §4/§5/§6 中本地供应者限制；§2 保留为未来恢复全本地实验的步骤，本轮无需启动 MLX、llama.cpp 或 Claude CLI。
+
+这不是 smoke 通过，也不追溯改变原交付的云 fallback 事实。M1-13 记录为用户更新后续路由政策，历史违规保留；只使用明确选定的 MiniMax 供应者，记录实际模型、版本、会话和请求结果，失败不得隐式切换其他供应者。本轮不扩大 M2–M4 路由、合并或部署授权。
+
+当前证据提交 `2e7e49ab05a109b0622a83ade6bddc0c678ca227` 仍不能解除 M1-14：Markdown wall=4890，JSON wall=5760，均包含未知阶段的估计；调用 ~5/7 也缺少完整调用账本。不能把“有估计”写成“额度明确”。下一步先修证据，再决定是否能进入接管；不增加额度，不重置时钟。
+
+### 下一步证据任务
+
+在 `local/m1-recovery-evidence` 正常 ff-only 更新后，修正以下内容并推送；不触碰实现分支：
+
+1. Findings 计数改为 12 major、2 blocking、1 minor，总计 15。删除“Codex 是合同所有者、可以自行豁免”的说法，授权来自用户。
+2. 核对每个实际 Agent 启动/续接/委派的 operation/session ID、角色、开始结束时间、结果和证据出处。`max_agent_calls` 按合同的 Agent 调用核对，不把每个模型 token 请求算一轮，也不把多个独立 Agent 启动压成一个会话。无法确定的调用单列 unknown；云审核根会话与 fresh Reviewer 分别说明来源和计数归属，不能从一份报告推定只有一次调用。
+3. wall 使用真实操作起止记录重建；提交时间不是任务开始/结束证据。解释等待、暂停与并发如何按可信规则计数，不能擅自扣除未知时间或默认采用较小估计。两个文件保持一致；无法确定则值为 null，并保留估计字段和原因。
+4. 根据实际证据确认 takeover=0、repair=1；核对本任务没有活跃/未知写入进程，历史 revert 本身不证明有孤儿进程。
+5. 同步 Markdown/JSON，将额度结论改为 verified 或 unknown，并列出接管和独立 final_verify 需要的剩余 Agent 调用及时间。记录明确 MiniMax 路由；本地 smoke 仍为 not_run，本轮政策下不适用。
+
+满足额度和单写入者前提后，按 §4 原范围进入唯一一次接管，不必再次请求正常 Git 权限。无法证明额度、已耗尽、或 fresh 最终审核调用无法容纳时，保持 blocked，提交缺失证据清单；不能以路由变更为理由扩大预算。本文件没有把原 review_2 blocked 改成 accept/takeover，也没有授权额外返修。
+
 ## 1. 精确输入与当前结论
 
 - 仓库：`https://github.com/emlszhou/supervisor.git`。
@@ -73,15 +93,17 @@ macOS 大小写不敏感 APFS 的失败不能豁免，也不能改保护测试�
 ```text
 先 fetch origin，读取 codex/m1-local-recovery 的 handoffs/M1/LOCAL-RECOVERY.md
 以及 main 的 AGENTS.md、docs/LOCAL-MODEL-RUNBOOK.md。
-本轮先完成本机路由恢复和实际 Claude CLI 本地推理/失败关闭验证，禁止云 fallback。
-不要在当前云会话里继续写实现；不要把 CLI 本机运行称作本地推理。
+先遵守本文件“当前生效的路由补充决定”：本轮允许 Hermes + MiniMax 云模型，
+无需启动 Claude CLI/MLX；不得宣称本地 smoke 通过，不得隐式切换其他供应者。
 核对 M1 全部历史调用、累计 wall、返修与接管；返修已用 1，不得重置。
 把脱敏路由与额度证据提交到独立 local/m1-recovery-evidence 分支，
 路径 deliveries/M1/local-recovery-evidence.md；不要放进受限实现分支。
-只有路由通过、额度有证且无未知副作用，才能按交接进入一次 local/m1-takeover。
+先修正 2e7e49a 的证据：15 findings=12 major+2 blocking+1 minor；
+wall 4890/5760 冲突和 ~5/7 调用数必须按实际日志核对，不能当已验证余额。
+只有 MiniMax 实际路由明确、额度有证且无未知副作用，才能进入一次 local/m1-takeover。
 从候选 7f301ea72f759e4ec87128af68deb3e6dd8c9c45 接管，读取审核提交
 9c4abdb46d3dfa75353bec9be71ba0a3175124ad 的全部 findings 与 probes。
 冻结合同、API、保护测试、预算不变；修复只在 allowed_files，真实复跑全部检查。
-完成后推送代码/报告，由另一真正全新本地会话 final_verify；不自行验收或合并。
-不能证明剩余额度或无法禁止 fallback 时保持 blocked，只交付证据与最小缺失条件。
+完成后推送代码/报告，由另一真正全新 Hermes/MiniMax 会话 final_verify；不自行验收或合并。
+不能证明剩余额度或缺少 fresh 能力时保持 blocked，只交付证据与最小缺失条件。
 ```
