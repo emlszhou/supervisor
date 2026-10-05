@@ -16,54 +16,52 @@ import pytest
 from supervisor.workspace.bundle import freeze_bundle, verify_bundle
 
 
-def _resolve_contract_root() -> Path:
-    """Find the frozen contract root, honouring ``M1_CONTRACT_ROOT`` if set.
-
-    The default looks for a sibling ``supervisor-M1-contract/task-bundle``
-    relative to the supervisor-M1 worktree. Test runners on a clean checkout
-    may override the location with the ``M1_CONTRACT_ROOT`` env var so the
-    bundle unit tests do not depend on a developer-specific absolute path.
-    """
-    override = os.environ.get("M1_CONTRACT_ROOT")
-    if override:
-        return Path(override)
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        candidate = parent / "supervisor-M1-contract" / "task-bundle"
-        if candidate.is_dir():
-            return candidate
-    # Final fallback: relative to cwd.
-    cwd_candidate = Path.cwd() / "supervisor-M1-contract" / "task-bundle"
-    if cwd_candidate.is_dir():
-        return cwd_candidate
-    raise FileNotFoundError(
-        "M1 contract root not found; set M1_CONTRACT_ROOT or clone the "
-        "supervisor-M1-contract repo next to supervisor-M1"
-    )
-
-
-CONTRACT_ROOT = _resolve_contract_root()
-TASK_PATH = CONTRACT_ROOT / "task.json"
-REQUIREMENTS_PATH = CONTRACT_ROOT / "requirements.md"
-ALLOWED_PATH = CONTRACT_ROOT / "allowed_files.json"
-FORBIDDEN_PATH = CONTRACT_ROOT / "forbidden_files.json"
-VERIFICATION_PATH = CONTRACT_ROOT / "verification.json"
-
-
 def _make_draft_source(tmp_path: Path) -> tuple[Path, str]:
     root = tmp_path / "input"
     root.mkdir()
-    task = json.loads(TASK_PATH.read_text())
-    task["status"] = "draft"
-    task["baseline_commit"] = None
+    task = {
+        "schema_version": 1,
+        "task_id": "M1-fixture",
+        "revision": 1,
+        "status": "draft",
+        "baseline_commit": None,
+        "requirements_file": "requirements.md",
+        "allowed_files_file": "allowed_files.json",
+        "forbidden_files_file": "forbidden_files.json",
+        "verification_file": "verification.json",
+        "roles": dict.fromkeys(
+            ("planner", "implementer", "reviewer", "fallback_repairer", "final_verifier"), "A"
+        ),
+        "budgets": {
+            "max_agent_calls": 7,
+            "max_repair_rounds": 1,
+            "max_takeovers": 1,
+            "max_wall_seconds": 7200,
+            "max_changed_files": 14,
+            "max_diff_lines": 2800,
+            "max_output_bytes": 1048576,
+        },
+    }
     (root / "task.json").write_text(json.dumps(task))
-    for name, src in (
-        ("requirements.md", REQUIREMENTS_PATH),
-        ("allowed_files.json", ALLOWED_PATH),
-        ("forbidden_files.json", FORBIDDEN_PATH),
-        ("verification.json", VERIFICATION_PATH),
-    ):
-        (root / name).write_bytes(src.read_bytes())
+    (root / "requirements.md").write_text("fixture requirements")
+    (root / "allowed_files.json").write_text('["src/**"]')
+    (root / "forbidden_files.json").write_text('["tests/protected/**"]')
+    (root / "verification.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "checks": [
+                    {
+                        "id": "unit",
+                        "kind": "project",
+                        "argv": ["python", "-m", "pytest"],
+                        "cwd": ".",
+                        "required": True,
+                    }
+                ],
+            }
+        )
+    )
     return root, task["task_id"]
 
 

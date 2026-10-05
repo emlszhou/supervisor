@@ -27,6 +27,7 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import stat
 import time
 from pathlib import Path
 from typing import Any
@@ -40,12 +41,12 @@ _VALID_STATUSES = ("pending", "completed", "unknown")
 
 
 def _check_id(name: str, value: Any) -> None:
-    if not isinstance(value, str) or not _ID_RE.match(value):
+    if not isinstance(value, str) or not _ID_RE.fullmatch(value):
         raise ValueError(f"{name} must match ^[A-Za-z0-9][A-Za-z0-9._-]{{0,63}}$")
 
 
 def _check_sha(name: str, value: Any) -> None:
-    if not isinstance(value, str) or not _SHA64_RE.match(value):
+    if not isinstance(value, str) or not _SHA64_RE.fullmatch(value):
         raise ValueError(f"{name} must be 64 lowercase hex characters")
 
 
@@ -90,7 +91,7 @@ class IntentStore:
         while True:
             try:
                 self._conn.execute("PRAGMA journal_mode=WAL")
-                self._conn.execute("PRAGMA synchronous=NORMAL")
+                self._conn.execute("PRAGMA synchronous=FULL")
                 self._conn.execute("PRAGMA foreign_keys=ON")
                 self._conn.execute("PRAGMA busy_timeout=30000")
                 break
@@ -100,80 +101,34 @@ class IntentStore:
                     raise
                 time.sleep(delay)
                 delay = min(delay * 2, 0.1)
-        self._create_schema()
+        try:
+            self._create_schema()
+        except BaseException:
+            self._safe_close()
+            raise
 
     @staticmethod
     def _check_path(path: Path) -> None:
-        if path.is_symlink():
-            raise ValueError(f"db path must not be a symlink: {path}")
-        if path.exists():
-            try:
-                st = path.lstat()
-            except OSError as e:
-                raise ValueError(f"db path not statable: {path}: {e}") from e
-            if stat.S_ISLNK(st.st_mode):
-                raise ValueError(f"db path must not be a symlink: {path}")
-            if st.st_nlink > 1:
-                raise ValueError(f"db path must not be a hardlink: {path}")
-        parent = path.parent
-        if parent.exists() and parent.is_symlink():
-            raise ValueError(f"db parent must not be a symlink: {parent}")
+        from supervisor.workspace.snapshot import _check_ancestors
+
+        _check_ancestors(path)
 
     def _check_name_chain(self, sidecar: Path, *, suffix: str = "") -> None:
-        """Walk every ancestor of `sidecar` and reject any link escape.
+        from supervisor.workspace.snapshot import _check_ancestors
 
-        The contract requires sqlite3 never to touch a path whose
-        DB or sidecar (or any directory between it and the file system
-        root) is a symlink, hardlink, or otherwise unclassified. This
-        rejects the open before any engine code touches the path.
-        """
-        # The path itself must not be a dangling symlink, a symlink, or
-        # a hardlinked regular file. `dangling` (relying `exists()` would
-        # follow a symlink) is detected by lstat; we use lstat semantics
-        # to see the link itself rather than its target.
-        if sidecar.exists() or os.path.lexists(str(sidecar)):
-            try:
-                st = sidecar.lstat()
-            except OSError as e:
-                self._safe_close()
-                raise ValueError(f"sidecar not statable: {sidecar}: {e}") from e
-            if stat.S_ISLNK(st.st_mode):
-                self._safe_close()
-                raise ValueError(f"refusing to open symlinked sidecar: {sidecar}")
-            if stat.S_ISREG(st.st_mode) and st.st_nlink > 1:
-                self._safe_close()
-                raise ValueError(f"refusing to open hardlinked sidecar: {sidecar}")
-            try:
-                target_real = Path(os.path.realpath(sidecar))
-            except OSError:
-                self._safe_close()
-                raise ValueError(f"sidecar not resolvable: {sidecar}") from None
-            db_real = Path(os.path.realpath(self._path))
-            if target_real.parent != db_real.parent:
-                # The sidecar lives outside the DB directory after
-                # resolving all ancestor links; reject.
-                self._safe_close()
-                raise ValueError(f"sidecar escapes db directory: {sidecar} -> {target_real}")
-        # Reject every ancestor directory between the file system root
-        # and the DB parent if any of them is a symlink.
-        chain = self._path.parent
-        while chain != chain.parent:
-            try:
-                if chain.is_symlink() or os.path.islink(str(chain)):
-                    self._safe_close()
-                    raise ValueError(f"db ancestor must not be a symlink: {chain}")
-            except OSError as e:
-                self._safe_close()
-                raise ValueError(f"db ancestor not statable: {chain}: {e}") from e
-            if chain == Path("/"):
-                break
-            chain = chain.parent
+        _check_ancestors(sidecar)
+        if os.path.lexists(sidecar):
+            st = sidecar.lstat()
+            if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+                raise ValueError(f"DB or sidecar must be an unlinked regular file: {sidecar}")
 
     def _safe_close(self) -> None:
-        try:
-            self._conn.close()
-        except sqlite3.Error:
-            pass
+        conn = getattr(self, "_conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
 
     def _create_schema(self) -> None:
         self._conn.executescript(
@@ -276,7 +231,7 @@ class IntentStore:
                 (operation_id,),
             )
             self._conn.execute("COMMIT")
-        except sqlite3.Error:
+        except BaseException:
             try:
                 self._conn.execute("ROLLBACK")
             except sqlite3.Error:
@@ -361,7 +316,7 @@ class IntentStore:
                 (operation_id, evidence_sha256),
             )
             self._conn.execute("COMMIT")
-        except sqlite3.Error:
+        except BaseException:
             try:
                 self._conn.execute("ROLLBACK")
             except sqlite3.Error:
@@ -404,7 +359,7 @@ class IntentStore:
                 (operation_id,),
             )
             self._conn.execute("COMMIT")
-        except sqlite3.Error:
+        except BaseException:
             try:
                 self._conn.execute("ROLLBACK")
             except sqlite3.Error:
@@ -448,8 +403,3 @@ class IntentStore:
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
         self.close()
-
-
-# Late import to avoid an unconditional stdlib top-level dependency on
-# `stat` (which is small but only needed for the hardlink check).
-import stat  # noqa: E402  (intentional late import)
