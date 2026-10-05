@@ -4,8 +4,8 @@
 - **Baseline commit / bundle SHA256 / candidate snapshot SHA256:**
   - Baseline: `c6e224587b930a5b96c7723009584424f6bc52d5`
   - Contract bundle: `47ea6c51c46570e92f97c89428c9783a90bcc10e301e3e8d6ce38d4fb25dd142`
-  - Candidate tracked-code snapshot SHA256 (frozen `task-bundle/snapshot.py` algorithm, NOT M1 workspace snapshot): `68f310b551707da6fed143dd6eac5e95a166bd1a7137051bfc574c8fa844423f`
-  - Candidate code commit: `fcc701358997385019bcf461224da35d07c83c39` (10 files changed/new, 2421 insertions)
+  - Candidate tracked-code snapshot SHA256 (frozen `task-bundle/snapshot.py` algorithm, NOT M1 workspace snapshot): `6212c137963a2a97b506e4a1d67efd79adfd6c0e10cd87f14d3b7139c04e0a42`
+  - Candidate code commit: `97a5bb9db3a37ca0da4bbf72487388330dd7f1c4` (5 production modules + 5 test files + 1 concurrent-init race fix = 11 files, 2509 insertions total in this branch vs baseline c6e2245)
 - **Implementation branch:** `hermes/m1`
 - **Report commit (this file):** reported by Git HEAD at delivery time, not self-referenced here.
 - **Agent / model / session / Worker / OS / Python:**
