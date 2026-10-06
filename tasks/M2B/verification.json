@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "checks": [
+    {
+      "id": "protected-adapter",
+      "kind": "independent",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "${CONTRACT}/tests/protected/test_contract.py",
+        "-q"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "full",
+      "kind": "project",
+      "argv": [
+        "python",
+        "-m",
+        "pytest"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "specs",
+      "kind": "project",
+      "argv": [
+        "python",
+        "scripts/check_specs.py"
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "lint",
+      "kind": "project",
+      "argv": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": ".",
+      "required": true
+    },
+    {
+      "id": "format",
+      "kind": "project",
+      "argv": [
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "cwd": ".",
+      "required": true
+    }
+  ]
+}
