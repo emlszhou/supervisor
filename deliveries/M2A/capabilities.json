@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "M2A-hermes-capabilities",
   "run_id": "m2a-hermes-investigation-1",
-  "attempt_id": "m2a-coordinator-2026-10-05T22-50Z",
+  "attempt_id": "m2a-coordinator-2026-10-05T22-50Z-reconciled",
   "baseline_commit": "35f948fd40a6bf3e63982fd884422206cbffd28a",
   "host": {
     "os": "macOS 27.0.1 (darwin-arm64)",
@@ -41,9 +41,9 @@
       "id": "noninteractive",
       "declared": "yes",
       "observed": "yes",
-      "enforced": "yes",
+      "enforced": "unknown",
       "status": "passed",
-      "reason": "hermes chat with -q, --oneshot, -Q exits with code 0 and prints response to stdout in a non-TTY shell. Pipeline-friendly: command is a normal argv invocation with no escape to REPL. Recorded fresh launch 20261006_064840_100423.",
+      "reason": "hermes chat with -q, --oneshot, -Q exits with code 0 and prints response to stdout in a non-TTY shell. Pipeline-friendly: command is a normal argv invocation with no escape to REPL. Recorded fresh launch 20261006_064840_100423. enforced=unknown per Codex M2A-R1-enforced: a single successful observation is not a control-boundary guarantee; downgrade from enforced=yes.",
       "argv": [
         "hermes",
         "chat",
@@ -74,9 +74,9 @@
       "id": "model_route",
       "declared": "yes",
       "observed": "yes",
-      "enforced": "yes",
+      "enforced": "unknown",
       "status": "passed",
-      "reason": "Actual inference provider observed in agent.log: model=MiniMax-M3 provider=minimax-cn. Hermes status shows MiniMax-CN key present in env, all other providers absent or unset. Inference location is cloud (minimax.cn endpoint, not local). Custom provider with base_url=http://127.0.0.1:18080/v1 falls back to minimax-cn when local endpoint is offline (port 18080 not listening, lsof -nP -iTCP:18080 returns empty). Per user 2026-10-05 supplement, MiniMax cloud is explicitly authorized for this round.",
+      "reason": "Actual inference provider observed in agent.log for session 20261006_064840_100423: model=MiniMax-M3 provider=minimax-cn (from agent.conversation_loop log line). Specific probe binds: probe1/model_route uses minimax-cn directly; probe4 (20261006_064900_fb3e02) used provider=custom base_url=18080/v1, hit APIConnectionError, fell back to llamacpp (also dead), then minimax-cn/MiniMax-M3; final API call completed. Hermes status shows MiniMax-CN key present in env, all other providers absent or unset. Inference location is cloud (minimax.cn endpoint, not local). Per user 2026-10-05 supplement, MiniMax cloud is explicitly authorized for this round. enforced=unknown per Codex M2A-R1-enforced: route was observed and chosen by Hermes internal fallback, not by Adapter-side enforcement.",
       "argv": [
         "hermes",
         "chat",
@@ -107,9 +107,9 @@
       "id": "fresh_session",
       "declared": "yes",
       "observed": "yes",
-      "enforced": "yes",
+      "enforced": "unknown",
       "status": "passed",
-      "reason": "Two distinct hermes chat invocations produced distinct session IDs: 20261006_064840_100423 (probe1) and 20261006_064847_a83b31 (probe2). Third distinct ID 20261006_064854_7941c5 from probe3 stream-json confirms each invocation boots a fresh Python interpreter with its own session_id. Session IDs are emitted by hermes itself, not derived from chat-level role switching.",
+      "reason": "Multiple distinct hermes chat invocations produced distinct session IDs (each is a fresh Python interpreter boot, not chat-level role switch): 20261006_064840_100423 (probe1, model=MiniMax-M3 provider=minimax-cn), 20261006_064847_a83b31 (probe2), 20261006_064854_7941c5 (probe3, stream-json init event), 20261006_064900_fb3e02 (probe4, custom→llamacpp→minimax-cn fallback chain), 20261006_064926_4328cc (probe4c). Session IDs are emitted by hermes itself. enforced=unknown per Codex M2A-R1-enforced: session_id is self-attesting timestamp YYYYMMDD_HHMMSS_<hex6>, not signed or externally attestable.",
       "argv": [
         "hermes",
         "chat",
@@ -213,26 +213,10 @@
     {
       "id": "timeout",
       "declared": "yes",
-      "observed": "unknown",
-      "enforced": "unknown",
-      "status": "not_run",
-      "reason": "--run-budget N sets a wall-clock budget for the conversation run; hermes issues a one-time 80% wrap-up notice and caps implicit provider stale timeouts to the remaining budget. We attempted 1s budget with a 500-word-essay prompt; hermes completed the response in ~15s without exiting non-zero, returning the full essay. --run-budget does NOT hard-kill the process at 100%. We cannot reliably force a true hard timeout without modifying Hermes itself or making the provider unreachable; per the M2-A scope rules we do not modify the Agent binary. Status is not_run (was attempted, behavior unobserved). Adapter contract should specify a separate SIGTERM-style hard timeout owned by the caller.",
-      "argv": null,
-      "cwd": null,
-      "started_utc": null,
-      "ended_utc": null,
-      "exit_code": null,
-      "output_sha256": null,
-      "session_id": null,
-      "session_id_source": null
-    },
-    {
-      "id": "cancellation",
-      "declared": "yes",
       "observed": "yes",
-      "enforced": "yes",
-      "status": "passed",
-      "reason": "Started hermes chat in background (PID 60784, probe6b), sent SIGINT 1 second later; the python process exited and produced 0-byte output file (sha e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 = empty SHA). Cancellation is process-level only; the test verifies that SIGINT terminates the hermes process without leaking other processes (no child processes observed after kill). Per the §6 'leader exits does not mean whole-tree reclaim' requirement, this only verifies the head process and does NOT spawn orphan worker children (single-process Python interpreter).",
+      "enforced": "no",
+      "status": "failed",
+      "reason": "Probe5c actually ran and produced a real response: argv `hermes chat -q 'Write a 500 word essay about distributed consensus in computer systems' --oneshot --provider minimax-cn -m MiniMax-M3 --in /tmp -Q --run-budget 1 --max-turns 1 --source m2a-smoke-5c`; agent.log session 20261006_064947_c93927 confirms API call #1 latency=11.9s, response_len=3441, finish_reason=stop. The probe ran with --run-budget 1 (1 second wall budget) and --max-turns 1; the model took 11.9s of wall time to complete and returned a full 500-word essay; hermes did NOT hard-kill at the budget boundary; --run-budget was not enforced as a timeout. status=failed per Codex M2A-R1-timeout: the probe ran but failed to demonstrate a hard timeout. Adapter contract should specify caller-side SIGTERM-style hard timeout owned by the caller, NOT rely on --run-budget.",
       "argv": [
         "hermes",
         "chat",
@@ -247,17 +231,33 @@
         "/tmp",
         "-Q",
         "--run-budget",
-        "30",
+        "1",
         "--max-turns",
         "1",
         "--source",
-        "m2a-smoke-6b"
+        "m2a-smoke-5c"
       ],
       "cwd": "/Users/william/Public/AI project/supervisor-M2A",
-      "started_utc": "2026-10-05T22:50:28Z",
-      "ended_utc": "2026-10-05T22:50:29Z",
+      "started_utc": "2026-10-05T22:49:46Z",
+      "ended_utc": "2026-10-05T22:50:01Z",
       "exit_code": 0,
-      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_sha256": "30f1521d352caaa410e548788c6f504f537a96aebebd9447b4b08a65e39ae2d3",
+      "session_id": "20261006_064947_c93927",
+      "session_id_source": "/Users/william/.hermes/logs/agent.log line containing session=20261006_064947_c93927 agent.conversation_loop API call latency=11.9s"
+    },
+    {
+      "id": "cancellation",
+      "declared": "yes",
+      "observed": "unknown",
+      "enforced": "unknown",
+      "status": "unsupported",
+      "reason": "Multiple cancellation probes ran (probe6 session=20261006_065009_f966a0, probe7 session=20261006_065026_1cad62, probe6b external SIGINT on PID 60784). Each ran hermes chat in background and either received internal 'Interrupt requested (hard): explicit stop requested' (probe6, probe7) or was killed externally with SIGINT (probe6b). For probe6b the output file is 0 bytes (sha e3b0c44298... = empty SHA), ps -p showed process ended, but the exit code was NOT captured by the coordinator command and the process tree reclaim state was NOT verified by pgrep. status=unsupported because the validator schema requires exit_code as int when status is passed/failed and we cannot honestly claim the exit code; observed=enforced=unknown per Codex M2A-R1-cancel: ps-disappear + 0-byte file is not sufficient to claim wait=0 or tree-clean reclaim. Adapter contract should specify that cancellation must be verified by capturing $? AND pgrep -P <ppid> at +N seconds, NOT a single ps -p observation. Probe argv for probe6b is preserved below; older probe6/probe7 have hermes-internal interruption, not external SIGINT, so they are not the same evidence type.",
+      "argv": null,
+      "cwd": null,
+      "started_utc": null,
+      "ended_utc": null,
+      "exit_code": null,
+      "output_sha256": null,
       "session_id": null,
       "session_id_source": null
     },
@@ -281,24 +281,44 @@
   "fresh_sessions": [
     {
       "id": "20261006_064840_100423",
-      "source": "/Users/william/Public/AI project/supervisor-M2A/.m2a-control/probe1/output.txt (hermes chat probe1 session_id line)"
+      "source": "/Users/william/Public/AI project/supervisor-M2A/.m2a-control/probe1/output.txt (line 3 'session_id: 20261006_064840_100423'); cross-validated from /Users/william/.hermes/logs/agent.log"
     },
     {
       "id": "20261006_064847_a83b31",
-      "source": "/Users/william/Public/AI project/supervisor-M2A/.m2a-control/probe2/output.txt (hermes chat probe2 session_id line)"
+      "source": "/Users/william/Public/AI project/supervisor-M2A/.m2a-control/probe2/output.txt (line 3 'session_id: 20261006_064847_a83b31'); cross-validated from /Users/william/.hermes/logs/agent.log"
     },
     {
       "id": "20261006_064854_7941c5",
-      "source": "/Users/william/Public/AI project/supervisor-M2A/.m2a-control/probe3/output.txt (hermes chat probe3 stream-json session_id init event)"
+      "source": "/Users/william/Public/AI project/supervisor-M2A/.m2a-control/probe3/output.txt (stream-json init event session_id); cross-validated from /Users/william/.hermes/logs/agent.log"
+    },
+    {
+      "id": "20261006_064900_fb3e02",
+      "source": "/Users/william/.hermes/logs/agent.log session=20261006_064900_fb3e02 agent.turn_context; probe4 with provider=custom→llamacpp→minimax-cn fallback chain"
+    },
+    {
+      "id": "20261006_064926_4328cc",
+      "source": "/Users/william/.hermes/logs/agent.log session=20261006_064926_4328cc agent.turn_context; probe4c with provider=nonexistent-provider, silent fallback to minimax-cn"
+    },
+    {
+      "id": "20261006_064947_c93927",
+      "source": "/Users/william/.hermes/logs/agent.log session=20261006_064947_c93927 agent.conversation_loop API call latency=11.9s response_len=3441; probe5c with --run-budget 1 (timeout probe)"
+    },
+    {
+      "id": "20261006_065314_527fb2",
+      "source": "/Users/william/.hermes/logs/agent.log session=20261006_065314_527fb2 platform=subagent; fresh Reviewer via delegate_task deleg_91129ec3 sa-0-9922978a"
     }
   ],
   "adapter_readiness": "blocked",
   "limitations": [
-    "endpoint_failure: hermes silently falls back to minimax-cn when primary provider fails; the failure is logged on stderr but not surfaced as a non-zero exit code (observed=enforced=no)",
-    "timeout: --run-budget is a soft wrap-up budget, not a SIGTERM after a generous number of seconds; true hard timeout requires caller-level SIGKILL",
-    "permissions: declared but not adversarially tested; real file/network/MCP/process boundaries deferred to M2-C Worker contract",
+    "endpoint_failure: hermes silently falls back to minimax-cn when primary provider fails; the failure is logged on stderr but not surfaced as a non-zero exit code (observed=enforced=no). Probe4 (provider=custom base_url=18080/v1) showed the FULL fallback chain: custom→APIConnectionError→llamacpp→APIConnectionError→minimax-cn/MiniMax-M3. The chain is observable but the final exit is success.",
+    "timeout: --run-budget is a soft wrap-up budget, NOT a SIGTERM; probe5c (--run-budget 1) actually ran for 11.9s wall and returned a 3441-byte response. Adapter contract should specify caller-side SIGTERM hard timeout.",
+    "cancellation: validator schema requires exit_code as int when status is passed/failed; coordinator's external-kill probe6b (PID 60784, SIGINT at +1s) did not capture $? and did not verify process-tree reclaim via pgrep. Hermes-internal interruptions (probe6, probe7) showed 'Interrupt requested (hard): explicit stop requested' but those are HERMES internal, not Adapter-side SIGTERM. Per Codex M2A-R1-cancel + M2A-R2 format-gap: validator cannot express 'executed but exit-code unknown' as a structured state; current schema forces unsupported to lose argv/sha evidence.",
+    "permissions: declared but not adversarially tested; real file/network/MCP/process boundaries deferred to M2-C Worker contract. --safe-mode / --ignore-rules are declared; not equivalent to disabling tools.",
     "macOS case-insensitive APFS does not affect Hermes capabilities, but is recorded as the platform characteristic of the host",
     "local MLX / llamacpp endpoints (127.0.0.1:18080, 127.0.0.1:15721, 127.0.0.1:18434) are not listening during this investigation; hermes chat --provider custom falls back to minimax-cn as a result, and this is the only observable cloud-vs-local divergence",
-    "fresh_sessions emitted by hermes carry an embedded timestamp YYYYMMDD_HHMMSS_<hex6>; identity is real (each invocation boots a fresh Python interpreter) but it is not signed or externally attestable"
+    "fresh_sessions emitted by hermes carry an embedded timestamp YYYYMMDD_HHMMSS_<hex6>; identity is real (each invocation boots a fresh Python interpreter) but it is not signed or externally attestable",
+    "55 pytest fails in tests/unit/ are baseline-inherited from dcfd0ca/b56bc0b/e1e8af2/2050caf integration chain; 39 from snapshot.py:158 raising 'case-insensitive filesystem is not supported' on macOS APFS, 16 from test-side 'Regex pattern did not match'. Coordinator cannot modify M1 code/tests per forbidden_files.json; M1 contract owner is responsible.",
+    "Real Agent-launch ledger (per Codex M2A-R1-budget reconciliation): 12 model-bound probes (probe1-7 + probe4b, 4c, 5b, 6b external) + 1 fresh reviewer = 13 launches (exceeded 7-launch contract budget by 6); coordinator session 20261005_193638_282edb is multi-day, not counted as an additional launch for the M2-A cycle but its machine-handoff continuation is logged. Per user 2026-10-06 budget adjustment: cycle is no longer auto-stopped by budget, but the over-budget state is preserved in this evidence.",
+    "Validator format gap: validate_delivery.py cannot express 'probe ran but exit_code unknown' as a structured status; this forces cancellation check to lose its argv/sha evidence when we honestly cannot claim the exit code. Per Codex M2A-R2: documented as a gap for the next contract owner to address in the validator schema, NOT by modifying the current validator."
   ]
 }
