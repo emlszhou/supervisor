@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "review_type": "source_specification",
+  "task_id": "M2B-hermes-adapter-fixtures",
+  "decision": "accept",
+  "reviewed_commit": "b1c39fb78bd14f7eefebbfa0f797cf6be3823d41",
+  "fresh_session": true,
+  "independent_provider": false,
+  "scope": "Independent clone; reviewer-only report; no implementation edits, live Hermes, model probes, or network calls.",
+  "feasibility": "Offline stdlib parser and bounded synthetic CLI are feasible within four allowed files and unchanged public APIs. Corrected actual runner naming and explicit 4096-character summary rejection resolve blocking findings.",
+  "budget_interpretation": "Cycle wall time, Agent calls, repair and takeover counts advisory per user steering; four-file/2200-line scope and actual per-process limits hard.",
+  "checks": [
+    {
+      "command": "Python jsonschema validation of tasks/M2B/task.json and verification.json against existing schemas",
+      "exit_code": 0,
+      "result": "both valid"
+    },
+    {
+      "command": "Python jsonschema check of 4097-character summary against existing AgentResult summary schema",
+      "exit_code": 0,
+      "result": "rejected as expected; specification mismatch confirmed"
+    },
+    {
+      "command": "python -m pytest tasks/M2B/tests/protected/test_contract.py --collect-only -q",
+      "exit_code": 0,
+      "collected": 29,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "not_run": [
+    "Adapter behavioral tests: implementation absent, collection is not a pass",
+    "Full project suite/build/lint: source specification review only",
+    "Real Hermes/model/OS isolation probes: prohibited and outside offline scope"
+  ],
+  "frozen_bundle": "not yet published; this review binds source commit only",
+  "limitations": [
+    "No claim of real CLI compatibility, tool disabling, OS isolation, or live model readiness.",
+    "build_request must remain unconditionally disabled before any process launch.",
+    "Some protocol boundary and actual fixture integration checks remain implementer-owned; independent checks are meaningful, not comprehensive."
+  ],
+  "previous_review_commit": "16e816502324d16aa5084f763ee2525154d56aa4",
+  "resolved_findings": [
+    {
+      "id": "M2B-SPEC-1",
+      "severity": "blocking",
+      "file": "tasks/M2B/requirements.md",
+      "description": "The existing runner is ProcessRunner.run in supervisor.workers.process; no ProcessWorker exists. Mandatory fixture integration currently names a nonexistent API while Worker edits are forbidden.",
+      "requested_change": "Name ProcessRunner.run explicitly for fixture integration, retaining the existing ProcessRequest/ProcessResult API."
+    },
+    {
+      "id": "M2B-SPEC-2",
+      "severity": "blocking",
+      "file": "tasks/M2B/requirements.md",
+      "description": "Terminal text accepts arbitrary strings within the 65536-byte stream limit and becomes summary verbatim. Existing agent-result.schema.json limits summary to 4096 characters. A 4097-character terminal text is protocol-valid under the draft but violates the required existing AgentResult schema.",
+      "requested_change": "Specify a schema-compatible policy, preferably safe failed rejection for terminal text longer than 4096 characters; independently test 4096 and 4097."
+    }
+  ],
+  "findings": []
+}

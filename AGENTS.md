@@ -78,3 +78,7 @@ M0R已独立验收接受并合入main。当前M1-integrity-intents使用main的h
 用户也明确批准 M2 继续使用 Hermes + MiniMax 云模型，覆盖上文本地推理默认要求；不得宣称全本地或隐式换其他供应者。当前 M2A-hermes-capabilities 仅调查和证据交付，不实现 Adapter/Worker。权威冻结输入见 handoffs/M2A/v1；实施分支 hermes/m2a，两个允许交付文件见冻结 allowed_files，审核分支 local/m2a-review-*。共用 14400 秒与 7 次 Agent 启动，角色与真实 probe 启动共同计数，额度不足停止，不能保证返修和接管全部可用。
 
 M2-C 真正边界验证前，Agent smoke 必须已核验禁用工具并在无秘密合成目录执行；不能保证则不运行，报告 unsupported。Reviewer 必须真正 fresh，结构 validator 不证明运行真实性。普通推拉已授权；M2 实现合并 main 与部署没有自动授权。规格发布由协调流程管理，不把角色报告当授权。
+
+## 当前预算语义与 M2-B
+
+用户2026-10-06已将周期时间/Agent启动额度改为建议值，超额检视原因与停滞，不自动停止、不重置历史消耗，覆盖旧硬停止条款。单次进程预算、scope、权限、真实性和fresh审核继续有效。M2-A成果可用于规格准备，但真机执行门禁仍未通过。M2B-hermes-adapter-fixtures以handoffs/M2B/v1为权威输入，hermes/m2b实施，local/m2b-review-*审核；仅离线解析与模拟CLI，真实build_request恒拒绝。普通规格发布/推拉已授权，实施merge main/部署仍需具体授权。

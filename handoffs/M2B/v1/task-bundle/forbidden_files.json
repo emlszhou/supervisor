@@ -1,0 +1,16 @@
+[
+  "tasks/**",
+  "handoffs/**",
+  "schemas/**",
+  "tests/protected/**",
+  "src/supervisor/workers/**",
+  "src/supervisor/workspace/**",
+  "src/supervisor/agents/base.py",
+  "src/supervisor/agents/mock.py",
+  "docs/**",
+  "AGENTS.md",
+  "pyproject.toml",
+  "uv.lock",
+  "deliveries/M1/**",
+  "deliveries/M2A/**"
+]

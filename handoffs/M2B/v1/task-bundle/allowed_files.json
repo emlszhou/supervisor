@@ -1,0 +1,6 @@
+[
+  "src/supervisor/agents/hermes.py",
+  "tests/unit/test_hermes_adapter.py",
+  "tests/fixtures/hermes_cli.py",
+  "deliveries/M2B/hermes-report.md"
+]

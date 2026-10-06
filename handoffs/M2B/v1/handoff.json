@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "task_id": "M2B-hermes-adapter-fixtures",
+  "revision": 1,
+  "baseline_commit": "85fde6074d45ea0137a2dc55aae3362befa91639",
+  "bundle_sha256": "9a46b4a424ffeab7c0f63ec9b3cbb1038b7d9168488da7697576613e38574703",
+  "implementation_branch": "hermes/m2b",
+  "source_spec_commit": "b1c39fb78bd14f7eefebbfa0f797cf6be3823d41",
+  "spec_review_commit": "02e9b36cd470416039d14fcd907c35e6217bdd7f",
+  "budget_semantics": "cycle time/launch/repair/takeover advisory; process limits and scope mandatory",
+  "baseline_tests_passed": 301
+}
