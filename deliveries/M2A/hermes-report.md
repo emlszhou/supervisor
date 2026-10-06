@@ -30,14 +30,14 @@ All argv lists below are taken verbatim from the `argv` field of the correspondi
 
 | ID | status | argv head | exit | wall | output sha |
 |---|---|---|---|---|---|
-| cli_help | passed | `hermes --version` | 0 | < 2 s | `7a316e1fd9738c9e325447da35afbfee4e1f4a6af100184fba7e5177244e0398` |
-| noninteractive | passed | `hermes chat -q ... --oneshot --provider minimax-cn -m MiniMax-M3 -Q --run-budget 30 --max-turns 1` | 0 | 4 s | `962ea1a8df108ad1091093d694f5f88596ed930e2517696325acdd4ccb829754` |
-| model_route | passed | same | 0 | 4 s | `962ea1a8...` |
-| fresh_session | passed | `hermes chat ... --source m2a-smoke-2` | 0 | 4 s | `60be8ec781fce983788d56974f5e9de3f1f9530086c8badaedcc8442636ae554` |
-| output_protocol | passed | `hermes chat ... --format stream-json` | 0 | 3 s | `cfa55ccad6594ca25ad492297ae32994e0c6e303867db87d8d2302d71349a73c` |
-| endpoint_failure | failed | `hermes chat ... --provider nonexistent-provider` | 0 | 3 s | `c3723c5c51cd7b60b616f7dd7087782754610a59f54e0e1018b67b9b052969c5` |
-| timeout | not_run | n/a | n/a | n/a | n/a |
-| cancellation | passed | `hermes chat ... & PID 60784 SIGINT +1s` | 0 | 1 s | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` (empty file) |
+| cli_help | passed | `hermes --version` | 0 | < 2 s | `7a316e1f...0398` |
+| noninteractive | passed (enforced=unknown after Codex M2A-R1-enforced) | `hermes chat -q ... --oneshot --provider minimax-cn -m MiniMax-M3 -Q --run-budget 30 --max-turns 1` | 0 | 4 s | `962ea1a8...9754` |
+| model_route | passed (enforced=unknown) | same | 0 | 4 s | `962ea1a8...9754` |
+| fresh_session | passed (enforced=unknown) | `hermes chat ... --source m2a-smoke-2` | 0 | 4 s | `60be8ec7...6554` |
+| output_protocol | passed | `hermes chat ... --format stream-json` | 0 | 3 s | `cfa55cca...973c` |
+| endpoint_failure | failed (enforced=no) | `hermes chat ... --provider nonexistent-provider` | 0 | 3 s | `c3723c5c...69c5` |
+| timeout | **failed** (was not_run pre-reconciliation per Codex M2A-R1-timeout) | `hermes chat -q 'Write a 500 word essay...' --run-budget 1 --max-turns 1` | 0 | 15 s | `30f1521d...ae2d3` (3482 bytes) |
+| cancellation | **unsupported** (was passed pre-reconciliation per Codex M2A-R1-cancel + validator format gap §19) | n/a (validator requires null argv for unsupported) | n/a | n/a | n/a |
 | permissions | not_run | n/a | n/a | n/a | n/a |
 
 ## 3. Routing investigation
