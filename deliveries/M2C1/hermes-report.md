@@ -210,7 +210,7 @@ Per contract §"C2具体可实施平台方案与拒绝测试计划":
 
 ## 10. Budget ledger (HISTORICAL SNAPSHOT 2026-10-06T08:30Z; superseded — see §19)
 
-> **Historical note**: this §10 was written after the M2-C1 R1 commits (`2fac022`, `a78cb40`) and predates R2 (commits `0452c72`, `6b05c62`) and R2 cosmetic (`8893291`, `6991f0b`). It records an estimate, not a final value. The final scope is `origin/hermes/m2c1 = 6991f0b487955744d0f93a2b1cabcc5c80a69438` with **4 files / 1413 insertions** (counted after the §17 round-2 cosmetic commit). Final candidate/review mapping is in §19.
+> **Historical note**: this §10 was written after the M2-C1 R1 commits (`2fac022`, `a78cb40`) and predates R2 (commits `0452c72`, `6b05c62`) and R2 cosmetic (`8893291`, `6991f0b`). It records an estimate, not a final value. The final scope is `origin/hermes/m2c1 = fae9702c7da6f649711545778945355d1f09bd0c` with **4 files / 1511 insertions** (counted via `git diff --numstat 2805b1f..HEAD` after the R3 commit). Final candidate/review mapping is in §19.
 
 - wall: M2-C1 cycle start ~2026-10-06T08:30Z; current step ~2026-10-06T09:00Z; ≈ 30 minutes for implementation + tests.
 - Agent launches used: 1 (this coordinator session is a continuation of `20261005_193638_282edb`; the M2-C1 portion is recorded as one cycle rather than a separate launch).
@@ -253,7 +253,7 @@ No contract violation; no rerun required.
 
 > **Historical note**: this §14 was written after the M2-C1 R1 review cycle (Round-1 Reviewer `deleg_c5d1313b` ACCEPT on commit `a78cb40`). The R1 ACCEPT was later superseded by Codex round-2 audit (`origin/codex/m2c1-review-1` commit `b326b70`) which found 3 still-open findings. Final cycle close is in §19.
 
-- `origin/hermes/m2c1` tip TBD at commit push below.
+- `origin/hermes/m2c1` tip at end of R1: `a78cb40a125abdaf008c181465e36e79edd2cdde` (now superseded by R2/R3).
 - Round-1 Reviewer verdict: ACCEPT (recorded in `local/m2c1-review-1`).
 - No main merged.
 - No real Hermes execution enabled.
@@ -291,8 +291,8 @@ The Round-1 Hermes-side reviewer ACCEPT (`deleg_c5d1313b`) on commit `8893291` w
 
 > **Historical note**: this §16 was written after the Round-2 Hermes-side reviewer ACCEPT (`deleg_9ff15ab2` on commit `6b05c62`). That ACCEPT was later superseded by Codex round-2 audit (`origin/codex/m2c1-review-2` commit `6fea8fa`) which found 2 still-open findings. Final cycle close is in §19.
 
-- `origin/hermes/m2c1` tip TBD at commit push below.
-- Round-2 Reviewer dispatch pending.
+- `origin/hermes/m2c1` tip at end of R2: `6b05c62865cbddcfe8f5ed60b59bfab310d7d0e6` (now superseded by R2 cosmetic + R3).
+- Round-2 Reviewer verdict: ACCEPT (recorded in `local/m2c1-review-2`).
 - No main merged.
 - No real Hermes execution enabled.
 - No further force-with-lease will be issued.
@@ -361,10 +361,10 @@ The Codex round-2 audit (`codex/m2c1-review-2`) explicitly forbade re-running pr
 | R1 cosmetic | `origin/hermes/m2c1` | `8893291` | cosmetic only |
 | R2 repair | `origin/hermes/m2c1` | `6b05c62` | Round-2 Hermes-side reviewer ACCEPT (later superseded) |
 | **R2 cosmetic** | `origin/hermes/m2c1` | `6991f0b` | (post-R2 cosmetic) |
-| **R3 evidence-correction** | `origin/hermes/m2c1` | TBD at commit push below | awaiting Round-3 Hermes-side reviewer |
+| **R3 evidence-correction** | `origin/hermes/m2c1` | `fae9702c7da6f649711545778945355d1f09bd0c` | Round-3 Hermes-side reviewer ACCEPT (`deleg_9dfb784c` / `sa-0-09675b2a`, 191.21 s wall); cosmetic fixes for §19 in this commit |
 | R1 review | `origin/local/m2c1-review-1` | `dc742be` | ACCEPT (superseded) |
 | R2 review | `origin/local/m2c1-review-2` | `b9e9057` | ACCEPT (superseded by Codex round-2 audit) |
-| R3 review | `local/m2c1-review-3` | TBD | awaiting dispatch |
+| R3 review | `local/m2c1-review-3` | TBD at commit push below | ACCEPT pending commit push |
 | Codex R2 audit | `origin/codex/m2c1-review-2` | `6fea8fae83c0e24537b4455902a88374a0580947` | `request_changes` (M2C1-R1-evidence partially open + M2C1-R1-trace open) |
 
 ### 19.2 Final scope (vs baseline `2805b1f`)
@@ -376,7 +376,7 @@ src/supervisor/workers/boundary.py        | 360 lines (new)
 tests/unit/test_boundary.py               | 608 lines (new)
 ```
 
-4 files / 1413 insertions (after R2 cosmetic `6991f0b`). R3 commit is documentation-only, will add ~80 lines to `hermes-report.md` (§18, §19, §15 text rewrites).
+4 files / 1511 insertions (counted via `git diff --numstat 2805b1f..HEAD`; hermes-report.md = 408, boundary.py = 360, test_boundary.py = 608, boundary-evidence.json = 135). R3 commit is documentation-only and adds ~102 net lines to `hermes-report.md` (§18, §19, §15 text rewrites, with deletions in §10/§14/§15 historical markers).
 
 ### 19.3 Final 4-of-7 boundary status (after R3 corrections)
 
@@ -398,11 +398,23 @@ tests/unit/test_boundary.py               | 608 lines (new)
 - **Honest gap**: the inode-collision claim was retracted; the case-collision claim stands only as "both names were accepted by the filesystem" (no inode/stat evidence).
 - **Honest gap**: the host-write authorization gap (R2 mkdir/touch/rm) is documented in §18; not retroactively authorized.
 
-### 19.5 Cycle close (final, awaiting Round-3 Reviewer)
+### 19.5 Cycle close (final, awaiting Round-3 Reviewer commit push)
 
-- `origin/hermes/m2c1` tip TBD at commit push below.
-- Round-3 Hermes-side reviewer dispatch pending.
+- `origin/hermes/m2c1` tip: `fae9702c7da6f649711545778945355d1f09bd0c` (R3 evidence correction). R3 cosmetic commit will follow after this report.
+- Round-3 Hermes-side reviewer verdict: **ACCEPT** (`deleg_9dfb784c` / `sa-0-09675b2a`, 191.21 s wall; verdict written to `deliveries/M2C1/review-round3.md`).
 - No main merged.
 - No real Hermes execution enabled (`require_live_execution` always raises `RuntimeError("live_execution_disabled: ...")`).
 - No further force-with-lease will be issued.
 - M2-C2 task list in §9.1/§9.2 remains the recommended next phase.
+
+---
+
+## 20. Round-3 Reviewer cosmetic notes (2026-10-06)
+
+The Round-3 Hermes-side Reviewer (`deleg_9dfb784c` / `sa-0-09675b2a`) issued ACCEPT on commit `fae9702`. Two non-blocking presentation notes were raised and resolved in this section:
+
+1. **§19.1 + §19.5 had "TBD at commit push below"** for the R3 candidate and the R3 review row even though R3 had been dispatched and accepted before §19 was written. **Resolved**: §19.1 R3 candidate row now shows the actual SHA `fae9702c7da6f649711545778945355d1f09bd0c` with the ACCEPT verdict and the cosmetic-fix-this-commit note; the R3 review row now shows "ACCEPT pending commit push"; §19.5 now records `origin/hermes/m2c1` tip as `fae9702c7da6f649711545778945355d1f09bd0c` with the Round-3 reviewer ACCEPT verdict.
+
+2. **§19.2 (and §10 historical note) said "1413 insertions"** but real `git diff --numstat 2805b1f..HEAD` is **1511** insertions (hermes-report.md = 408 + boundary.py = 360 + test_boundary.py = 608 + boundary-evidence.json = 135). **Resolved**: §19.2 now shows 1511 with per-file breakdown; §10 historical note now points to `fae9702` (not `6991f0b`) and 1511 insertions; §14 and §16 now show the actual end-of-round commit SHAs (`a78cb40` and `6b05c62` respectively) instead of "TBD at commit push below".
+
+No contract violation; no rerun required.
