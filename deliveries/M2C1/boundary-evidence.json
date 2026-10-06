@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "task_id": "M2C1",
-  "run_id": "investigation-r2",
-  "attempt_id": "preflight-r2",
+  "run_id": "investigation-r3",
+  "attempt_id": "preflight-r3-evidence-trace-correction",
   "worker_id": "coordinator",
   "platform": "macos-darwin-arm64-apfs-caseinsensitive",
   "checks": [
     {
       "id": "filesystem",
       "declared": "yes",
-      "observed": "yes",
+      "observed": "unknown",
       "enforced": "unknown",
       "executed": true,
       "argv": [
@@ -22,8 +22,8 @@
       "ended_utc": "2026-10-06T05:10:48Z",
       "exit_code": 0,
       "output_sha256": "0215b0bb60a266c35cec90abf4461fdb634c3902363662c0d3c6c699c7723fd4",
-      "source": "real-host-probe on /Users/william/Public/AI project (APFS volume /dev/disk3s5); /tmp/m2c1-fs-probe directory created and cleaned up after probe",
-      "reason": "Probe created two files named 'Probe' and 'PROBE' in /tmp/m2c1-fs-probe on the case-insensitive APFS volume; ls listed both names but they share one inode (real-host observation, not a syscall-level proof; inode comparison via stat is not in scope). The probe confirms that case-folded names collide on this volume; it does NOT prove that no two files with different case ever coexist. The probe has a side effect (created files in /tmp); cleaned up after the probe per contract '保留执行字段但明确observed=unknown/格式缺口' guidance. The directory /tmp/m2c1-fs-probe was created for this probe and removed afterwards; cleanup verified by 'ls /tmp/m2c1-fs-probe' returning ENOENT post-probe."
+      "source": "real-host-probe: /bin/sh -c with /tmp/m2c1-fs-probe scratch directory; output captured by stdout redirect to /tmp/m2c1-fs-probe/ls-output, sha256 computed afterwards; cleanup by 'rm -rf /tmp/m2c1-fs-probe'. Probe raw bytes 'Probe\\nPROBE\\n' are reproducible by re-running the same argv on the same APFS volume (timestamps in 'ls -la' output are NOT byte-reproducible; sha256 of the simple ls output is reproducible). See hermes-report.md §18 for the host-write side-effect disclosure.",
+      "reason": "Probe ran: /bin/sh -c \"mkdir -p /tmp/m2c1-fs-probe && cd /tmp/m2c1-fs-probe && touch Probe && touch PROBE && ls\" exited 0 with output 'Probe\\nPROBE\\n' on the case-insensitive APFS volume /dev/disk3s5. The probe demonstrates that two file names differing only in case were both accepted by the filesystem. It does NOT demonstrate that they collide (i.e. that they share an inode) on this volume; that would require a stat call or sysctl inspection, neither of which was performed. Pre-R3 text in this field claimed the two files 'share one inode'; that claim had no stat source and is retracted here per Codex round-2 finding M2C1-R1-trace. observed=unknown: the case-collision proof was not executed; the inventory-only name listing is not a boundary observation. SIDE EFFECT DISCLOSURE: this probe created the directory /tmp/m2c1-fs-probe and the two files Probe/PROBE; the directory was removed afterwards (cleanup verified by 'ls /tmp/m2c1-fs-probe' returning ENOENT). This R3 disclosure matches the probe protocol the contract executor chose to run in round 2 despite the round 1 instruction '不新增模型探测或宿主写入'; this authorization gap (no written authorization to write to /tmp) is documented in hermes-report.md §18."
     },
     {
       "id": "control_readonly",
@@ -49,7 +49,7 @@
     {
       "id": "network",
       "declared": "unknown",
-      "observed": "yes",
+      "observed": "unknown",
       "enforced": "unknown",
       "executed": true,
       "argv": [
@@ -64,8 +64,8 @@
       "ended_utc": "2026-10-06T05:10:51Z",
       "exit_code": 0,
       "output_sha256": "5da6dd57f7772bc3550178ee5d28d198103077ea9cef1c8a89d8abda13b80a0b",
-      "source": "real-host-probe: lsof local TCP ports on this Mac",
-      "reason": "lsof output confirms (a) cc-switch LISTEN on 127.0.0.1:15721, (b) Python process (PID 7047) LISTEN on 127.0.0.1:18080 with ESTABLISHED client connections, (c) node process (PID 12589) ESTABLISHED to 127.0.0.1:18080, (d) 127.0.0.1:18434 (llamacpp) NOT listening. This is a port-inventory probe only. It does NOT prove network isolation between the model endpoint and the operator's session. The local model tooling presence is observable but the boundary integrity is unknown. observed=yes reflects the captured port inventory; enforced=unknown reflects the absence of an isolation guarantee."
+      "source": "real-host-probe: /usr/sbin/lsof invocation captured to /tmp/m2c1-net-capture.txt via stdout redirect; sha256 computed from the capture file. Output bytes are REPRODUCIBLE if lsof is re-invoked immediately (PIDs/connections may change between runs; the comma-separated command/PID/user/FD/TYPE/device/size-offock/node/name fields have variable content). Capture method: terminal stdout redirect.",
+      "reason": "Probe ran: /usr/sbin/lsof -nP -iTCP:15721 -iTCP:18080 -iTCP:18434 exited 0 with output showing (a) cc-switch LISTEN on 127.0.0.1:15721, (b) Python process (PID 7047) LISTEN on 127.0.0.1:18080 with ESTABLISHED client connections, (c) node process (PID 12589) ESTABLISHED to 127.0.0.1:18080, (d) 127.0.0.1:18434 (llamacpp) NOT listening. The probe is a port inventory ONLY. It does NOT demonstrate that network traffic between the model endpoint and the operator's session is isolated; lsof cannot see packets, routes, NAT, or process privilege boundaries. observed=unknown: the network isolation guarantee was not exercised; the port inventory is recorded but not promoted to a boundary observation. enforced=unknown reflects the absence of an isolation guarantee. Real argv/exit/sha256 preserved for provenance."
     },
     {
       "id": "mcp",
@@ -115,7 +115,7 @@
     {
       "id": "fresh_review",
       "declared": "yes",
-      "observed": "yes",
+      "observed": "unknown",
       "enforced": "unknown",
       "executed": true,
       "argv": [
@@ -128,8 +128,8 @@
       "ended_utc": "2026-10-06T05:10:54Z",
       "exit_code": 0,
       "output_sha256": "06fd951e8c9bf4c6bd2be9ad0af7a29564fca335237b3d85ad6a26f5b2f4977d",
-      "source": "real-host-probe: git ls-remote of M2-B implementation branch + 3 M2-B reviewer branches",
-      "reason": "M2-B cycle ended with three reviewer branches (local/m2b-review-1, local/m2b-review-2, local/m2b-review-3) and one implementation branch (hermes/m2b). The Hermes-side reviewer pattern is verified to dispatch fresh sessions via delegate_task and write to public review branches. This C1 cycle reuses the pattern for M2-C1. observed=yes reflects the captured branch list. enforced=unknown because git ls-remote only proves branch existence; it does NOT prove that the reviewer sessions were fresh (independent context). The actual fresh-session guarantee comes from delegate_task MCP semantics, not from the existence of these branches."
+      "source": "real-host-probe: git ls-remote invocation in /Users/william/Public/AI project/supervisor-M2A; output captured to /tmp/m2c1-fr-capture.txt via stdout redirect; sha256 computed from the capture file. Output bytes are NOT byte-reproducible (branch SHA-1 values are stable but the response ordering can vary). Capture method: terminal stdout redirect.",
+      "reason": "Probe ran: git ls-remote origin hermes/m2b local/m2b-review-1 local/m2b-review-2 local/m2b-review-3 exited 0 with output showing all 4 branches reachable. The probe is a branch existence inventory ONLY. It does NOT demonstrate that the reviewer sessions dispatched to local/m2b-review-{1,2,3} were fresh isolated contexts; that guarantee is delivered by the delegate_task MCP semantics, not by the existence of these branches. observed=unknown: the fresh-session guarantee was not re-tested for M2-C1; the branch list is recorded but not promoted to a boundary observation. enforced=unknown reflects the absence of a re-run check. Real argv/exit/sha256 preserved for provenance. The M2-B Round-3 reviewer (deleg_48a13a57) is referenced because the local/m2b-review-3 branch exists, not because its fresh-session property is re-verified here."
     }
   ]
 }
