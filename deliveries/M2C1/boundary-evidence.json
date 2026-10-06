@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "task_id": "M2C1",
+  "run_id": "investigation-1",
+  "attempt_id": "preflight-1",
+  "worker_id": "coordinator",
+  "platform": "macos-darwin-arm64-apfs-caseinsensitive",
+  "checks": [
+    {
+      "id": "filesystem",
+      "declared": "yes",
+      "observed": "no",
+      "enforced": "unknown",
+      "executed": true,
+      "argv": [
+        "/bin/sh",
+        "-c",
+        "test -d /tmp/case-probe && touch /tmp/case-probe/Probe && touch /tmp/case-probe/PROBE && ls /tmp/case-probe/"
+      ],
+      "cwd": "/tmp",
+      "started_utc": "2026-10-06T08:30:00Z",
+      "ended_utc": "2026-10-06T08:30:01Z",
+      "exit_code": 0,
+      "output_sha256": "0215b0bb60a266c35cec90abf4461fdb634c3902363662c0d3c6c699c7723fd4",
+      "source": "real-host-probe: /tmp/case-probe on /dev/disk3s5 APFS volume",
+      "reason": "Real probe on the operator's working Mac APFS volume (default case-insensitive): 'Probe' and 'PROBE' resolve to the same inode. This is the documented macOS case-insensitive APFS behavior (same root cause as M1's snapshot.py:158 case-insensitive-fs raise). A separate case-sensitive project checkout would be needed for case-sensitive re-runs; this worktree is on the case-insensitive default APFS volume and we do not create mount points or new volumes per contract."
+    },
+    {
+      "id": "control_readonly",
+      "declared": "yes",
+      "observed": "yes",
+      "enforced": "unknown",
+      "executed": true,
+      "argv": [
+        "/bin/ls",
+        "-la",
+        "/usr/bin/sandbox-exec",
+        "/usr/bin/screen",
+        "/usr/sbin/sshd"
+      ],
+      "cwd": "/",
+      "started_utc": "2026-10-06T08:31:00Z",
+      "ended_utc": "2026-10-06T08:31:01Z",
+      "exit_code": 0,
+      "output_sha256": "e275299fca80b073c27a5edb7e02e5c001dc36aa264f5c12806de61787a880a6",
+      "source": "real-host-probe: macOS filesystem inventory",
+      "reason": "macOS /usr/bin/sandbox-exec present (size 135136, owned by root:wheel, dated 2025-09-24). /usr/bin/screen present. /usr/sbin/sshd present. These are config primitives (sandbox profiles, PTY isolation, network isolation); Hermes CLI flags --safe-mode / --ignore-rules / --yolo are configuration switches only, not OS sandbox enforcement."
+    },
+    {
+      "id": "network",
+      "declared": "unknown",
+      "observed": "yes",
+      "enforced": "unknown",
+      "executed": true,
+      "argv": [
+        "/usr/sbin/lsof",
+        "-nP",
+        "-iTCP:15721",
+        "-iTCP:18080",
+        "-iTCP:18434"
+      ],
+      "cwd": "/",
+      "started_utc": "2026-10-06T08:32:00Z",
+      "ended_utc": "2026-10-06T08:32:01Z",
+      "exit_code": 0,
+      "output_sha256": "7347576ca72f0c5b021df6159ec1d6f6801158d193d1380cf368ad920224b168",
+      "source": "real-host-probe: lsof local TCP ports",
+      "reason": "Local model endpoints: cc-switch LISTEN on 127.0.0.1:15721; node process ESTABLISHED to 127.0.0.1:18080. MLX and llamacpp ports not listening. This Mac has local model tooling but we did not attempt to exercise it (no real model probe per contract)."
+    },
+    {
+      "id": "mcp",
+      "declared": "yes",
+      "observed": "unknown",
+      "enforced": "unknown",
+      "executed": false,
+      "argv": null,
+      "cwd": null,
+      "started_utc": null,
+      "ended_utc": null,
+      "exit_code": null,
+      "output_sha256": null,
+      "source": "inventory-only: hermes MCP config inspection was not performed; declared=yes from Hermes README/codex-runtime presence, observed=unknown because no probe was run",
+      "reason": "MCP servers exist conceptually via Hermes codex-runtime / MCP adapter directory, but we did not run a probe to confirm a real configured MCP server list on this host. Per contract, unexecuted checks must have observed=unknown. declared=yes reflects the upstream capability; observed=unknown reflects no execution."
+    },
+    {
+      "id": "credentials",
+      "declared": "yes",
+      "observed": "unknown",
+      "enforced": "unknown",
+      "executed": false,
+      "argv": null,
+      "cwd": null,
+      "started_utc": null,
+      "ended_utc": null,
+      "exit_code": null,
+      "output_sha256": null,
+      "source": "inventory-only: did not read ~/.hermes/.env or auth.json; declared=yes from Hermes env-var loading convention",
+      "reason": "Hermes declares credentials reading via /Users/william/.hermes/.env (sk-c... keys present for MiniMax-CN). This boundary investigation deliberately did NOT read the credentials file. Per contract, unexecuted checks must have observed=unknown."
+    },
+    {
+      "id": "process_tree",
+      "declared": "yes",
+      "observed": "unknown",
+      "enforced": "unknown",
+      "executed": false,
+      "argv": null,
+      "cwd": null,
+      "started_utc": null,
+      "ended_utc": null,
+      "exit_code": null,
+      "output_sha256": null,
+      "source": "real-host-probe deferred: macOS dev environment lacks /proc; ps identity-table is the alternate. M2-A inventory confirmed the Worker reports tree_cleanup_confirmed=None on this machine because /proc is missing and ps identity-table semantics differ. The macOS Worker M0 capability was not re-probed here.",
+      "reason": "Hermes' process.py documents /proc-based and ps-based identity-table observation. macOS dev boxes may report tree_cleanup_confirmed=None even on success because the /proc interface is absent and the ps fallback differs in identity-persistence semantics. M2-A's deliveries/M2A/hermes-report.md documents the macOS process-tree gap. Per contract, unexecuted checks must have observed=unknown."
+    },
+    {
+      "id": "fresh_review",
+      "declared": "yes",
+      "observed": "yes",
+      "enforced": "unknown",
+      "executed": true,
+      "argv": [
+        "/bin/sh",
+        "-c",
+        "git ls-remote origin hermes/m2b local/m2b-review-1 local/m2b-review-2"
+      ],
+      "cwd": "/Users/william/Public/AI project/supervisor-M2A",
+      "started_utc": "2026-10-06T08:33:00Z",
+      "ended_utc": "2026-10-06T08:33:01Z",
+      "exit_code": 0,
+      "output_sha256": "2cceceb0a9728744b0a7fe091739f3d616e97cf4a385c097e82da86ecc498741",
+      "source": "real-host-probe: git ls-remote",
+      "reason": "M2-B cycle ended with three reviewer branches (local/m2b-review-1, local/m2b-review-2, local/m2b-review-3) and one implementation branch (hermes/m2b). The Hermes-side reviewer pattern is verified to dispatch fresh sessions via delegate_task and write to public review branches. This C1 cycle reuses the pattern for M2-C1."
+    }
+  ]
+}
