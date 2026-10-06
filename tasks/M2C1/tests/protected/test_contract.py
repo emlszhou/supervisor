@@ -139,3 +139,34 @@ def test_live_always_disabled():
 def test_expected_newline_rejected():
     with pytest.raises(ValueError):
         api()(record(), expected={**EXPECTED, "task_id": "M2C1\n"})
+
+
+def test_consistent_enforced_declaration_is_only_evidence():
+    data = record()
+    check = data["checks"][0]
+    executed(check)
+    check.update(enforced="yes", exit_code=0)
+    assert api()(data, expected=EXPECTED) == data
+
+
+def test_negative_exit_preserved():
+    data = record()
+    executed(data["checks"][0])
+    data["checks"][0]["exit_code"] = -15
+    assert api()(data, expected=EXPECTED)["checks"][0]["exit_code"] == -15
+
+
+@pytest.mark.parametrize(
+    "expected", [None, [], {**EXPECTED, "extra": "x"}, {**EXPECTED, "worker_id": True}]
+)
+def test_malformed_expected_rejected(expected):
+    with pytest.raises(ValueError):
+        api()(record(), expected=expected)
+
+
+def test_error_does_not_echo_raw_value():
+    data = record()
+    data["worker_id"] = "PRIVATE_SENTINEL"
+    with pytest.raises(ValueError) as error:
+        api()(data, expected=EXPECTED)
+    assert "PRIVATE_SENTINEL" not in str(error.value)
