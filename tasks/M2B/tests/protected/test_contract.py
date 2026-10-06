@@ -121,3 +121,30 @@ def test_usage_mapping():
     result = adapter().parse_result(process(events), expected=EXPECTED)
     assert result.status == "completed"
     assert result.usage == dict(input_tokens=7, output_tokens=2)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b'{"type":"system","type":"system"}',
+        b'{"type":"system","subtype":"init","model":"MiniMax-M3","session_id":"s","timestamp":NaN}',
+    ],
+)
+def test_noncanonical_json(payload):
+    assert adapter().parse_result(process(stdout=payload), expected=EXPECTED).status == "failed"
+
+
+@pytest.mark.parametrize("length, status", [(4096, "completed"), (4097, "failed")])
+def test_summary_schema_boundary(length, status):
+    events = output()
+    events[-1]["text"] = "x" * length
+    assert adapter().parse_result(process(events), expected=EXPECTED).status == status
+
+
+def test_missing_terminal():
+    assert adapter().parse_result(process(output()[:-1]), expected=EXPECTED).status == "failed"
+
+
+def test_invalid_expected_route():
+    with pytest.raises(ValueError):
+        adapter().parse_result(process(), expected={**EXPECTED, "provider": "other"})
