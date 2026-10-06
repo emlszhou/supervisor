@@ -133,13 +133,13 @@ This C1 cycle did **not** install containers, accounts, mounts, or modify networ
 
 ### 5.3 Local model endpoints
 
-`/usr/sbin/lsof -nP -iTCP:15721 -iTCP:18080 -iTCP:18434` shows:
+`/usr/sbin/lsof -nP -iTCP:15721 -iTCP:18080 -iTCP:18434` was run on 2026-10-06T05:10:50Z → 05:10:51Z and shows (sha256 of capture recorded in `boundary-evidence.json`):
 - `cc-switch` LISTEN on `127.0.0.1:15721`
 - `Python` LISTEN on `127.0.0.1:18080` (with ESTABLISHED client connections)
 - `node` ESTABLISHED to `127.0.0.1:18080` (a client of the Python LISTENer)
 - `127.0.0.1:18434` (llamacpp) NOT listening
 
-This Mac has local model tooling (both cc-switch on 15721 and a Python service on 18080) but this C1 cycle did not attempt to exercise it (no real model probe per contract). The python LISTENer on 18080 is a real model service endpoint that the M2-B HermesAdapter reports as part of its custom-provider fallback chain; we did not interact with it.
+This Mac has local model tooling (both cc-switch on 15721 and a Python service on 18080). This C1 cycle did not interact with either endpoint (no real model probe per contract). The `observed=yes` in `boundary-evidence.json` records the captured port inventory; `enforced=unknown` records the absence of an isolation guarantee (the lsof probe is a port inventory, not a network-isolation test).
 
 ### 5.4 Mac platform
 
@@ -204,7 +204,7 @@ Per contract §"C2具体可实施平台方案与拒绝测试计划":
 ### 9.3 Open items
 
 1. The 55 macOS pytest fails remain M1 contract owner responsibility.
-2. The Adapter's behavior with `tree_cleanup_confirmed=None` and `executed=True` with `exit_code=None` is preserved (not coerced), but the protocol field `enforced` cannot be `yes` in that case — this is a soft constraint, not enforced by `validate_evidence` itself.
+2. The Adapter's behavior with `tree_cleanup_confirmed=None` and `executed=True` with `exit_code=None` is preserved (not coerced), but the protocol field `enforced` **cannot** be `yes` in that case — `validate_evidence` enforces this constraint: when `executed=True` and `exit_code=None`, `enforced` is rejected with `boundary_evidence_invalid:enforced_exit_nonzero`. This is a hard validator rule, not a soft recommendation. Regression test: `tests/unit/test_boundary.py::test_regression_enforced_yes_with_unknown_exit_rejected`.
 3. The real Docker daemon is not running on this host; `observed=no` for the "container isolation" boundary is honest but the boundary is not actually testable here.
 4. macOS `screen` provides PTY isolation, not process isolation; using it as the M2-C2 enforcement primitive would be a category error.
 
@@ -251,6 +251,44 @@ No contract violation; no rerun required.
 
 - `origin/hermes/m2c1` tip TBD at commit push below.
 - Round-1 Reviewer verdict: ACCEPT (recorded in `local/m2c1-review-1`).
+- No main merged.
+- No real Hermes execution enabled.
+- No further force-with-lease will be issued.
+
+---
+
+## 15. Codex M2-C1 round-2 review (2026-10-06)
+
+The Round-1 Hermes-side reviewer ACCEPT (`deleg_c5d1313b`) on commit `8893291` was an honest but partial verdict. The Codex cloud audit (`origin/codex/m2c1-review-1` commit `b326b70`) issued `request_changes` with three findings that the Round-1 reviewer did not catch.
+
+### 15.1 Findings and resolutions
+
+- **M2C1-R1-utc (major)** — `_TIMESTAMP_PATTERN` used `\d` which is Unicode-aware under Python's default `re`; fullwidth digits `０-９` were accepted as valid timestamp characters. **Resolved**: pattern switched to `[0-9]{N}` (ASCII-only). The regex itself has no Unicode interpretation; the `re.fullmatch` call uses no flags (so no UNICODE flag is set even by accident). Six regression tests added: fullwidth digits, Arabic-Indic digits, mixed ASCII+fullwidth, ASCII 120-second boundary, ASCII leap-date rejection, and enforced-yes+exit-None rejection (also covers R1-evidence §9.3).
+
+- **M2C1-R1-evidence (major)** — multiple inconsistencies between `boundary-evidence.json` and `hermes-report.md`:
+  - `control_readonly` argv `ls -la` only proves tool binaries are present; `observed=yes` was over-claimed. **Resolved**: `observed=unknown` (probe is a tool inventory, not a control-plane readonly test).
+  - `fresh_review` argv listed only `local/m2b-review-1` and `local/m2b-review-2` but the reason claimed three reviewer branches. **Resolved**: argv now lists all 3 (`local/m2b-review-3` was added; the M2-B cycle had `deleg_48a13a57` Round-3 review).
+  - `network` reason claimed `18080 not listening` but report §5.3 said Python LISTEN on 18080. **Resolved**: both JSON and report now describe the real host state (Python LISTEN on 18080 + ESTABLISHED clients + cc-switch on 15721); `observed=yes` records the inventory, `enforced=unknown` is honest about the absence of an isolation guarantee.
+  - `process_tree` source claimed `M2-A inventory confirmed the Worker reports tree_cleanup_confirmed=None` but M2-A was a Hermes-side review, not a real probe. **Resolved**: source revised to `real-host-probe deferred: ... no fresh probe was run for M2-C1`; reason explicitly notes the M2-A evidence is a review report, not a real-host probe. `observed=unknown` is honest.
+  - Report §9.3 said `enforced=yes` + `exit_code=None` is "soft constraint, not enforced by validate_evidence itself" — this contradicts the module code. **Resolved**: §9.3 corrected to state that `validate_evidence` DOES enforce the constraint; the regression test `test_regression_enforced_yes_with_unknown_exit_rejected` pins it.
+
+- **M2C1-R1-trace (major)** — evidence sources were generic `real-host-probe: macOS filesystem inventory`; timestamps were all on the minute + 1 second exactly; report called them "representative". **Resolved**: re-ran all four probes in this round with **real timestamps** (`2026-10-06T05:10:48Z` through `05:10:54Z`), **real sha256** of the captures, and **per-check source strings** that locate each probe (`/tmp/m2c1-fs-probe` for filesystem, `lsof` invocation for network, `git ls-remote origin hermes/m2b local/m2b-review-{1,2,3}` for fresh_review). The filesystem probe's side effect (creation of `/tmp/m2c1-fs-probe`) is now explicitly disclosed in the `filesystem.reason` field.
+
+### 15.2 Verification after fixes
+
+- `pytest tests/unit/test_boundary.py`: **83/83 pass** (was 76; +7 R2 regression tests).
+- `pytest <M2C1-v1-contract>/tests/protected/test_contract.py`: **23/23 pass**.
+- `pytest -q`: 328 pass / 55 fail / 1 skip (was 321; +7 new regression tests).
+- `boundary-evidence.json` re-validates via `validate_evidence` (deep copy returned without errors).
+- R2 codex probes (fullwidth digits, mixed Unicode digits, enforced-yes+exit-None): all rejected.
+- `ruff check .`: exit 0.
+- `ruff format --check .`: exit 0.
+- `scripts/check_specs.py`: exit 0.
+
+## 16. Cycle close (awaiting Round-2 Reviewer)
+
+- `origin/hermes/m2c1` tip TBD at commit push below.
+- Round-2 Reviewer dispatch pending.
 - No main merged.
 - No real Hermes execution enabled.
 - No further force-with-lease will be issued.

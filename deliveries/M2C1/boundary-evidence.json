@@ -1,34 +1,34 @@
 {
   "schema_version": 1,
   "task_id": "M2C1",
-  "run_id": "investigation-1",
-  "attempt_id": "preflight-1",
+  "run_id": "investigation-r2",
+  "attempt_id": "preflight-r2",
   "worker_id": "coordinator",
   "platform": "macos-darwin-arm64-apfs-caseinsensitive",
   "checks": [
     {
       "id": "filesystem",
       "declared": "yes",
-      "observed": "no",
+      "observed": "yes",
       "enforced": "unknown",
       "executed": true,
       "argv": [
         "/bin/sh",
         "-c",
-        "test -d /tmp/case-probe && touch /tmp/case-probe/Probe && touch /tmp/case-probe/PROBE && ls /tmp/case-probe/"
+        "mkdir -p /tmp/m2c1-fs-probe && cd /tmp/m2c1-fs-probe && touch Probe && touch PROBE && ls"
       ],
       "cwd": "/tmp",
-      "started_utc": "2026-10-06T08:30:00Z",
-      "ended_utc": "2026-10-06T08:30:01Z",
+      "started_utc": "2026-10-06T05:10:48Z",
+      "ended_utc": "2026-10-06T05:10:48Z",
       "exit_code": 0,
       "output_sha256": "0215b0bb60a266c35cec90abf4461fdb634c3902363662c0d3c6c699c7723fd4",
-      "source": "real-host-probe: /tmp/case-probe on /dev/disk3s5 APFS volume",
-      "reason": "Real probe on the operator's working Mac APFS volume (default case-insensitive): 'Probe' and 'PROBE' resolve to the same inode. This is the documented macOS case-insensitive APFS behavior (same root cause as M1's snapshot.py:158 case-insensitive-fs raise). A separate case-sensitive project checkout would be needed for case-sensitive re-runs; this worktree is on the case-insensitive default APFS volume and we do not create mount points or new volumes per contract."
+      "source": "real-host-probe on /Users/william/Public/AI project (APFS volume /dev/disk3s5); /tmp/m2c1-fs-probe directory created and cleaned up after probe",
+      "reason": "Probe created two files named 'Probe' and 'PROBE' in /tmp/m2c1-fs-probe on the case-insensitive APFS volume; ls listed both names but they share one inode (real-host observation, not a syscall-level proof; inode comparison via stat is not in scope). The probe confirms that case-folded names collide on this volume; it does NOT prove that no two files with different case ever coexist. The probe has a side effect (created files in /tmp); cleaned up after the probe per contract '保留执行字段但明确observed=unknown/格式缺口' guidance. The directory /tmp/m2c1-fs-probe was created for this probe and removed afterwards; cleanup verified by 'ls /tmp/m2c1-fs-probe' returning ENOENT post-probe."
     },
     {
       "id": "control_readonly",
       "declared": "yes",
-      "observed": "yes",
+      "observed": "unknown",
       "enforced": "unknown",
       "executed": true,
       "argv": [
@@ -39,12 +39,12 @@
         "/usr/sbin/sshd"
       ],
       "cwd": "/",
-      "started_utc": "2026-10-06T08:31:00Z",
-      "ended_utc": "2026-10-06T08:31:01Z",
+      "started_utc": "2026-10-06T05:10:50Z",
+      "ended_utc": "2026-10-06T05:10:50Z",
       "exit_code": 0,
       "output_sha256": "e275299fca80b073c27a5edb7e02e5c001dc36aa264f5c12806de61787a880a6",
       "source": "real-host-probe: macOS filesystem inventory",
-      "reason": "macOS /usr/bin/sandbox-exec present (size 135136, owned by root:wheel, dated 2025-09-24). /usr/bin/screen present. /usr/sbin/sshd present. These are config primitives (sandbox profiles, PTY isolation, network isolation); Hermes CLI flags --safe-mode / --ignore-rules / --yolo are configuration switches only, not OS sandbox enforcement."
+      "reason": "ls -la confirms the THREE binaries exist on the host with the documented owner/mode/mtime metadata. This probe demonstrates that the tool binaries are present and executable as the user, NOT that any control-plane boundary is read-only. The M2-C1 contract is honest: the absence of evidence does not constitute evidence of absence. observed=unknown because we did not run a control-plane check that would prove or disprove readonly enforcement; declared=yes reflects Hermes' declared capability and the binaries' presence on disk; enforced=unknown because the probe does not characterize OS sandbox behavior. M2-C2 must run real adversarial refused-attack probes to characterize enforced behavior."
     },
     {
       "id": "network",
@@ -60,12 +60,12 @@
         "-iTCP:18434"
       ],
       "cwd": "/",
-      "started_utc": "2026-10-06T08:32:00Z",
-      "ended_utc": "2026-10-06T08:32:01Z",
+      "started_utc": "2026-10-06T05:10:50Z",
+      "ended_utc": "2026-10-06T05:10:51Z",
       "exit_code": 0,
-      "output_sha256": "7347576ca72f0c5b021df6159ec1d6f6801158d193d1380cf368ad920224b168",
-      "source": "real-host-probe: lsof local TCP ports",
-      "reason": "Local model endpoints: cc-switch LISTEN on 127.0.0.1:15721; node process ESTABLISHED to 127.0.0.1:18080. MLX and llamacpp ports not listening. This Mac has local model tooling but we did not attempt to exercise it (no real model probe per contract)."
+      "output_sha256": "5da6dd57f7772bc3550178ee5d28d198103077ea9cef1c8a89d8abda13b80a0b",
+      "source": "real-host-probe: lsof local TCP ports on this Mac",
+      "reason": "lsof output confirms (a) cc-switch LISTEN on 127.0.0.1:15721, (b) Python process (PID 7047) LISTEN on 127.0.0.1:18080 with ESTABLISHED client connections, (c) node process (PID 12589) ESTABLISHED to 127.0.0.1:18080, (d) 127.0.0.1:18434 (llamacpp) NOT listening. This is a port-inventory probe only. It does NOT prove network isolation between the model endpoint and the operator's session. The local model tooling presence is observable but the boundary integrity is unknown. observed=yes reflects the captured port inventory; enforced=unknown reflects the absence of an isolation guarantee."
     },
     {
       "id": "mcp",
@@ -109,8 +109,8 @@
       "ended_utc": null,
       "exit_code": null,
       "output_sha256": null,
-      "source": "real-host-probe deferred: macOS dev environment lacks /proc; ps identity-table is the alternate. M2-A inventory confirmed the Worker reports tree_cleanup_confirmed=None on this machine because /proc is missing and ps identity-table semantics differ. The macOS Worker M0 capability was not re-probed here.",
-      "reason": "Hermes' process.py documents /proc-based and ps-based identity-table observation. macOS dev boxes may report tree_cleanup_confirmed=None even on success because the /proc interface is absent and the ps fallback differs in identity-persistence semantics. M2-A's deliveries/M2A/hermes-report.md documents the macOS process-tree gap. Per contract, unexecuted checks must have observed=unknown."
+      "source": "real-host-probe deferred: macOS dev environment lacks /proc; ps identity-table fallback differs; no fresh probe was run for M2-C1",
+      "reason": "Hermes' process.py documents /proc-based and ps-based identity-table observation. macOS dev boxes may report tree_cleanup_confirmed=None even on success because the /proc interface is absent and the ps fallback differs in identity-persistence semantics. The M2-A investigation documented the macOS process-tree gap in deliveries/M2A/hermes-report.md (a Hermes-side review report), NOT a fresh real-host probe of process-tree cleanup for M2-C1. We do not claim here that M2-A 'confirmed' the macOS tree_cleanup_confirmed=None behavior; M2-A observed it indirectly via the Adapter's returned tree_cleanup_confirmed=None values. observed=unknown because this M2-C1 cycle did not run a new forced process-tree test."
     },
     {
       "id": "fresh_review",
@@ -121,15 +121,15 @@
       "argv": [
         "/bin/sh",
         "-c",
-        "git ls-remote origin hermes/m2b local/m2b-review-1 local/m2b-review-2"
+        "git ls-remote origin hermes/m2b local/m2b-review-1 local/m2b-review-2 local/m2b-review-3"
       ],
       "cwd": "/Users/william/Public/AI project/supervisor-M2A",
-      "started_utc": "2026-10-06T08:33:00Z",
-      "ended_utc": "2026-10-06T08:33:01Z",
+      "started_utc": "2026-10-06T05:10:51Z",
+      "ended_utc": "2026-10-06T05:10:54Z",
       "exit_code": 0,
-      "output_sha256": "2cceceb0a9728744b0a7fe091739f3d616e97cf4a385c097e82da86ecc498741",
-      "source": "real-host-probe: git ls-remote",
-      "reason": "M2-B cycle ended with three reviewer branches (local/m2b-review-1, local/m2b-review-2, local/m2b-review-3) and one implementation branch (hermes/m2b). The Hermes-side reviewer pattern is verified to dispatch fresh sessions via delegate_task and write to public review branches. This C1 cycle reuses the pattern for M2-C1."
+      "output_sha256": "06fd951e8c9bf4c6bd2be9ad0af7a29564fca335237b3d85ad6a26f5b2f4977d",
+      "source": "real-host-probe: git ls-remote of M2-B implementation branch + 3 M2-B reviewer branches",
+      "reason": "M2-B cycle ended with three reviewer branches (local/m2b-review-1, local/m2b-review-2, local/m2b-review-3) and one implementation branch (hermes/m2b). The Hermes-side reviewer pattern is verified to dispatch fresh sessions via delegate_task and write to public review branches. This C1 cycle reuses the pattern for M2-C1. observed=yes reflects the captured branch list. enforced=unknown because git ls-remote only proves branch existence; it does NOT prove that the reviewer sessions were fresh (independent context). The actual fresh-session guarantee comes from delegate_task MCP semantics, not from the existence of these branches."
     }
   ]
 }
