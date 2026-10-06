@@ -309,3 +309,64 @@ The implementation worktree's `git status --short` does not show `codex-review-1
 - No main merged
 - No real Hermes execution enabled
 - No further force-push will be issued
+
+---
+
+## 16. Codex M2-B round-3 review (2026-10-06)
+
+The Codex cloud audit (`origin/codex/m2b-review-1` commit `7cfdcf0`) issued `request_changes` with a single remaining finding, M2B-R2-identity. The Round-2 Hermes-side reviewer ACCEPT on commit `93cc84d` (refreshed as `1a10ed8`) did not catch this bug because the protected contract tests do not exercise the trailing-newline case.
+
+### 16.1 Finding and resolution
+
+- **M2B-R2-identity (major)** — `_ID_PATTERN` and `_SESSION_ID_PATTERN` used `re.match` with `$`. Python's `$` matches the position before a final `\n`, so `"s\n"` and `"M2B\n"` matched the patterns. Reproduction:
+  - `init.session_id = "s\n"` and `result.session_id = "s\n"` → `parse_result` returned `status=completed` with `session_id` retaining `\n`
+  - `expected.task_id = "M2B\n"` did not raise `ValueError` and returned `completed`
+
+  **Resolved**: All three identity validators now use `re.fullmatch`, which strictly matches the entire string with no `$`-newline leniency. Affected locations:
+  - `_validate_expected`: `re.match(_ID_PATTERN, ...)` → `re.fullmatch(_ID_PATTERN, ...)` for task_id / run_id / attempt_id
+  - `_validate_init`: `re.match(_SESSION_ID_PATTERN, ...)` → `re.fullmatch(_SESSION_ID_PATTERN, ...)`
+  - `_validate_result`: `re.match(_SESSION_ID_PATTERN, ...)` → `re.fullmatch(_SESSION_ID_PATTERN, ...)` (preserves the `(error_tag, "", None)` tuple return shape)
+
+  No `.strip()` is used. Expected identity with trailing `\n` now raises `ValueError`; output session_id with trailing `\n` returns `failed` with a fixed safe error tag.
+
+### 16.2 New regression tests added
+
+13 new regression tests were added to `tests/unit/test_hermes_adapter.py`, covering:
+
+- **`_validate_expected` boundary** (3 tests): trailing newline in `task_id` / `run_id` / `attempt_id` raises `ValueError` (not silently accepted).
+- **`_validate_init` / `_validate_result` boundary** (3 tests): trailing `\n` and `\r` rejected; internal `\n` rejected; lone `\n` rejected.
+- **Max-length boundary** (4 tests): `session_id` exactly 128 chars accepted, 129 chars rejected; `task_id` exactly 64 chars accepted, 65 chars rejected.
+- **Sanity** (3 tests): valid `session_id` with `.`, `_`, `-` characters still accepted; valid `run_id` with dots still accepted; full happy path still completed.
+
+Total unit tests: 57 (after R2) + 13 (R3) = **70 tests, all passing**.
+
+### 16.3 Verification after fixes
+
+- `pytest tests/unit/test_hermes_adapter.py`: **70/70 pass**
+- `pytest <M2B-v1-contract>/tests/protected/test_contract.py`: **29/29 pass**
+- `pytest -q`: 315 pass / 55 fail / 1 skip (the 55 fails remain baseline-inherited from `origin/main`).
+- R1 Codex probe script (`codex-review-1-probes.py` from `origin/codex/m2b-review-1`): **7/7 PASS** (run from outside the worktree at `/tmp/m2b-probes/probes.py`).
+- `ruff check .`: exit 0
+- `ruff format --check .`: exit 0
+- `scripts/check_specs.py`: exit 0
+
+## 17. M2B-R2-identity re-verification
+
+After applying the `re.fullmatch` fix and rerunning the reproduction:
+
+```
+$ PYTHONPATH=.../supervisor-M2A/src uv run --frozen python -c "..."
+case 1 (session_id with \\n): failed error= 'init session_id pattern invalid'
+case 2 (expected task_id with \\n): ValueError: expected['task_id'] does not match identity pattern
+sanity (good): completed session_id= 'session-1'
+```
+
+Both bug-reproduction cases now produce the documented failure mode; the good-path sanity check still returns `completed`.
+
+## 18. Cycle close (awaiting Round-3 Reviewer)
+
+- `origin/hermes/m2b` tip TBD at commit push below.
+- Round-3 Reviewer dispatch pending (the Round-2 review record on `origin/local/m2b-review-2` is superseded by the new candidate; the next Reviewer will be dispatched against the new full candidate).
+- No main merged.
+- No real Hermes execution enabled.
+- No further force-with-lease will be issued (per user 2026-10-06 rule; this round uses a normal push).
