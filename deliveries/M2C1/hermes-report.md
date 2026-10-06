@@ -14,7 +14,7 @@
 This cycle delivers the offline boundary-evidence validator per `handoffs/M2C1/v1/task-bundle/requirements.md`. Four files added within the allowed scope:
 
 - `src/supervisor/workers/boundary.py` (≈350 LOC) — `validate_evidence(record, *, expected) -> dict` and `require_live_execution(*args, **kwargs)` (constant-rejection)
-- `tests/unit/test_boundary.py` (≈520 LOC, 76 tests) — depth coverage including deep-copy isolation, length boundaries, timestamp validation, exit_code type rejection, argv NUL-byte rejection, error-sentinel non-echo, require_live_execution constant-rejection
+- `tests/unit/test_boundary.py` (≈520 → 608 LOC, 83 tests; 76 R1 + 7 R2 regression) — depth coverage including deep-copy isolation, length boundaries, timestamp validation, exit_code type rejection, argv NUL-byte rejection, error-sentinel non-echo, require_live_execution constant-rejection, fullwidth / Arabic-Indic / mixed Unicode digit rejection, 120-second ASCII boundary, ASCII leap-date rejection, enforced=yes+exit_code=None hard-rejection, executed=True+exit_code=None preserved when enforced=unknown.
 - `deliveries/M2C1/boundary-evidence.json` (real-host inventory of 7 boundary checks; 4 executed probes with real sha256, 3 unexecuted marked honestly)
 - `deliveries/M2C1/hermes-report.md` — this report
 
@@ -45,7 +45,7 @@ $ uv run --frozen python -m pytest tests/unit/test_boundary.py -q
 exit=0
 ```
 
-76 unit tests pass, supplementing the protected contract with deeper coverage: every tristate, strict executed bool, fullmatch newline handling, every argv/cwd/sha/exit_code/utc type/length boundary, deep-copy mutation isolation across nested structures, error sentinel that does not echo caller-controlled strings, and constant-rejection across arbitrary arguments.
+83 unit tests pass (76 baseline + 7 R2 regression), supplementing the protected contract with deeper coverage: every tristate, strict executed bool, fullmatch newline handling, every argv/cwd/sha/exit_code/utc type/length boundary, deep-copy mutation isolation across nested structures, error sentinel that does not echo caller-controlled strings, constant-rejection across arbitrary arguments, fullwidth / Arabic-Indic / mixed Unicode digit rejection, 120-second ASCII boundary, ASCII leap-date rejection, enforced=yes+exit_code=None hard-rejection, executed=True+exit_code=None preserved when enforced=unknown.
 
 ### 2.3 Full project test suite
 
@@ -263,7 +263,7 @@ The Round-1 Hermes-side reviewer ACCEPT (`deleg_c5d1313b`) on commit `8893291` w
 
 ### 15.1 Findings and resolutions
 
-- **M2C1-R1-utc (major)** — `_TIMESTAMP_PATTERN` used `\d` which is Unicode-aware under Python's default `re`; fullwidth digits `０-９` were accepted as valid timestamp characters. **Resolved**: pattern switched to `[0-9]{N}` (ASCII-only). The regex itself has no Unicode interpretation; the `re.fullmatch` call uses no flags (so no UNICODE flag is set even by accident). Six regression tests added: fullwidth digits, Arabic-Indic digits, mixed ASCII+fullwidth, ASCII 120-second boundary, ASCII leap-date rejection, and enforced-yes+exit-None rejection (also covers R1-evidence §9.3).
+- **M2C1-R1-utc (major)** — `_TIMESTAMP_PATTERN` used `\d` which is Unicode-aware under Python's default `re`; fullwidth digits `０-９` were accepted as valid timestamp characters. **Resolved**: pattern switched to `[0-9]{N}` (ASCII-only). The regex itself has no Unicode interpretation; the `re.fullmatch` call uses no flags (so no UNICODE flag is set even by accident). Seven regression tests added: fullwidth digits, Arabic-Indic digits, mixed ASCII+fullwidth, ASCII 120-second boundary, ASCII leap-date rejection, enforced-yes+exit-None rejection (also covers R1-evidence §9.3), and executed=True+exit=None preserved when enforced=unknown.
 
 - **M2C1-R1-evidence (major)** — multiple inconsistencies between `boundary-evidence.json` and `hermes-report.md`:
   - `control_readonly` argv `ls -la` only proves tool binaries are present; `observed=yes` was over-claimed. **Resolved**: `observed=unknown` (probe is a tool inventory, not a control-plane readonly test).
@@ -276,7 +276,7 @@ The Round-1 Hermes-side reviewer ACCEPT (`deleg_c5d1313b`) on commit `8893291` w
 
 ### 15.2 Verification after fixes
 
-- `pytest tests/unit/test_boundary.py`: **83/83 pass** (was 76; +7 R2 regression tests).
+- `pytest tests/unit/test_boundary.py`: **83/83 pass** (was 76; +7 R2 regression tests: fullwidth / Arabic-Indic / mixed digits, 120-second ASCII boundary, ASCII leap-date, enforced-yes+exit-None, executed-True+exit-None-preserved-when-enforced-unknown).
 - `pytest <M2C1-v1-contract>/tests/protected/test_contract.py`: **23/23 pass**.
 - `pytest -q`: 328 pass / 55 fail / 1 skip (was 321; +7 new regression tests).
 - `boundary-evidence.json` re-validates via `validate_evidence` (deep copy returned without errors).
@@ -292,3 +292,15 @@ The Round-1 Hermes-side reviewer ACCEPT (`deleg_c5d1313b`) on commit `8893291` w
 - No main merged.
 - No real Hermes execution enabled.
 - No further force-with-lease will be issued.
+
+---
+
+## 17. Round-2 Reviewer cosmetic notes (2026-10-06)
+
+The Round-2 Hermes-side Reviewer (`deleg_9ff15ab2` / `sa-0-02870e70`) issued ACCEPT on commit `6b05c62`. Two non-blocking presentation notes were raised and resolved in this section:
+
+1. **"76 tests" → "83 tests"** in §1 and §2.2: the report text said "76 unit tests pass" in two places, but the real pytest output is 83 (76 R1 + 7 R2 regression tests). Now corrected to "83 unit tests pass (76 baseline + 7 R2 regression)" with the 7 named: fullwidth / Arabic-Indic / mixed digits, 120-second ASCII boundary, ASCII leap-date, enforced-yes+exit-None, executed-True+exit-None-preserved-when-enforced-unknown. §15.1 also changed from "Six regression tests" to "Seven regression tests" with the seventh enumerated.
+
+2. **§15.1 R2 regression test count** was "Six regression tests" but the actual test file contains 7 regression tests (`test_regression_fullwidth_digits_timestamp_rejected`, `test_regression_arabic_indic_digits_timestamp_rejected`, `test_regression_mixed_ascii_and_unicode_digits_timestamp_rejected`, `test_regression_ascii_120_second_boundary_accepted`, `test_regression_ascii_leap_date_rejected`, `test_regression_enforced_yes_with_unknown_exit_rejected`, `test_regression_executed_true_with_unknown_exit_preserved_when_enforced_unknown`). Now corrected.
+
+No contract violation; no rerun required.
