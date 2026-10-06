@@ -276,10 +276,13 @@ commit
 $ git cat-file -t e3710df2acb7ba272702c1b88b393285b7559221
 commit
 $ git log --oneline -3 origin/main
-85fde60 (HEAD -> origin/main, origin/HEAD, origin/hermes/m2a, ...) Freeze reviewed M2-A capability investigation handoff
+<historical snapshot at time of force-with-lease incident>
+85fde60 (origin/main, origin/hermes/m2a, ...) Freeze reviewed M2-A capability investigation handoff
+<note: origin/main has since advanced past 85fde60 (current tip 2805b1f);
+85fde60 remains an ancestor of origin/main and is reachable in the object graph>
 ```
 
-Both SHAs are reachable in the object graph. The `origin/main` ref itself still points to `85fde60`. The local branch was force-with-lease'd, but the previous tip is preserved as an alternative reachable SHA on `origin/main` and `origin/hermes/m2a`.
+Both SHAs are reachable in the object graph. `git rev-parse 85fde60` returns the same commit, and `git merge-base --is-ancestor 85fde60 origin/main` returns 0. The `origin/main` ref has advanced past `85fde60` (current tip `2805b1f`), but `85fde60` is preserved as an ancestor on `origin/main` and `origin/hermes/m2a`. The local branch was force-with-lease'd, but the previous tip is reachable and recoverable.
 
 ### 13.5 Lessons and rule
 
