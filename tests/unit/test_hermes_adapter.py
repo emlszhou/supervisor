@@ -442,3 +442,198 @@ def test_integration_with_tree_cleanup_required():
         result = HermesAdapter().parse_result(proc, expected=EXPECTED)
         assert result.status == "failed"
         assert "cleanup" in (result.error or "").lower()
+
+
+# --- regression tests for M2B-R1-process (Codex round 2) -----------------
+
+
+def test_regression_status_failed_with_exit_zero_cannot_claim_completed():
+    """A failed process whose stdout is well-formed must NOT be promoted to
+    ``completed``. The Adapter is required to refuse and surface the actual
+    exit_code (here ``0`` because the Worker falsely reported success).
+    """
+    proc = _process(
+        [_good_init(), _good_text(), _good_result()],
+        status="failed",
+        exit_code=0,
+    )
+    result = HermesAdapter().parse_result(proc, expected=EXPECTED)
+    assert result.status == "failed"
+    assert result.exit_code == 0
+
+
+def test_regression_worker_preserved_status_keeps_actual_exit_code():
+    """Worker-preserved statuses (timed_out / cancelled / output_limit /
+    environment_failure) must keep the actual exit_code. timed_out/-15
+    must round-trip as timed_out/-15, not timed_out/None.
+    """
+    proc = _process(
+        [_good_init(), _good_text(), _good_result()],
+        status="timed_out",
+        exit_code=-15,
+        stdout=b"bad",
+    )
+    result = HermesAdapter().parse_result(proc, expected=EXPECTED)
+    assert result.status == "timed_out"
+    assert result.exit_code == -15
+
+
+def test_regression_worker_cancelled_preserves_exit_137():
+    """SIGKILL yields exit_code=-9 (or 137). The Adapter must not coerce it."""
+    proc = _process(
+        [_good_init(), _good_text(), _good_result()],
+        status="cancelled",
+        exit_code=-9,
+        stdout=b"bad",
+    )
+    result = HermesAdapter().parse_result(proc, expected=EXPECTED)
+    assert result.status == "cancelled"
+    assert result.exit_code == -9
+
+
+# --- regression tests for M2B-R1-json (Codex round 2) ---------------------
+
+
+def test_regression_infinite_timestamp_is_rejected():
+    """math.isfinite(Infinity) is False; the Adapter must reject Infinity."""
+    init = _good_init()
+    init["timestamp"] = float("inf")
+    result = HermesAdapter().parse_result(
+        _process([init, _good_text(), _good_result()]), expected=EXPECTED
+    )
+    assert result.status == "failed"
+
+
+def test_regression_nan_timestamp_is_rejected():
+    """math.isfinite(NaN) is False; the Adapter must reject NaN."""
+    init = _good_init()
+    init["timestamp"] = float("nan")
+    result = HermesAdapter().parse_result(
+        _process([init, _good_text(), _good_result()]), expected=EXPECTED
+    )
+    assert result.status == "failed"
+
+
+def test_regression_null_timestamp_is_rejected():
+    """timestamp:null is present-as-key with null value; must be rejected."""
+    init = _good_init()
+    init["timestamp"] = None
+    result = HermesAdapter().parse_result(
+        _process([init, _good_text(), _good_result()]), expected=EXPECTED
+    )
+    assert result.status == "failed"
+
+
+def test_regression_unknown_token_key_is_rejected():
+    """tokens must only contain input/output/total/cache_read/cache_write."""
+    res = _good_result()
+    res["tokens"] = dict(input=1, output=2, unknown=3)
+    result = HermesAdapter().parse_result(
+        _process([_good_init(), _good_text(), res]), expected=EXPECTED
+    )
+    assert result.status == "failed"
+
+
+def test_regression_null_tokens_is_rejected():
+    """tokens:null is present-as-key with null value; must be rejected."""
+    res = _good_result()
+    res["tokens"] = None
+    result = HermesAdapter().parse_result(
+        _process([_good_init(), _good_text(), res]), expected=EXPECTED
+    )
+    assert result.status == "failed"
+
+
+def test_regression_null_duration_ms_is_rejected():
+    """duration_ms:null is rejected even when other fields are valid."""
+    res = _good_result()
+    res["duration_ms"] = None
+    result = HermesAdapter().parse_result(
+        _process([_good_init(), _good_text(), res]), expected=EXPECTED
+    )
+    assert result.status == "failed"
+
+
+def test_regression_missing_optional_timestamp_is_allowed():
+    """When an optional timestamp key is absent, the Adapter must accept."""
+    init = _good_init()
+    init.pop("timestamp", None)
+    res = _good_result()
+    res.pop("timestamp", None)
+    res.pop("duration_ms", None)
+    result = HermesAdapter().parse_result(_process([init, _good_text(), res]), expected=EXPECTED)
+    assert result.status == "completed"
+
+
+# --- regression tests for M2B-R1-order (Codex round 2) --------------------
+
+
+def test_regression_text_event_before_init_is_rejected():
+    """The state machine must require init before text events."""
+    events = [dict(type="text", text="early"), _good_init(), _good_text(), _good_result()]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_result_event_before_init_is_rejected():
+    """Result before init must be rejected even if init appears later."""
+    events = [_good_result(), _good_init(), _good_text()]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_init_only_no_text_no_result_is_rejected():
+    """A stream with only init and no result must be rejected (missing terminal)."""
+    events = [_good_init(), _good_text()]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+# --- regression tests for M2B-R1-errors (Codex round 2) -------------------
+
+
+def test_regression_unhashable_event_type_returns_failed_not_raises():
+    """event_type=[] is unhashable; the Adapter must convert to failed,
+    NOT raise TypeError."""
+    events = [dict(type=[])]  # invalid: type must be a string
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_unhashable_system_subtype_returns_failed():
+    """subtype={} is unhashable; must convert to failed without raising."""
+    events = [dict(type="system", subtype={}, model="MiniMax-M3", session_id="s")]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_noncanonical_json_constant_is_rejected():
+    """The JSON line ``NaN`` (parse_constant) must be rejected as invalid NDJSON."""
+    payload = (
+        b'{"type":"system","subtype":"init","model":"MiniMax-M3",'
+        b'"session_id":"s","timestamp":Infinity}'
+    )
+    result = HermesAdapter().parse_result(_process([], stdout=payload), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_ndjson_line_with_infinity_constant_is_rejected():
+    """Bare ``Infinity`` JSON literal is also a parse_constant and must be rejected."""
+    payload = (
+        b"Infinity\n"
+        + json.dumps(_good_init()).encode()
+        + b"\n"
+        + json.dumps(_good_text()).encode()
+        + b"\n"
+        + json.dumps(_good_result()).encode()
+        + b"\n"
+    )
+    result = HermesAdapter().parse_result(_process([], stdout=payload), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_event_type_null_is_rejected():
+    """event_type=None is falsy but neither hashable-not-in-set nor in allowed types."""
+    events = [dict(type=None)]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
