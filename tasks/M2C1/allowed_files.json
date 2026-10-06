@@ -1,0 +1,6 @@
+[
+  "src/supervisor/workers/boundary.py",
+  "tests/unit/test_boundary.py",
+  "deliveries/M2C1/boundary-evidence.json",
+  "deliveries/M2C1/hermes-report.md"
+]
