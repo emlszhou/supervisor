@@ -100,7 +100,14 @@ _SOURCE_MAX = 1024
 _REASON_MAX = 4096
 
 # Timestamp regex: strict ``YYYY-MM-DDTHH:MM:SSZ`` with 4-digit year, zero-padded.
-_TIMESTAMP_PATTERN = r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$"
+# Uses ``[0-9]`` (ASCII) rather than ``\d`` (which under Python's default
+# Unicode-aware re would match fullwidth digits ０-９ and other Unicode
+# decimal digits) so callers cannot bypass the digit gate by substituting
+# visually-identical non-ASCII digits. The regex itself is ASCII-only
+# because ``[0-9]`` has no Unicode interpretation; the surrounding
+# ``re.fullmatch`` call below uses no flags (so no UNICODE flag would
+# be set even by accident).
+_TIMESTAMP_PATTERN = r"^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$"
 
 # Maximum check duration in seconds
 _MAX_CHECK_SECONDS = 120

@@ -514,3 +514,95 @@ def test_validate_evidence_rejects_executed_not_bool():
     data["checks"][0]["executed"] = 1
     with pytest.raises(ValueError, match="boundary_evidence_invalid"):
         validate_evidence(data, expected=EXPECTED)
+
+
+# --- regression tests for M2C1-R1-utc (Codex round 2) ----------------------
+
+
+def test_regression_fullwidth_digits_timestamp_rejected():
+    """M2C1-R1-utc: the timestamp regex must use [0-9] (ASCII), not \\d
+    (which under Python's default Unicode-aware re matches fullwidth
+    digits 0-9). A fullwidth timestamp that looks visually identical
+    to ASCII must be rejected.
+    """
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["started_utc"] = (
+        "\uff12\uff10\uff12\uff16-\uff11\uff10-\uff10\uff16T\uff10\uff10:\uff10\uff10:\uff10\uff10Z"
+    )
+    data["checks"][0]["ended_utc"] = (
+        "\uff12\uff10\uff12\uff16-\uff11\uff10-\uff10\uff16T\uff10\uff10:\uff10\uff10:\uff10\uff11Z"
+    )
+    with pytest.raises(ValueError, match="boundary_evidence_invalid"):
+        validate_evidence(data, expected=EXPECTED)
+
+
+def test_regression_arabic_indic_digits_timestamp_rejected():
+    """Other Unicode decimal digit blocks (e.g. Arabic-Indic ٠-٩) must
+    also be rejected by the strict ASCII timestamp regex.
+    """
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["started_utc"] = (
+        "\u0660\u0660\u0660\u0660-\u0660\u0660-\u0660\u0660T\u0660\u0660:\u0660\u0660:\u0660\u0660Z"
+    )
+    with pytest.raises(ValueError, match="boundary_evidence_invalid"):
+        validate_evidence(data, expected=EXPECTED)
+
+
+def test_regression_mixed_ascii_and_unicode_digits_timestamp_rejected():
+    """A timestamp that mixes ASCII and Unicode digits must be rejected;
+    fullmatch rejects any deviation, so even one fullwidth digit fails."""
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["started_utc"] = "2026-10-06T00:00:\uff10\uff10Z"  # last 2 digits fullwidth
+    with pytest.raises(ValueError, match="boundary_evidence_invalid"):
+        validate_evidence(data, expected=EXPECTED)
+
+
+def test_regression_ascii_120_second_boundary_accepted():
+    """A 120-second boundary span (allowed by the contract) with strict
+    ASCII digits is accepted."""
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["started_utc"] = "2026-10-06T00:00:00Z"
+    data["checks"][0]["ended_utc"] = "2026-10-06T00:02:00Z"  # exactly 120s
+    result = validate_evidence(data, expected=EXPECTED)
+    assert result["checks"][0]["executed"] is True
+
+
+def test_regression_ascii_leap_date_rejected():
+    """Strict UTC datetime validation rejects 2026-02-30 even when
+    digits are pure ASCII."""
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["started_utc"] = "2026-02-30T00:00:00Z"
+    data["checks"][0]["ended_utc"] = "2026-03-01T00:00:00Z"
+    with pytest.raises(ValueError, match="boundary_evidence_invalid"):
+        validate_evidence(data, expected=EXPECTED)
+
+
+def test_regression_enforced_yes_with_unknown_exit_rejected():
+    """M2C1-R1-evidence: enforced=yes requires exit_code=0, not None.
+    The report §9.3 wording previously said '校验器不强制' which
+    contradicted the module; this regression test pins the contract."""
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["enforced"] = "yes"
+    data["checks"][0]["exit_code"] = None  # exit unknown
+    with pytest.raises(ValueError, match="boundary_evidence_invalid"):
+        validate_evidence(data, expected=EXPECTED)
+
+
+def test_regression_executed_true_with_unknown_exit_preserved_when_enforced_unknown():
+    """When exit_code is None, executed must remain True (the
+    'executed but exit unknown' contract guarantee). enforced must NOT
+    be 'yes' (because the contract forbids that)."""
+    data = base_record()
+    execute_check(data["checks"][0])
+    data["checks"][0]["exit_code"] = None
+    data["checks"][0]["enforced"] = "unknown"
+    result = validate_evidence(data, expected=EXPECTED)
+    assert result["checks"][0]["executed"] is True
+    assert result["checks"][0]["exit_code"] is None
+    assert result["checks"][0]["enforced"] == "unknown"
