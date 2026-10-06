@@ -637,3 +637,139 @@ def test_regression_event_type_null_is_rejected():
     events = [dict(type=None)]
     result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
     assert result.status == "failed"
+
+
+# --- regression tests for M2B-R2-identity (Codex round 3) ----------------
+
+
+def _identity_with_trailing_newline(session_id):
+    """Build init/text/result events using a session_id that ends in ``\\n``.
+
+    The M2-B contract requires strict full-string identity validation;
+    ``re.match`` with ``$`` accepted ``"s\\n"`` because ``$`` matches before
+    a final newline. M2B-R2-identity fixes this by using ``re.fullmatch``.
+    """
+    return [
+        dict(type="system", subtype="init", model="MiniMax-M3", session_id=session_id),
+        dict(type="result", session_id=session_id, exit_code=0, text="OK"),
+    ]
+
+
+def test_regression_session_id_trailing_newline_rejected():
+    """session_id ending in newline must NOT be accepted as a valid
+    session_id. The previous re.match('$') permitted this; the fix uses
+    re.fullmatch which strictly matches the entire string."""
+    events = _identity_with_trailing_newline("s\n")
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+    assert "session_id pattern invalid" in (result.error or "")
+
+
+def test_regression_session_id_trailing_carriage_return_rejected():
+    """Trailing \\r (Windows-style line ending) is also rejected."""
+    events = _identity_with_trailing_newline("s\r")
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_expected_task_id_trailing_newline_raises():
+    """expected.task_id ending in newline must raise ValueError, not be
+    silently accepted. Identity is the trusted source; fullmatch enforces
+    strict equality."""
+    proc = _process([_good_init(), _good_text(), _good_result()])
+    with pytest.raises(ValueError, match="does not match identity pattern"):
+        HermesAdapter().parse_result(proc, expected={**EXPECTED, "task_id": "M2B\n"})
+
+
+def test_regression_expected_run_id_trailing_newline_raises():
+    """run_id with trailing newline is also rejected at validate time."""
+    proc = _process([_good_init(), _good_text(), _good_result()])
+    with pytest.raises(ValueError):
+        HermesAdapter().parse_result(proc, expected={**EXPECTED, "run_id": "run-1\n"})
+
+
+def test_regression_expected_attempt_id_trailing_newline_raises():
+    """attempt_id with trailing newline is rejected at validate time."""
+    proc = _process([_good_init(), _good_text(), _good_result()])
+    with pytest.raises(ValueError):
+        HermesAdapter().parse_result(proc, expected={**EXPECTED, "attempt_id": "attempt-1\n"})
+
+
+def test_regression_session_id_max_length_128_accepted():
+    """A session_id of exactly 128 chars (max boundary) is accepted."""
+    sid = "a" * 128
+    events = [
+        dict(type="system", subtype="init", model="MiniMax-M3", session_id=sid),
+        dict(type="result", session_id=sid, exit_code=0, text="OK"),
+    ]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "completed"
+    assert result.session_id == sid
+
+
+def test_regression_session_id_129_chars_rejected():
+    """A session_id of 129 chars (one over max) is rejected."""
+    sid = "a" * 129
+    events = [
+        dict(type="system", subtype="init", model="MiniMax-M3", session_id=sid),
+        dict(type="result", session_id=sid, exit_code=0, text="OK"),
+    ]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+    assert "session_id pattern invalid" in (result.error or "")
+
+
+def test_regression_expected_task_id_max_length_64_accepted():
+    """A task_id of exactly 64 chars (max boundary) is accepted."""
+    tid = "t" + "a" * 63  # exactly 64 chars: starts with letter, [A-Za-z0-9._-]*
+    expected_64 = {**EXPECTED, "task_id": tid}
+    proc = _process([_good_init(), _good_text(), _good_result()])
+    result = HermesAdapter().parse_result(proc, expected=expected_64)
+    assert result.status == "completed"
+
+
+def test_regression_expected_task_id_65_chars_rejected():
+    """A task_id of 65 chars (one over max) raises ValueError."""
+    tid = "t" + "a" * 64  # exactly 65 chars
+    proc = _process([_good_init(), _good_text(), _good_result()])
+    with pytest.raises(ValueError):
+        HermesAdapter().parse_result(proc, expected={**EXPECTED, "task_id": tid})
+
+
+def test_regression_session_id_with_internal_newline_rejected():
+    """A session_id containing a newline in the middle (not just trailing)
+    is also rejected. fullmatch enforces exact character set."""
+    events = [
+        dict(type="system", subtype="init", model="MiniMax-M3", session_id="s\nid"),
+        dict(type="result", session_id="s\nid", exit_code=0, text="OK"),
+    ]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_session_id_with_only_newline_rejected():
+    """A session_id that is just ``"\\n"`` is rejected (empty before newline)."""
+    events = _identity_with_trailing_newline("\n")
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "failed"
+
+
+def test_regression_valid_session_id_with_special_chars_accepted():
+    """A session_id containing only allowed special chars (. _ -) is accepted.
+    Regression guard for M2B-R2-identity: the fix uses fullmatch, but
+    legitimate sessions with dots/underscores/dashes must still work."""
+    events = [
+        dict(type="system", subtype="init", model="MiniMax-M3", session_id="s.1_2-3"),
+        dict(type="result", session_id="s.1_2-3", exit_code=0, text="OK"),
+    ]
+    result = HermesAdapter().parse_result(_process(events), expected=EXPECTED)
+    assert result.status == "completed"
+    assert result.session_id == "s.1_2-3"
+
+
+def test_regression_valid_run_id_with_special_chars_accepted():
+    """A run_id with dots is accepted (legitimate run ids may use them)."""
+    expected = {**EXPECTED, "run_id": "r.0.1"}
+    proc = _process([_good_init(), _good_text(), _good_result()])
+    result = HermesAdapter().parse_result(proc, expected=expected)
+    assert result.status == "completed"

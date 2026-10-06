@@ -114,7 +114,7 @@ def _validate_expected(expected):
     import re
 
     for field in ("task_id", "run_id", "attempt_id"):
-        if not re.match(_ID_PATTERN, expected[field]):
+        if not re.fullmatch(_ID_PATTERN, expected[field]):
             raise ValueError(f"expected[{field!r}] does not match identity pattern")
 
     from supervisor.agents.base import _ALLOWED_ROLES  # type: ignore[attr-defined]
@@ -368,7 +368,7 @@ class HermesAdapter:
         sid = obj.get("session_id")
         if not isinstance(sid, str) or not sid:
             return "init session_id missing"
-        if not re.match(_SESSION_ID_PATTERN, sid):
+        if not re.fullmatch(_SESSION_ID_PATTERN, sid):
             return "init session_id pattern invalid"
 
         # Optional timestamp: distinguish missing (key absent) from null.
@@ -417,7 +417,7 @@ class HermesAdapter:
         sid = obj.get("session_id")
         if not isinstance(sid, str) or not sid:
             return "result session_id missing", "", None
-        if not re.match(_SESSION_ID_PATTERN, sid):
+        if not re.fullmatch(_SESSION_ID_PATTERN, sid):
             return "result session_id pattern invalid", "", None
 
         exit_code = obj.get("exit_code")
