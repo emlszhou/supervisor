@@ -82,3 +82,7 @@ M2-C 真正边界验证前，Agent smoke 必须已核验禁用工具并在无秘
 ## 当前预算语义与 M2-B
 
 用户2026-10-06已将周期时间/Agent启动额度改为建议值，超额检视原因与停滞，不自动停止、不重置历史消耗，覆盖旧硬停止条款。单次进程预算、scope、权限、真实性和fresh审核继续有效。M2-A成果可用于规格准备，但真机执行门禁仍未通过。M2B-hermes-adapter-fixtures以handoffs/M2B/v1为权威输入，hermes/m2b实施，local/m2b-review-*审核；仅离线解析与模拟CLI，真实build_request恒拒绝。普通规格发布/推拉已授权，实施merge main/部署仍需具体授权。
+
+## 当前任务 M2-C1
+
+M2-B离线候选77920b99f279956cbe88bc2b3b2364b5ae078ce7经独立复核接受，未合main。M2-C拆C1预检证据格式/C2隔离实施。当前M2C1-boundary-preflight基线main2805b1f，权威包handoffs/M2C1/v1，实施hermes/m2c1，审核local/m2c1-review-*。仅四允许文件，实现纯证据校验、恒拒绝真实执行入口和只读平台盘点；不创建账户/容器/挂载、不改网络或M1/Adapter、不cherry-pick M2B。周期建议6小时10调用，不作硬停止；真实进程边界/权限/scope/fresh仍有效。普通规格发布与推拉沿用授权，实施merge/main/部署未自动授权。

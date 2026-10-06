@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "review_kind": "fresh_specification_review",
+  "task_id": "M2C1-boundary-preflight",
+  "source_commit": "956bcfcfc4f5ab390e3fc62f09ddbeee56d978b7",
+  "implementation_baseline": "2805b1f03d95d0d8de5ab81ea8538822198c397c",
+  "decision": "accept",
+  "decision_scope": "Draft specification is feasible for C1 evidence validation and read-only inventory; this is not implementation acceptance, OS isolation verification or permission for live execution.",
+  "independence": {
+    "fresh_agent_context": true,
+    "independent_clone": "/tmp/m2c1-spec-review",
+    "participated_in_specification_edits": false,
+    "independent_provider": false
+  },
+  "blocking_findings": [],
+  "assessment": {
+    "schema": "Task and verification documents validate against existing schemas; allowed and forbidden paths do not overlap. Draft null baseline is valid; frozen publication must bind the exact baseline and external manifest.",
+    "feasibility": "Standalone boundary module requires only standard-library validation, datetime parsing and deepcopy. Existing ProcessRunner is not changed and its process management does not establish OS isolation. No M2B API or merge is necessary.",
+    "security_meaning": "Declared/observed/enforced are submission consistency fields only. All-unknown unexecuted records remain valid; require_live_execution always rejects, including allow_live arguments. Source references are not opened or attested.",
+    "scope": "Four implementation delivery paths and 1800 diff lines are sufficient. Inventory is read-only and excludes new resources, credentials, model probes and hostile host tests. Missing Mac prerequisites must remain not_run/unknown.",
+    "budget": "Cycle time and agent-start numbers are advisory under current user instructions. Per-command 120 seconds/64KiB, scope, permissions, freshness and truthful evidence remain binding. Historical consumption is not reset."
+  },
+  "checks": [
+    {
+      "name": "direct-M2C1-schema-and-scope-validation",
+      "executor": "/workspace/supervisor/.venv/bin/python -B",
+      "cwd": "/tmp/m2c1-spec-review",
+      "exit_code": 0,
+      "result": "task.schema.json and verification.schema.json validation passed; no allow/deny overlap"
+    },
+    {
+      "argv": [
+        "/workspace/supervisor/.venv/bin/python",
+        "-B",
+        "scripts/check_specs.py"
+      ],
+      "cwd": "/tmp/m2c1-spec-review",
+      "exit_code": 0,
+      "result": "6 schemas and existing sample/M0 preparation artifacts validated; script does not validate M2C1 automatically"
+    },
+    {
+      "argv": [
+        "/workspace/supervisor/.venv/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "tasks/M2C1/tests/protected/test_contract.py",
+        "--collect-only",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "cwd": "/tmp/m2c1-spec-review",
+      "exit_code": 0,
+      "collected": 23,
+      "executed": 0,
+      "passed": null,
+      "result": "Collection only; boundary implementation absent, no protected behavior passed"
+    },
+    {
+      "argv": [
+        "git",
+        "cat-file",
+        "-e",
+        "2805b1f03d95d0d8de5ab81ea8538822198c397c^{commit}"
+      ],
+      "cwd": "/tmp/m2c1-spec-review",
+      "exit_code": 0,
+      "result": "Declared implementation baseline resolves locally"
+    }
+  ],
+  "candidate_review_checks_not_yet_executed": [
+    "One fixed ValueError message across every malformed input and no attacker-controlled string in message or exception chain",
+    "Malformed root/expected/check types; missing and extra expected/check fields; expected identity bounds and full-match newline handling",
+    "Every tristate, strict executed bool, platform/source/reason type and length boundary",
+    "Every unexecuted execution field must be null, including individually injected argv/cwd/time/hash values",
+    "Positive enforced=yes with observed=yes and true integer zero; reject false observation and nonzero/unknown exit",
+    "Accept negative integer exit; reject float/bool exit; argv empty/nonstring/NUL cases",
+    "Strict UTC syntax, valid leap dates, equal timestamps, exact 120-second duration and reversed timestamps",
+    "Deep-copy isolation for all nested mutable values and no mutation on rejection",
+    "No file/source access, process launch, network or configuration read by validator; no live bypass for arbitrary arguments",
+    "Actual inventory identities, source references and report logs agree; synthetic fixtures are not labeled host evidence"
+  ],
+  "nonblocking_notes": [
+    "Protected cases are meaningful and include positive enforced=yes, negative exit, malformed expected inputs and error sentinel; fixed identical errors and remaining type/length constraints still require candidate-review coverage.",
+    "Verification ID protected-adapter is a cosmetic carryover; its argv correctly targets boundary contract tests.",
+    "No host inventory, real model invocation, OS attack test, full project suite or Mac execution was performed for this specification-only review."
+  ],
+  "final_source_delta": "Independently inspected seven additional cases; no requirement semantics changed and no blocking finding."
+}

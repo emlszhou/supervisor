@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "task_id": "M2C1-boundary-preflight",
+  "baseline_commit": "2805b1f03d95d0d8de5ab81ea8538822198c397c",
+  "bundle_sha256": "595511a65981bb7ddcca6a339939ae53584d0a3274f92c4e58aac3273ee71a40",
+  "implementation_branch": "hermes/m2c1",
+  "source_spec_commit": "956bcfcfc4f5ab390e3fc62f09ddbeee56d978b7",
+  "spec_review_commit": "ba9780d4e53ee277fe60e054abdcd04ce5782144",
+  "budget_semantics": "cycle budgets advisory; scope and per-process limits mandatory",
+  "baseline_tests_passed": 301
+}
