@@ -2,7 +2,7 @@
   "schema_version": 1,
   "review_kind": "fresh_specification_review",
   "task_id": "M2C1-boundary-preflight",
-  "source_commit": "b060daa8f0183ab7added9aeea53229cbed6838c",
+  "source_commit": "956bcfcfc4f5ab390e3fc62f09ddbeee56d978b7",
   "implementation_baseline": "2805b1f03d95d0d8de5ab81ea8538822198c397c",
   "decision": "accept",
   "decision_scope": "Draft specification is feasible for C1 evidence validation and read-only inventory; this is not implementation acceptance, OS isolation verification or permission for live execution.",
@@ -29,22 +29,41 @@
       "result": "task.schema.json and verification.schema.json validation passed; no allow/deny overlap"
     },
     {
-      "argv": ["/workspace/supervisor/.venv/bin/python", "-B", "scripts/check_specs.py"],
+      "argv": [
+        "/workspace/supervisor/.venv/bin/python",
+        "-B",
+        "scripts/check_specs.py"
+      ],
       "cwd": "/tmp/m2c1-spec-review",
       "exit_code": 0,
       "result": "6 schemas and existing sample/M0 preparation artifacts validated; script does not validate M2C1 automatically"
     },
     {
-      "argv": ["/workspace/supervisor/.venv/bin/python", "-B", "-m", "pytest", "tasks/M2C1/tests/protected/test_contract.py", "--collect-only", "-q", "-p", "no:cacheprovider"],
+      "argv": [
+        "/workspace/supervisor/.venv/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "tasks/M2C1/tests/protected/test_contract.py",
+        "--collect-only",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
       "cwd": "/tmp/m2c1-spec-review",
       "exit_code": 0,
-      "collected": 16,
+      "collected": 23,
       "executed": 0,
       "passed": null,
       "result": "Collection only; boundary implementation absent, no protected behavior passed"
     },
     {
-      "argv": ["git", "cat-file", "-e", "2805b1f03d95d0d8de5ab81ea8538822198c397c^{commit}"],
+      "argv": [
+        "git",
+        "cat-file",
+        "-e",
+        "2805b1f03d95d0d8de5ab81ea8538822198c397c^{commit}"
+      ],
       "cwd": "/tmp/m2c1-spec-review",
       "exit_code": 0,
       "result": "Declared implementation baseline resolves locally"
@@ -63,8 +82,9 @@
     "Actual inventory identities, source references and report logs agree; synthetic fixtures are not labeled host evidence"
   ],
   "nonblocking_notes": [
-    "Protected cases are meaningful but not exhaustive; fixed safe errors, positive enforced=yes and many type/length constraints require candidate-review coverage.",
+    "Protected cases are meaningful and include positive enforced=yes, negative exit, malformed expected inputs and error sentinel; fixed identical errors and remaining type/length constraints still require candidate-review coverage.",
     "Verification ID protected-adapter is a cosmetic carryover; its argv correctly targets boundary contract tests.",
     "No host inventory, real model invocation, OS attack test, full project suite or Mac execution was performed for this specification-only review."
-  ]
+  ],
+  "final_source_delta": "Independently inspected seven additional cases; no requirement semantics changed and no blocking finding."
 }
