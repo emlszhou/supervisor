@@ -69,7 +69,7 @@
 ## 6. Git 事件
 
 - 普通提交 + 普通推送 `hermes/m2c2a`（已授权）；无 force/reset/clean/删除分支；无 main 合并。
-- 本轮精确 SHA：见交接（commit 后 `git rev-parse HEAD`，先于提交范围定稿避免自引用摘要）。
+- 精确 SHA：`88232d470c261c2daeb38055d3db73c45b412217`（commit 后 `git rev-parse HEAD` + `git ls-remote origin hermes/m2c2a` 核验一致）。
 
 ## 7. fresh Reviewer 说明
 
