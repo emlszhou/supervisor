@@ -61,8 +61,8 @@
 
 - 分支：`local/m2c2-plan-pi`（基于 `origin/main = 51d497c`；从 R5 审核分支 `origin/codex/m2c2-plan-review-5` 恢复四文件后修订）。
 - 本轮提交内容：4 文件（plan.md / acceptance-matrix.md / permission-request.md / pi-report.md），全在 `proposals/M2C2/`。
-- 推送：普通 `git push origin local/m2c2-plan-pi`（已授权范围），无 force/reset/clean。
-- 精确 SHA：commit 后 `git rev-parse HEAD`（本节先于 SHA 定稿，避免自引用摘要问题）。
+- 推送：普通 `git push origin local/m2c2-plan-pi-r5` 建立新分支 `origin/local/m2c2-plan-pi-r5`（R5 修订线，基于 R5 审核分支 `origin/codex/m2c2-plan-review-5`）。注：R4 线 `origin/local/m2c2-plan-pi`（`2295288`）与 R5 审核线（`76a54cc`）历史分叉（R5 审核分支含删除 `proposals/M2C2/` 的清理提交），无法普通 fast-forward；是否以 force-push 将 `local/m2c2-plan-pi` 指向 `2197894` 属 N7（force-push 永久禁止）范围，本轮不执行，待用户单独授权。无 reset/clean。
+- 精确 SHA：`21978946382806baba2a89ba2056213f5804dad0`（commit 后 `git rev-parse HEAD` + `git ls-remote origin local/m2c2-plan-pi-r5` 核验一致）。
 
 ---
 
