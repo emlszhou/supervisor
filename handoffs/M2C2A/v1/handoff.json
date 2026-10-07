@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "task_id": "M2C2A-seatbelt-synthetic",
+  "baseline_commit": "51d497cae7f20872e5a5f9c8825fd0f83323a92f",
+  "bundle_sha256": "f01525c5b92dd516c7d2fbf9f7c2e8034514c1353d5d270460d7fcdca383b9ef",
+  "implementation_branch": "hermes/m2c2a",
+  "source_spec_commit": "03ecc058a404f8df3f470e81be282b623ec63e5e",
+  "spec_review_commit": "933f9d59b8ee57895efdcbed22c40e855541552f",
+  "budget_semantics": "cycle advisory; scope/permissions/per-process mandatory",
+  "baseline_tests_passed": 301,
+  "mac_probe_authorized": false
+}
