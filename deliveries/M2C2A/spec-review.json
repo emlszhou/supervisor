@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "record_kind": "fresh_specification_review",
+  "task_id": "M2C2A-seatbelt-synthetic",
+  "decision": "accept_specification",
+  "source_commit": "03ecc058a404f8df3f470e81be282b623ec63e5e",
+  "implementation_baseline": "51d497cae7f20872e5a5f9c8825fd0f83323a92f",
+  "initial_source_commit": "bbd9ab6aa06dc41b45272d9db95707f9b8310d04",
+  "reviewed_utc": "2026-10-07T10:41:34.149047+00:00",
+  "reviewer": {
+    "role": "fresh_specification_reviewer",
+    "session": "/root/m2c2a_spec_review",
+    "provider": "OpenAI",
+    "model": "not_exposed_in_runtime_metadata",
+    "fresh_context": true,
+    "independent_provider": false,
+    "implemented_or_modified_specification": false
+  },
+  "checkout": {
+    "path": "/tmp/m2c2a-spec-review",
+    "method": "independent_https_clone",
+    "worktree": false,
+    "source_remote": "https://github.com/emlszhou/supervisor.git"
+  },
+  "source_files": [
+    {
+      "path": "tasks/M2C2A/README.md",
+      "sha256": "d7ab11b656a792ab66715039566dbc8f1e5a8c6c58d80144abaddb3fedd705f5"
+    },
+    {
+      "path": "tasks/M2C2A/acceptance.md",
+      "sha256": "bf48205d12e272c0f2fdf2b9da548e8c62dadcbbe33d92dca2f43e188b467c3d"
+    },
+    {
+      "path": "tasks/M2C2A/allowed_files.json",
+      "sha256": "aa469e565f472747ed368836c8e216ae9f0430543863e9718b8f4ae439a3c4d3"
+    },
+    {
+      "path": "tasks/M2C2A/forbidden_files.json",
+      "sha256": "73f877484ff28e8486444c348a73c6e05afe6ff00f4ed2025663471b8cf6c564"
+    },
+    {
+      "path": "tasks/M2C2A/permissions.md",
+      "sha256": "fd4fca5f5000b50d0682bc8d1486859bff91e8d17e2e23dff8ac9982e314562e"
+    },
+    {
+      "path": "tasks/M2C2A/requirements.md",
+      "sha256": "9813a7e0a76ea7db621a1c7d8d9e1ad922e7bc1393c0a9b336dceababe3be796"
+    },
+    {
+      "path": "tasks/M2C2A/task.json",
+      "sha256": "11a76497d478d2b984c41964bf8c8a432817cb7bb3fef6a19d0ab4fb6a54993c"
+    },
+    {
+      "path": "tasks/M2C2A/tests/protected/__pycache__/test_contract.cpython-312-pytest-8.4.2.pyc",
+      "sha256": "13e75073c1cb78f02b1edcdb5b412f0cfa23d127b14f0de781f89b17a1186df7"
+    },
+    {
+      "path": "tasks/M2C2A/tests/protected/test_contract.py",
+      "sha256": "d713175081e048a195b035db526f769d178932d933f69675b2268ca39154b83d"
+    },
+    {
+      "path": "tasks/M2C2A/verification.json",
+      "sha256": "d5919305d6f09d844131454d08713e5a4aa390f6e50ca97da218e13892bb9585"
+    }
+  ],
+  "checks": [
+    {
+      "check": "frozen_uv_sync",
+      "exit_code": 0,
+      "cache": "/tmp/m2c2a-uv-cache"
+    },
+    {
+      "check": "task_and_verification_jsonschema_independent",
+      "exit_code": 0
+    },
+    {
+      "check": "protected_contract_collect_only",
+      "exit_code": 0,
+      "collected": 46,
+      "passed": null,
+      "behavior_executed": false
+    },
+    {
+      "check": "check_specs",
+      "exit_code": 0,
+      "limitation": "existing script validates six schemas/sample artifacts/M0 draft; M2C2A separately validated"
+    },
+    {
+      "check": "project_pytest",
+      "exit_code": 0,
+      "passed": 301,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "check": "ruff_check_all",
+      "exit_code": 0
+    },
+    {
+      "check": "ruff_format_check_all",
+      "exit_code": 0,
+      "files": 63
+    },
+    {
+      "check": "uv_build_no_sources",
+      "exit_code": 0
+    }
+  ],
+  "resolved_findings": [
+    "Refusal target_unchanged=False has explicit fail priority matching protected test.",
+    "Generic package integrity verifier accepts the protected minimal package; complete Mac deliverable shape is separately checked by harness/reviewer."
+  ],
+  "design_assessment": [
+    "Public APIs and 46 collected checks are consistent after clarification.",
+    "Production scope is implementable with Python standard library; runtime Seatbelt guarantees require actual Mac validation.",
+    "Real same-action/target controls, errno and observed side effects prevent mock or invalid endpoint upgrades to pass.",
+    "Default denial, strict paths/endpoints, constant live refusal and unknown cleanup preserve fail-closed behavior.",
+    "Payload -> pre-cleanup -> cleanup -> final manifest -> CHECKSUMS hash dependency graph has no self-reference.",
+    "Explicit temporary/persistent roots, bounded TCP listeners, command limits and restricted cancellation permit concrete operator review.",
+    "Draft baseline null is allowed; coordinator must freeze to exact implementation baseline after this acceptance."
+  ],
+  "limitations": [
+    "M2C2A production modules do not exist at reviewed source; 46 protected behaviors were not run or passed.",
+    "No Mac command/probe, listening socket, sandbox profile enforcement or process cancellation was executed.",
+    "Mac permissions and both actual roots need separate external operator approval; this review grants none.",
+    "Authorization-file existence or structural JSON validity cannot confer trusted authority.",
+    "Acceptance is specification-only, not frozen-bundle acceptance, implementation acceptance, main merge, deployment, live execution or security-readiness certification.",
+    "Same provider; context independence is not provider independence."
+  ],
+  "setup_issue": {
+    "initial_command": "uv sync --frozen --group dev",
+    "exit_code": 2,
+    "reason": "default /home/agent/.cache/uv read-only",
+    "resolved": "UV_CACHE_DIR=/tmp/m2c2a-uv-cache; frozen sync succeeded"
+  },
+  "budget": "Cycle budgets are advisory; permission, scope, per-command bounds and historical usage remain applicable."
+}
