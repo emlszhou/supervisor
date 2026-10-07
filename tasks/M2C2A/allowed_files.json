@@ -1,0 +1,11 @@
+[
+  "src/supervisor/workers/backend.py",
+  "src/supervisor/workers/evidence.py",
+  "src/supervisor/workers/preflight.py",
+  "tests/fixtures/seatbelt_probe.py",
+  "tests/unit/test_seatbelt_backend.py",
+  "tests/unit/test_boundary_package.py",
+  "tests/integration/test_seatbelt_preflight.py",
+  "deliveries/M2C2A/hermes-report.md",
+  "deliveries/M2C2A/evidence/**"
+]

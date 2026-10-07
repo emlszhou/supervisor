@@ -1,0 +1,5 @@
+# M2-C2A：Mac Seatbelt 合成边界后端
+
+规划来源21978946382806baba2a89ba2056213f5804dad0；交接事件证据f112cb5753004c78bc8c4f1462c50eecb9137a2f。此合同替代提案中的重复/冲突算法。仅实现与合成测试，不启用真实模型、MCP或Worker live入口。Mac运行需operator单独批准permissions.md；未批准仍可实施代码与离线测试，不运行宿主探测。规格发布不等于实施合并或宿主授权。
+
+周期建议8小时/10调用，超额检视而非硬停止；历史消耗不重置。实现者在hermes/m2c2a普通提交推送；非快进拒绝后保留分叉并推新分支，禁止force/reset/clean/删除分支。全新Reviewer审精确候选；同provider不声明独立供应者。
