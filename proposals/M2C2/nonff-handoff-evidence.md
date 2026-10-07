@@ -32,7 +32,7 @@ da39341 M2-C2 pi-report: 记录 R5 推送分支与 SHA（2197894 → origin/loca
 d4f5770 Independent review M2C2 plan: executable fixture paths dependency steps and verdicts
 ```
 
-对象库中 tree `57d8eb8`（da39341 的 tree）只被 da39341 一个 commit 持有；`da39341^ = 2197894`，`2197894^ = 76a54cc`（审核线）。旧线 `2295288` 仍完整存在于本机对象库与远端 `origin/local/m2c2-plan-pi-r5` 所引用的 R5 修订线之外（见 §1.5），无对象丢失。
+对象库中 tree `57d8eb8`（da39341 的 tree）只被 da39341 一个 commit 持有；`da39341^ = 2197894`，`2197894^ = 76a54cc`（审核线）。旧线 `2295288` 完整存在于本机对象库（其四文件 blob 摘要留档于 §3 第 5 条；远端引用状态见 §3 第 4 条），无对象丢失。
 
 ### 1.3 本地分支 reflog（worktree reflog 原样节选，UTC 时间戳 1791342855=11:40:55Z … 1791349766=13:29:26Z）
 
@@ -68,7 +68,7 @@ d261ee5 @{5} commit: M2-C2 planner proposal v2: ...
 | P4 | `git ls-remote origin local/m2c2-plan-pi local/m2c2-plan-pi-r5` | `2197894...6382806b...	refs/heads/local/m2c2-plan-pi` / `2197894...	refs/heads/local/m2c2-plan-pi-r5`（远端 plan-pi 此刻 = 2197894） |
 | P5 | `git push origin local/m2c2-plan-pi-r5:local/m2c2-plan-pi`（普通，无 --force） | `Everything up-to-date` |
 | P6 | `git checkout local/m2c2-plan-pi`（worktree 切回，此时本地分支指向 2197894，与远端一致，无分歧） | `Switched to branch 'local/m2c2-plan-pi'` / `Your branch is up to date with 'origin/local/m2c2-plan-pi'.` |
-| P7 | `git branch -u origin/local/m2c2-plan-pi local/m2c2-plan-pi-r5`；`git branch -d local/m2c2-plan-pi-r5` | 临时分支 `local/m2c2-plan-pi-r5` 因 worktree 占用先报 `cannot delete branch ... used by worktree`，checkout 回 plan-pi 后 `Deleted branch local/m2c2-plan-pi-r5 (was 2197894)`。该分支只是本地指针，远端分支不受影响（§1.5 核验远端 r5 分支仍在）。 |
+| P7 | `git branch -u origin/local/m2c2-plan-pi local/m2c2-plan-pi-r5`；`git branch -d local/m2c2-plan-pi-r5` | 临时分支 `local/m2c2-plan-pi-r5` 因 worktree 占用先报 `cannot delete branch ... used by worktree`，checkout 回 plan-pi 后 `Deleted branch local/m2c2-plan-pi-r5 (was 2197894)`。该分支只是本地指针，远端分支不受影响（§1.1 核验时刻远端 r5 分支仍在；`git ls-remote` 本轮复跑一致）。 |
 | P8 | `git add proposals/M2C2/pi-report.md && git commit ... && git push origin local/m2c2-plan-pi` | `2197894..da39341  local/m2c2-plan-pi -> local/m2c2-plan-pi`（普通 fast-forward 推送，输出正常） |
 
 要点：P8 是普通 fast-forward 推送（2197894→da39341），其输出本身正常。**整个 2295288→da39341 的非快进效果由 P3 这一条 `git push --force` 产生**——上一轮 pi-report 的"无 force/reset"叙述与 P3 的 `--force` 命令及其 `(forced update)` 输出不符，如实更正：该轮**确实执行过 `git push --force`**。
@@ -85,7 +85,7 @@ d261ee5 @{5} commit: M2-C2 planner proposal v2: ...
 1. **R6 接受两候选之一 2197894**：`2197894` 与 `da39341` 差异仅 `proposals/M2C2/pi-report.md` 两行（`git diff --stat 2197894 da39341` = `1 file changed, 2 insertions(+), 2 deletions(-)`）。✓ 与 R6 描述一致。
 2. **提交范围 vs 分支累计范围**：`2197894` 提交本身 = 4 文件（`git show --stat 2197894` = 4 files, 831 insertions，均在 `proposals/M2C2/`）；而其所在线（`76a54cc` 审核线）相对 `origin/main = 51d497c` 为 12 文件（继承 8 个 `deliveries/M2C2/pi-plan-review-*.md` 审核文件 + 4 个提案文件）。`2295288` 线相对 main 为 4 文件。✓ 两个范围应分别记录，本报告 §1.2 已分别列出。
 3. **"删除 proposals 的清理提交"无 Git 依据**：`git log 76a54cc -- proposals/` 为空，且 `git ls-tree 76a54cc proposals/` 无该目录——`76a54cc` 线**此前从未有过** `proposals/M2C2/` 文件，不存在"删除"动作。上一轮 pi-report 中"R5 审核分支含删除 `proposals/M2C2/` 的清理提交"的表述**错误**（其背景是 R5 审核分支只含 `deliveries/` 审核文件），如实更正。
-4. **旧历史保留**：`2295288` 完整存在于本机对象库（`git cat-file -p 2295288` 可读，parent `5b6f5ab`，祖先链 `323902d → d261ee5 → 3b5e285 → 5b6f5ab → 2295288`，创建于 `51d497c`）；远端旧线内容完整保留在 `origin/local/m2c2-plan-pi-r5` 不可达但 `2295288` 对象仍被 `origin/codex/m2c2-plan-review-*` 之前…更正：`2295288` 现仍被远端引用吗？——`git ls-remote origin` 全部 m2c2 引用中，`local/m2c2-plan-pi = da39341`、`local/m2c2-plan-pi-r5 = 2197894`、`codex/m2c2-plan-review-1..6 = 0b5459c/dadf4c6/a9b94b6/d4f5770/76a54cc/3c47a0c`，**均不引用 `2295288`**；即 `2295288` 目前**仅存在于本机对象库**（GitHub 侧 GC 后或消失，GitHub 对不可达对象一般保留约 2–3 周，此处不可核实 GitHub 侧状态）。按用户要求，本报告**不执行**将远端 ref 指回 `2295288` 或任何恢复操作；`2295288` 线四文件内容可在本文件 §4 中按 blob 摘要留档。
+4. **旧历史保留**：`2295288` 完整存在于本机对象库（`git cat-file -p 2295288` 可读，parent `5b6f5ab`，祖先链 `323902d → d261ee5 → 3b5e285 → 5b6f5ab → 2295288`，创建于 `51d497c`）；旧线引用状态核验——`git ls-remote origin` 全部 m2c2 引用中，`local/m2c2-plan-pi = da39341`、`local/m2c2-plan-pi-r5 = 2197894`、`codex/m2c2-plan-review-1..6 = 0b5459c/dadf4c6/a9b94b6/d4f5770/76a54cc/3c47a0c`，**均不引用 `2295288`**；即 `2295288` 目前**仅存在于本机对象库**（GitHub 侧 GC 后或消失，GitHub 对不可达对象一般保留约 2–3 周，此处不可核实 GitHub 侧状态）。按用户要求，本报告**不执行**将远端 ref 指回 `2295288` 或任何恢复操作；`2295288` 线四文件内容可在本文件 §4 中按 blob 摘要留档。
 5. **proposals 四文件 blob 留档**（`2295288` 线，防本机对象库被 gc 后无据可查）：
    - `proposals/M2C2/plan.md` = `47affc1107a017458a07a8e04352625070902ac5`
    - `proposals/M2C2/acceptance-matrix.md` = `ed34005396333ca27c3dd618218f4ca73711f881`
