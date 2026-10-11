@@ -296,3 +296,94 @@ def test_reference_to_unlisted_file_rejected(tmp_path):
     with pytest.raises(ValueError) as excinfo:
         verify_package(tmp_path)
     assert "unlisted" in str(excinfo.value)
+
+
+# ---------------------------------------------------------------------------
+# C2A-R2-evidence regressions
+#
+# ``pre-cleanup-manifest.json`` is ordinary final payload.  The earlier blanket
+# metadata exemption let a package omit it, or plant a symlink at that name,
+# and still be accepted -- a hidden hole in exactly the file that records what
+# the package contained before cleanup.
+# ---------------------------------------------------------------------------
+
+
+def test_final_package_must_list_the_pre_cleanup_manifest(tmp_path):
+    build_package(tmp_path)
+    (tmp_path / "pre-cleanup-manifest.json").write_text(
+        json.dumps({"schema_version": 1, "files": []})
+    )
+    # present on disk but absent from the manifest: an unlisted node
+    with pytest.raises(ValueError) as excinfo:
+        verify_package(tmp_path)
+    assert "unlisted file" in str(excinfo.value)
+
+    # once it is listed, it is ordinary payload and fully verified
+    manifest = _rebuild_manifest(tmp_path)
+    assert any(e["path"] == "pre-cleanup-manifest.json" for e in manifest["files"])
+    assert verify_package(tmp_path)["schema_version"] == 1
+
+    # and tampering with it is caught like any other payload
+    (tmp_path / "pre-cleanup-manifest.json").write_text(
+        json.dumps({"schema_version": 1, "files": [{"path": "nope"}]})
+    )
+    with pytest.raises(ValueError):
+        verify_package(tmp_path)
+
+
+def test_pre_cleanup_manifest_symlink_is_rejected(tmp_path):
+    """Regression: a dangling symlink at the meta name was accepted."""
+    build_package(tmp_path)
+    (tmp_path / "pre-cleanup-manifest.json").symlink_to(tmp_path / "no-such-target")
+    with pytest.raises(ValueError) as excinfo:
+        verify_package(tmp_path)
+    assert "symlink" in str(excinfo.value)
+
+
+def test_pre_cleanup_manifest_symlink_is_rejected_when_listed(tmp_path):
+    build_package(tmp_path)
+    (tmp_path / "pre-cleanup-manifest.json").symlink_to(tmp_path / "summary.json")
+    _rebuild_manifest(tmp_path)
+    with pytest.raises(ValueError):
+        verify_package(tmp_path)
+
+
+def test_pre_cleanup_stage_uses_its_own_explicit_interface(tmp_path):
+    """The pre-cleanup stage is a different check, not a metadata exemption."""
+    from supervisor.workers.evidence import verify_pre_cleanup_package
+
+    build_package(tmp_path)
+    # at the pre-cleanup stage the snapshot lists everything except itself and
+    # there is no external CHECKSUMS yet
+    entries = [
+        {
+            "path": str(p.relative_to(tmp_path)),
+            "sha256": sha256_bytes(p.read_bytes()),
+            "bytes": p.stat().st_size,
+        }
+        for p in sorted(tmp_path.rglob("*"))
+        if p.is_file() and p.name not in ("manifest.json", "CHECKSUMS.sha256")
+    ]
+    raw = json.dumps({"schema_version": 1, "files": entries}).encode()
+    (tmp_path / "pre-cleanup-manifest.json").write_bytes(raw)
+    (tmp_path / "manifest.json").write_bytes(raw)
+    (tmp_path / "CHECKSUMS.sha256").unlink(missing_ok=True)
+    assert verify_pre_cleanup_package(tmp_path)["schema_version"] == 1
+
+    # ...but the finished package still requires CHECKSUMS
+    with pytest.raises(ValueError):
+        verify_package(tmp_path)
+
+    # ...and the pre-cleanup interface is not a loophole for a symlink either
+    (tmp_path / "pre-cleanup-manifest.json").unlink()
+    (tmp_path / "pre-cleanup-manifest.json").symlink_to(tmp_path / "no-such-target")
+    with pytest.raises(ValueError):
+        verify_pre_cleanup_package(tmp_path)
+
+
+def test_minimal_plain_package_is_still_accepted(tmp_path):
+    """The generic contract API must keep accepting minimal plain packages."""
+    minimal_package(tmp_path)
+    manifest = verify_package(tmp_path)
+    assert manifest["schema_version"] == 1
+    assert not any(e["path"] == "pre-cleanup-manifest.json" for e in manifest["files"])

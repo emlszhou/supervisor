@@ -32,6 +32,16 @@ import subprocess
 import sys
 import time
 
+# The harness declares that only these interpreter-essential names (plus the
+# M2C2A_* values it sets itself) are handed to the synthetic Worker.  The
+# fixture reports any other name it actually sees, so an inherited host
+# credential becomes visible instead of being silently tolerated.
+_DECLARED_ENV_NAMES = frozenset(
+    {"PATH", "HOME", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "TERM"}
+    # injected by macOS into every spawned child; declared so that the
+    # "undeclared names" report still catches anything genuinely inherited
+) | frozenset({"__CF_USER_TEXT_ENCODING"})
+
 
 def _errno_name(number: int | None) -> str | None:
     if number is None:
@@ -143,33 +153,70 @@ def action_connect(host: str, port: int) -> int:
 
 
 def action_child(depth: int) -> int:
+    """Spawn a real process chain of the requested depth and report what happened.
+
+    Depth is *observed*, never assumed: depth 2 really starts a child which in
+    turn starts a grandchild, and the grandchild's exit status is what the
+    fixture reports back.  A self-report of a depth that was never built is
+    exactly the kind of claim this harness must not accept.
+    """
     if depth <= 0:
-        _emit({"action": "child", "depth_reached": 0, "completed": True, "errno": None})
+        _emit(
+            {
+                "action": "child",
+                "depth_requested": depth,
+                "depth_reached": 0,
+                "completed": True,
+                "effect": True,
+                "errno": None,
+            }
+        )
         return 0
     if depth > 2:
         # Keep the tree tiny and deterministic; deeper trees are out of scope.
         _emit(
             {
                 "action": "child",
-                "depth_reached": depth,
+                "depth_requested": depth,
+                "depth_reached": 0,
                 "completed": False,
+                "effect": False,
                 "errno": None,
                 "note": "depth capped at 2",
             }
         )
         return 1
-    cmd = [sys.executable, "-c", "import time; time.sleep(0.1)"]
+    inner = "import time; time.sleep(0.05)"
+    middle = (
+        "import subprocess, sys, time;"
+        f"rc = subprocess.run([sys.executable, '-c', {inner!r}]).returncode;"
+        "sys.exit(rc)"
+    )
     try:
-        child = subprocess.run(cmd, capture_output=True, timeout=10)
+        child = subprocess.run([sys.executable, "-c", middle], capture_output=True, timeout=20)
     except subprocess.TimeoutExpired:
-        _emit({"action": "child", "depth_reached": 1, "completed": False, "errno": None})
+        _emit(
+            {
+                "action": "child",
+                "depth_requested": depth,
+                "depth_reached": 0,
+                "completed": False,
+                "effect": False,
+                "errno": None,
+                "note": "child chain timed out",
+            }
+        )
         return 1
+    # depth 2 means both the child and its own child exited cleanly
+    reached = depth if child.returncode == 0 else depth - 1
     _emit(
         {
             "action": "child",
-            "depth_reached": depth if child.returncode == 0 else 1,
+            "depth_requested": depth,
+            "depth_reached": reached,
             "child_exit_code": child.returncode,
             "completed": child.returncode == 0,
+            "effect": child.returncode == 0,
             "errno": None,
         }
     )
@@ -183,8 +230,28 @@ def action_timeout() -> int:
 
 
 def action_env() -> int:
-    names = sorted(n for n in os.environ if n.startswith("M2C2A_"))
-    _emit({"action": "env", "names": names, "completed": True, "errno": None})
+    """Report the *entire* environment by name, plus the values this probe owns.
+
+    Listing only the harness' own prefix would be worthless as isolation
+    evidence: the interesting claim is that nothing else is present.  Values
+    are never emitted, only names, so this stays safe to persist.
+    """
+    names = sorted(os.environ)
+    owned = sorted(n for n in names if n.startswith("M2C2A_"))
+    unexpected = sorted(
+        n for n in names if n not in _DECLARED_ENV_NAMES and not n.startswith("M2C2A_")
+    )
+    _emit(
+        {
+            "action": "env",
+            "names": names,
+            "owned_names": owned,
+            "undeclared_names": unexpected,
+            "completed": True,
+            "effect": True,
+            "errno": None,
+        }
+    )
     return 0
 
 

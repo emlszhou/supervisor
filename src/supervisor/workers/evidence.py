@@ -15,19 +15,19 @@ import stat as stat_module
 from copy import deepcopy
 from pathlib import Path
 
-__all__ = ["verify_package"]
+__all__ = ["verify_package", "verify_pre_cleanup_package"]
 
 _HEX = set("0123456789abcdef")
 _CHUNK = 1 << 16
 # Files that may never be listed as payload in a manifest: the manifest cannot
-# describe itself and the external checksum is not payload either.
+# describe itself and the external checksum is not payload either.  Nothing
+# else is exempt -- in particular ``pre-cleanup-manifest.json`` is ordinary
+# final payload and must be listed, non-symlinked and hash-checked like any
+# other file.
 _RESERVED = ("manifest.json", "CHECKSUMS.sha256")
-# The pre-cleanup snapshot is meta at every stage: during the pre-cleanup stage
-# it is deliberately excluded from itself (no self-reference), and in the final
-# manifest it is ordinary listed payload.  It is therefore never an "unlisted"
-# node, while ``_check_payload_files`` still verifies it whenever the manifest
-# does list it.
-_META = _RESERVED + ("pre-cleanup-manifest.json",)
+# Only the explicit pre-cleanup stage treats the snapshot as not-yet-payload,
+# because at that moment it is deliberately excluded from itself.
+_PRE_CLEANUP_IGNORED = _RESERVED + ("pre-cleanup-manifest.json",)
 
 
 def _fixed(message: str) -> ValueError:
@@ -159,7 +159,7 @@ def _check_payload_files(root: Path, manifest: dict) -> None:
             raise _fixed("invalid package: checksum mismatch")
 
 
-def _check_inventory(root: Path, manifest: dict) -> None:
+def _check_inventory(root: Path, manifest: dict, ignored: tuple[str, ...] = _RESERVED) -> None:
     """Reject every node the manifest does not account for.
 
     The walk never follows symlink directories.  Regular files must be
@@ -167,18 +167,24 @@ def _check_inventory(root: Path, manifest: dict) -> None:
     must be listed and are separately rejected by ``_check_payload_files``;
     directory nodes are containers and may remain unlisted only when every
     node below them is listed; sockets, fifos and devices must be listed
-    and are rejected as non-regular entries.
+    and are rejected as non-regular entries.  ``ignored`` names only the two
+    reserved files (plus the not-yet-payload snapshot during the explicit
+    pre-cleanup stage) -- an ignored name is still resolved with ``lstat``, so
+    a symlink placed at an ignored name is never walked through or tolerated
+    as a directory.
     """
     listed = {_safe_rel(entry["path"]) for entry in manifest["files"]}
 
     def walk(directory: Path) -> None:
         for path in directory.iterdir():
             rel = _safe_rel(str(path.relative_to(root)))
-            if rel in _META:
-                continue
             st = _lstat(path)
             if st is None:
                 continue  # vanished between readdir and lstat: not proof either way
+            if rel in ignored:
+                if stat_module.S_ISLNK(st.st_mode):
+                    raise _fixed("invalid package: reserved node must not be a symlink")
+                continue
             mode = st.st_mode
             if stat_module.S_ISDIR(mode) and not path.is_symlink():
                 walk(path)
@@ -279,24 +285,47 @@ def _check_references(root: Path, manifest: dict) -> None:
                     check_record(item)
 
 
+def _verify(root: Path, ignored: tuple[str, ...], require_checksums: bool) -> dict:
+    manifest = _load_manifest(root)
+    if require_checksums:
+        _check_checksums(root)
+    _check_payload_files(root, manifest)
+    _check_inventory(root, manifest, ignored=ignored)
+    _check_references(root, manifest)
+    return deepcopy(manifest)
+
+
 def verify_package(path: Path) -> dict:
-    """Verify an evidence package and return a deep copy of its manifest.
+    """Verify a finished evidence package and return a deep copy of its manifest.
 
     The package root must be a real directory containing only the files
     listed in ``manifest.json`` plus ``manifest.json``/``CHECKSUMS.sha256``.
-    Symlinks, dangling references, unlisted nodes, size/hash mismatches and
-    tampered cross-references are all rejected with a fixed ValueError that
-    echoes no package content.  This is a generic integrity check; it does
-    not verify that a record was produced honestly, and it does not reject
-    minimal packages that lack ``cleanup.json`` or ``process_tree.json``.
+    Nothing else is exempt: ``pre-cleanup-manifest.json`` is ordinary payload
+    here and must be listed, hash-checked and a regular file.  Symlinks,
+    dangling references, unlisted nodes, size/hash mismatches and tampered
+    cross-references are all rejected with a fixed ValueError that echoes no
+    package content.  This is a generic integrity check; it does not verify that
+    a record was produced honestly, and it does not reject minimal packages
+    that lack ``cleanup.json`` or ``process_tree.json``.
     """
     root = Path(path)
     st = _lstat(root)
     if st is None or stat_module.S_ISLNK(st.st_mode) or not stat_module.S_ISDIR(st.st_mode):
         raise _fixed("invalid package: root must be a real directory")
-    manifest = _load_manifest(root)
-    _check_checksums(root)
-    _check_payload_files(root, manifest)
-    _check_inventory(root, manifest)
-    _check_references(root, manifest)
-    return deepcopy(manifest)
+    return _verify(root, ignored=_RESERVED, require_checksums=True)
+
+
+def verify_pre_cleanup_package(path: Path) -> dict:
+    """Verify the package at the pre-cleanup stage.
+
+    Identical structural checks, with two deliberate differences that belong to
+    this stage only: the external ``CHECKSUMS.sha256`` does not exist yet (it
+    is written by finalization), and ``pre-cleanup-manifest.json`` is still the
+    snapshot being built, so it is excluded from its own manifest.  Both are
+    explicit here rather than hidden behind a general metadata exemption.
+    """
+    root = Path(path)
+    st = _lstat(root)
+    if st is None or stat_module.S_ISLNK(st.st_mode) or not stat_module.S_ISDIR(st.st_mode):
+        raise _fixed("invalid package: root must be a real directory")
+    return _verify(root, ignored=_PRE_CLEANUP_IGNORED, require_checksums=False)

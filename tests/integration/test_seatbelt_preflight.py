@@ -23,6 +23,10 @@ def _utc_now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -45,6 +49,8 @@ def write_authorization(path: Path, contract_sha: str) -> None:
                 "loopback": {
                     "family": "tcp",
                     "host": "127.0.0.1",
+                    "control_port": 18000,
+                    "refused_port": 18001,
                     "connect_timeout_s": 2,
                     "max_bytes": 8192,
                 },
@@ -540,7 +546,13 @@ def _write_auth(path, contract_sha, **overrides):
             "sandbox_root": "/tmp/m2c2-sandbox",
             "persistence_root": str(path.parent / "persist"),
         },
-        "loopback": {"host": "127.0.0.1", "port": 18000, "connect_timeout_s": 2, "max_bytes": 8192},
+        "loopback": {
+            "host": "127.0.0.1",
+            "control_port": 18000,
+            "refused_port": 18001,
+            "connect_timeout_s": 2,
+            "max_bytes": 8192,
+        },
         "approved_by": "operator",
         "approved_at_utc": "2026-01-01T00:00:00Z",
         "approved_scopes": ["write_root", "persistence_root", "loopback"],
@@ -581,7 +593,13 @@ def test_authorization_non_loopback_host_rejected(tmp_path):
         _write_auth(
             auth,
             "f" * 64,
-            loopback={"host": host, "port": 18000, "connect_timeout_s": 2, "max_bytes": 8192},
+            loopback={
+                "host": host,
+                "control_port": 18000,
+                "refused_port": 18001,
+                "connect_timeout_s": 2,
+                "max_bytes": 8192,
+            },
         )
         with pytest.raises(ValueError):
             preflight.load_authorization(auth, expected_bundle_sha="f" * 64)
@@ -718,30 +736,35 @@ def test_run_refuses_missing_fixture(tmp_path, monkeypatch):
     assert result["reason"] == "fixture_unavailable"
 
 
-def _offline_worker(profile_path, fixture, argv, cwd, env, capture_path, timeout=120.0, grace=5.0):
-    import sys as _sys
+def _offline_worker(
+    profile_path,
+    fixture,
+    argv,
+    cwd,
+    env,
+    capture_path,
+    interpreter="",
+    timeout=120.0,
+    grace=5.0,
+):
+    """Stand in for the sandboxed Worker without sandbox-exec.
 
-    profile = Path(profile_path)
-    base = profile.parent.parent  # attempt root
-    worker_env = dict(env)
-    worker_env.update(
-        {
-            "M2C2A_WORK": str(base / "work"),
-            "M2C2A_RO": str(base / "ro"),
-            "M2C2A_DENIED": str(base / "denied"),
-            "M2C2A_SECRET": str(base / "secret"),
-        }
-    )
+    The same read-only fixture copy and the same minimal environment are used,
+    so orchestration, classification and the evidence lifecycle are exercised --
+    but nothing here tests macOS enforcement, and the substitution must never be
+    reported as boundary evidence.
+    """
     result = preflight._run_bounded_command(
-        [_sys.executable, fixture] + list(argv),
+        [interpreter or sys.executable, fixture] + list(argv),
         cwd=cwd,
-        env=worker_env,
+        env=dict(env),
         timeout=timeout,
         max_output=preflight.MAX_OUTPUT,
         grace=grace,
     )
     capture_path.parent.mkdir(parents=True, exist_ok=True)
-    capture_path.write_bytes(result.get("stdout_text", "").encode("utf-8"))
+    capture_path.write_bytes(result.get("stdout_bytes") or b"")
+    capture_path.with_suffix(".stderr.log").write_bytes(result.get("stderr_bytes") or b"")
     return result
 
 
@@ -767,7 +790,13 @@ def test_full_orchestration_offline(tmp_path, monkeypatch):
         auth,
         contract_sha(),
         roots={"sandbox_root": str(sandbox_root), "persistence_root": str(persistence_root)},
-        loopback={"host": "127.0.0.1", "port": 19000, "connect_timeout_s": 2, "max_bytes": 8192},
+        loopback={
+            "host": "127.0.0.1",
+            "control_port": 19000,
+            "refused_port": 19001,
+            "connect_timeout_s": 2,
+            "max_bytes": 8192,
+        },
     )
     fixture = Path(__file__).resolve().parents[1] / "fixtures/seatbelt_probe.py"
 
@@ -797,39 +826,107 @@ def test_full_orchestration_offline(tmp_path, monkeypatch):
         r["fixture"].get("effect") is True for r in result["records"] if r["test_id"] in refuse_ids
     )
 
-    # same-target controls really ran next to their refusal
+    # every refusal with a same-target control really got one, and the control
+    # ran *before* the refusal it justifies
+    order = [r["test_id"] for r in result["records"]]
+    paired = 0
     for case in preflight._CASES:
-        if case["test_kind"] != "expected_refuse":
+        if case["test_kind"] != "expected_refuse" or not case.get("paired_control"):
             continue
+        paired += 1
+        assert order.index(case["paired_control"]) < order.index(case["test_id"])
         control = next(r for r in result["records"] if r["test_id"] == case["paired_control"])
-        target = next(r for r in result["records"] if r["test_id"] == case["test_id"])
-        assert control["argv"] == target["argv"]
-        assert control["target"] == target["target"]
+        refusal = next(r for r in result["records"] if r["test_id"] == case["test_id"])
+        if case["area"] == "loopback":
+            # the two loopback halves intentionally differ by exactly the port:
+            # same fixture, same cwd, two harness-owned endpoints
+            assert control["argv"][:4] == refusal["argv"][:4]
+            assert control["argv"][5] != refusal["argv"][5]
+        else:
+            assert control["argv"] == refusal["argv"]
+            assert control["linked_target"] == refusal["linked_target"]
         assert control["worker"]["exit_code"] == 0, control["worker"]
+        # both runs started from the same restored pristine baseline, so the
+        # refusal was never measured against what the control left behind.
+        # A loopback pair has no file target and therefore no baseline to keep.
+        if case["area"] != "loopback":
+            pristine = sha256_bytes(b"synthetic-sentinel\n")
+            assert refusal["restored_sha256"] == pristine
+            assert control["restored_sha256"] == pristine
+        # offline there is no enforcement, so a refused *write* really did
+        # change its target -- which is exactly why those sub-items must fail.
+        # Read refusals legitimately leave the file untouched.
+        if refusal["action"] == "write":
+            assert refusal["target_unchanged"] is False
+    assert paired >= 6, "the required refusal sub-items must keep their controls"
 
-    # the harness really listened on loopback for both the refused and the
-    # controlled connect case
+    # refusals that cannot have a same-target control under the frozen profile
+    # stay unknown rather than quietly claiming a pass
+    unpaired = [
+        c["test_id"]
+        for c in preflight._CASES
+        if c["test_kind"] == "expected_refuse" and not c.get("paired_control")
+    ]
+    assert unpaired, "symlink-escape refusals have no expressible same-target control"
+
+    # two harness-owned loopback endpoints, each really bound and closed
     loopback_cases = [r for r in result["records"] if r["area"] == "loopback"]
     assert len(loopback_cases) == 2
-    assert all(r["listener"] is not None for r in loopback_cases)
+    assert {r["listener"]["port"] for r in loopback_cases} == {19000, 19001}
+    for record in loopback_cases:
+        assert record["listener"]["bound"] is True
+        assert record["listener"]["closed_confirmed"] is True
+        assert record["listener"]["joined"] is True
 
-    # T7 is filled by an independent fresh reviewer, and this host never
-    # enforced anything, so the run can never be upgraded past partial capability
-    assert result["summary"] == "fail"
-    assert result["platform_capability"] == "partial"
-    assert result["live_execution"] is False
+    # the synthetic Worker saw a declared, minimal environment only
+    env_record = next(r for r in result["records"] if r["test_id"] == "T5-env-names")
+    assert env_record["fixture"]["undeclared_names"] == []
 
     package_root = persistence_root / "off1"
-    assert (package_root / "manifest.json").is_file()
-    assert (package_root / "cleanup.json").is_file()
     manifest = preflight.verify_package_offline(package_root)
     paths = {e["path"] for e in manifest["files"]}
-    assert "summary.json" in paths
-    assert "cleanup.json" in paths
-    # every case really produced persisted evidence, none was silently dropped
+    # the whole required delivery tree, not just a manifest and a checksum
+    for required in (
+        "summary.json",
+        "process_tree.json",
+        "denied_manifest.json",
+        "boundary-record.json",
+        "pre-cleanup-manifest.json",
+        "cleanup.json",
+    ):
+        assert required in paths, required
+    # every case produced persisted evidence, a capture and a readable profile
     assert result["package"]["missing"] == []
     for case in preflight._CASES:
         assert f"evidence/{case['test_id']}.json" in paths
+        assert f"capture/{case['test_id']}.log" in paths
+        assert f"capture/{case['test_id']}.stderr.log" in paths
+        assert f"profiles/{case['test_id']}.profile" in paths
+
+    # the C1 seven-check validator really ran over the record we produced
+    assert result["boundary_record"]["validated"] is True
+    assert result["boundary_record"]["checks"] == 7
+    boundary = json.loads((package_root / "boundary-record.json").read_text())
+    assert [c["id"] for c in boundary["checks"]] == [
+        "filesystem",
+        "control_readonly",
+        "network",
+        "mcp",
+        "credentials",
+        "process_tree",
+        "fresh_review",
+    ]
+    # MCP and the fresh-review flow are never self-signed
+    for check in boundary["checks"]:
+        if check["id"] in ("mcp", "fresh_review"):
+            assert check["executed"] is False
+            assert check["observed"] == "unknown"
+            assert check["argv"] is None
+
+    # finalized and independently re-verified after finalization
+    assert result["package"]["finalized"] is True
+    assert result["final_verification"]["verified"] is True
+    assert result["cleanup_blockers"] == []
 
     assert not (sandbox_root / "off1").exists()
     cleanup = json.loads((package_root / "cleanup.json").read_text())
@@ -966,3 +1063,446 @@ def test_attempt_id_is_a_single_canonical_component():
         with pytest.raises(ValueError):
             preflight._validate_attempt_id(bad)
     assert preflight._validate_attempt_id("m2c2a-2026-10-11") == "m2c2a-2026-10-11"
+
+
+# ---------------------------------------------------------------------------
+# C2A-R2 regressions: each case pins the contract behaviour, not the
+# implementation shape.
+# ---------------------------------------------------------------------------
+
+
+def test_capture_budget_is_exact_not_off_by_one(tmp_path):
+    """Producing exactly the budget is not overflow; one byte more is."""
+    script = tmp_path / "exact.py"
+    script.write_text("import sys; sys.stdout.buffer.write(b'x' * 16)\n")
+    at_budget = preflight._run_bounded_command(
+        [sys.executable, str(script)],
+        cwd=str(tmp_path),
+        env=preflight._minimal_env({}),
+        timeout=20.0,
+        max_output=16,
+        grace=1.0,
+    )
+    assert at_budget["output_limited"] is False
+    assert at_budget["exit_code"] == 0
+    assert at_budget["capture_bytes"] == 16
+
+    script.write_text("import sys; sys.stdout.buffer.write(b'x' * 17)\n")
+    over_budget = preflight._run_bounded_command(
+        [sys.executable, str(script)],
+        cwd=str(tmp_path),
+        env=preflight._minimal_env({}),
+        timeout=20.0,
+        max_output=16,
+        grace=1.0,
+    )
+    assert over_budget["output_limited"] is True
+    # never stored more than the budget, even when more was produced
+    assert over_budget["capture_bytes"] == 16
+
+
+def test_capture_bytes_are_persisted_verbatim(tmp_path, monkeypatch):
+    """A capture is stored as the exact bytes read, not re-encoded text."""
+    payload = bytes(range(256)) * 4  # invalid utf-8 on purpose
+    script = tmp_path / "binary.py"
+    script.write_bytes(b"import sys; sys.stdout.buffer.write(" + repr(payload).encode() + b")\n")
+    # A stand-in for sandbox-exec that drops straight through to the command.
+    # This exercises the real argv assembly and the byte-for-byte persistence;
+    # it claims nothing about macOS enforcement.
+    shim = tmp_path / "sandbox-exec-shim"
+    shim.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os, sys\n"
+        "args = sys.argv[1:]\n"
+        "assert args[0] == '-f' and args[2] == '--', args\n"
+        "os.execv(args[3], args[3:])\n"
+    )
+    shim.chmod(0o755)
+    monkeypatch.setattr(preflight, "SANDBOX_EXEC", str(shim))
+
+    capture = tmp_path / "cap.log"
+    result = preflight.run_worker(
+        profile_path=str(tmp_path / "unused.profile"),
+        fixture=str(script),
+        argv=[],
+        cwd=str(tmp_path),
+        env=preflight._minimal_env({}),
+        capture_path=capture,
+        interpreter=sys.executable,
+        timeout=20.0,
+        grace=1.0,
+    )
+    assert result["exit_code"] == 0, result
+    assert capture.read_bytes() == payload
+    assert result["capture_file_sha256"] == sha256_bytes(payload)
+    # stderr is persisted next to stdout instead of dying in memory
+    assert (tmp_path / "cap.stderr.log").read_bytes() == b""
+
+
+def test_whole_tree_cleanup_is_false_when_a_descendant_survives(tmp_path):
+    """The leader exiting promptly must not be mistaken for a clean tree.
+
+    The child spawns a grandchild that ignores SIGTERM; only the whole-group
+    check can tell that something survived.
+    """
+    script = tmp_path / "stubborn.py"
+    script.write_text(
+        "import os, signal, subprocess, sys, time\n"
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+        "kid = subprocess.Popen([sys.executable, '-c',\n"
+        "    'import signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);"
+        "time.sleep(30)'])\n"
+        "time.sleep(30)\n"
+    )
+    result = preflight._run_bounded_command(
+        [sys.executable, str(script)],
+        cwd=str(tmp_path),
+        env=preflight._minimal_env({}),
+        timeout=1.0,
+        max_output=preflight.MAX_OUTPUT,
+        grace=1.0,
+    )
+    assert result["timed_out"] is True
+    assert isinstance(result["cancel_state"], dict)
+    # either the group was escalated and confirmed gone, or residue was
+    # observed and reported as not-clean; it is never silently "clean"
+    assert result["cleanup_confirmed"] is not True or (
+        result["cancel_state"]["group_gone"] is True
+        and result["cancel_state"]["identity_confirmed"] is not False
+    )
+    # the outcome is recorded either way
+    assert "group_gone" in result["cancel_state"]
+
+
+def test_cleanup_state_is_unknown_when_identity_is_unconfirmed():
+    """An unconfirmable identity can never be reported as clean."""
+    assert preflight._cleanup_state_from_cancel(None) is None
+    assert preflight._cleanup_state_from_cancel({"identity_confirmed": False}) is None
+    assert (
+        preflight._cleanup_state_from_cancel({"identity_confirmed": True, "group_gone": None})
+        is None
+    )
+    assert (
+        preflight._cleanup_state_from_cancel({"identity_confirmed": True, "group_gone": False})
+        is False
+    )
+    assert (
+        preflight._cleanup_state_from_cancel({"identity_confirmed": True, "group_gone": True})
+        is True
+    )
+
+
+def test_minimal_environment_drops_host_secrets(monkeypatch):
+    """The synthetic Worker must not inherit the host's credential-shaped vars."""
+    monkeypatch.setenv("M2C2A_TEST_CREDENTIAL_SENTINEL", "do-not-leak")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "do-not-leak")
+    monkeypatch.setenv("TOTALLY_UNRELATED_HOST_VAR", "do-not-leak")
+    env = preflight._minimal_env({"M2C2A_ATTEMPT_ID": "a1"})
+    assert env["M2C2A_ATTEMPT_ID"] == "a1"
+    for name in (
+        "M2C2A_TEST_CREDENTIAL_SENTINEL",
+        "AWS_SECRET_ACCESS_KEY",
+        "TOTALLY_UNRELATED_HOST_VAR",
+    ):
+        assert name not in env
+    # every forwarded name is declared, nothing else sneaks through
+    declared = set(preflight._MINIMAL_ENV_NAMES) | set(preflight.OS_INJECTED_ENV_NAMES)
+    assert set(env) - declared <= {
+        "M2C2A_ATTEMPT_ID",
+        "M2C2A_SYNTHETIC",
+        "M2C2A_WORK",
+        "M2C2A_RO",
+        "M2C2A_DENIED",
+        "M2C2A_SECRET",
+        "M2C2A_LOOPBACK_CONTROL_PORT",
+        "M2C2A_LOOPBACK_REFUSED_PORT",
+    }
+
+
+def test_credential_sentinel_never_reaches_the_worker(tmp_path, monkeypatch):
+    """End-to-end: a sentinel in the host environment stays in the host."""
+    monkeypatch.setenv("M2C2A_TEST_CREDENTIAL_SENTINEL", "super-secret-value")
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    seen = tmp_path / "seen.json"
+    script = tmp_path / "spy.py"
+    script.write_text(
+        f"import json, os, sys\njson.dump(sorted(os.environ), open({str(seen)!r}, 'w'))\n"
+    )
+    result = preflight._run_bounded_command(
+        [sys.executable, str(script)],
+        cwd=str(tmp_path),
+        env=preflight._minimal_env({}),
+        timeout=20.0,
+        max_output=preflight.MAX_OUTPUT,
+        grace=1.0,
+    )
+    assert result["exit_code"] == 0
+    names = json.loads(seen.read_text())
+    assert "M2C2A_TEST_CREDENTIAL_SENTINEL" not in names
+    assert "super-secret-value" not in result["stdout_bytes"].decode("utf-8", "replace")
+
+
+def test_a_legitimate_refusal_is_classified_pass():
+    """A real refusal (EPERM, untouched target, working control) must pass.
+
+    This is the case the previous single-pass ordering could never award: the
+    control was still ``unknown`` when the refusal was classified.
+    """
+    refusal = {
+        "test_id": "T2-secret-env",
+        "group": "T2",
+        "test_kind": "expected_refuse",
+        "action": "read",
+        "area": "secret",
+        "linked_target": "/tmp/secret/.env",
+        "executed": True,
+        "argv": ["--action", "read", "--target", "/tmp/secret/.env"],
+        "cwd": "/tmp/work",
+        "worker": {
+            "started": True,
+            "completed": True,
+            "exit_code": 1,
+            "output_limited": False,
+            "stderr_bytes": b"",
+        },
+        "fixture": {"errno": "EPERM", "effect": False},
+        "listener": None,
+        "target_unchanged": True,
+        "paired_control": "T2-secret-env-control",
+    }
+    control = {
+        "test_id": "T2-secret-env-control",
+        "group": "T2",
+        "test_kind": "positive",
+        "action": "read",
+        "area": "secret",
+        "linked_target": "/tmp/secret/.env",
+        "executed": True,
+        "argv": ["--action", "read", "--target", "/tmp/secret/.env"],
+        "cwd": "/tmp/work",
+        "worker": {
+            "started": True,
+            "completed": True,
+            "exit_code": 0,
+            "output_limited": False,
+            "stderr_bytes": b"",
+        },
+        "fixture": {"errno": None, "effect": True},
+        "listener": None,
+        "target_unchanged": True,
+        "paired_control": None,
+    }
+    verdicts = preflight._classify_records([refusal, control])
+    assert verdicts["T2-secret-env-control"] == "pass"
+    assert verdicts["T2-secret-env"] == "pass"
+
+    # ...but an observed effect still fails immediately, control or not
+    breached = dict(refusal, fixture={"errno": "EPERM", "effect": True})
+    assert preflight._classify_records([breached, control])["T2-secret-env"] == "fail"
+
+    # ...and with the control failing, the refusal cannot claim a pass
+    broken_control = dict(
+        control,
+        worker=dict(control["worker"], exit_code=1),
+        fixture={"errno": None, "effect": False},
+    )
+    assert preflight._classify_records([refusal, broken_control])["T2-secret-env"] == "unknown"
+
+
+def test_loopback_refusal_without_a_real_listener_is_unknown():
+    """ECONNREFUSED against a port nobody bound proves nothing."""
+    record = {
+        "test_id": "T3-connect",
+        "group": "T3",
+        "test_kind": "expected_refuse",
+        "action": "connect",
+        "area": "loopback",
+        "linked_target": None,
+        "executed": True,
+        "argv": ["--action", "connect", "--host", "127.0.0.1", "--port", "19001"],
+        "cwd": "/tmp/work",
+        "worker": {
+            "started": True,
+            "completed": True,
+            "exit_code": 1,
+            "output_limited": False,
+            "stderr_bytes": b"",
+        },
+        "fixture": {"errno": "ECONNREFUSED", "effect": False},
+        "listener": {"port": 19001, "bound": False, "served": False, "received_bytes": 0},
+        "target_unchanged": None,
+        "paired_control": "T3-connect-control",
+    }
+    case = preflight._case_for_classifier(record, "pass")
+    assert case["observation_complete"] is False
+    assert backend.classify_case(case) == "unknown"
+
+    # a real listener that received the connection is a boundary breach
+    breached = dict(
+        record,
+        listener=dict(record["listener"], bound=True, closed_confirmed=True, received_bytes=16),
+    )
+    case = preflight._case_for_classifier(breached, "pass")
+    assert case["effect_observed"] is True
+    assert backend.classify_case(case) == "fail"
+
+
+def test_loopback_listener_signals_ready_before_the_worker_starts():
+    """The worker must never race a port that is not accepting yet."""
+    import threading as _threading
+
+    ready = _threading.Event()
+    box = {}
+
+    def serve():
+        box["result"] = preflight.run_loopback_control(
+            port=19222,
+            connect_timeout=2.0,
+            max_bytes=8192,
+            deadline=3.0,
+            ready=ready,
+            cancel=_threading.Event(),
+        )
+
+    thread = _threading.Thread(target=serve, daemon=True)
+    thread.start()
+    assert ready.wait(timeout=5.0) is True, "listener never announced readiness"
+    # readiness implies the endpoint is genuinely connectable right now
+    import socket as _socket
+
+    with _socket.create_connection(("127.0.0.1", 19222), timeout=2.0) as sock:
+        sock.sendall(b"probe\n")
+    thread.join(timeout=5.0)
+    assert box["result"]["served"] is True
+    assert box["result"]["closed_confirmed"] is True
+
+
+def test_authorization_requires_two_distinct_loopback_endpoints(tmp_path):
+    auth = tmp_path / "auth.json"
+    _write_auth(
+        auth,
+        "f" * 64,
+        loopback={
+            "host": "127.0.0.1",
+            "control_port": 18000,
+            "refused_port": 70000,
+            "connect_timeout_s": 2,
+            "max_bytes": 8192,
+        },
+    )
+    with pytest.raises(ValueError) as excinfo:
+        preflight.load_authorization(auth, expected_bundle_sha="f" * 64)
+    assert "range" in str(excinfo.value)
+    _write_auth(
+        auth,
+        "f" * 64,
+        loopback={
+            "host": "127.0.0.1",
+            "control_port": 18000,
+            "refused_port": 18000,
+            "connect_timeout_s": 2,
+            "max_bytes": 8192,
+        },
+    )
+    with pytest.raises(ValueError) as excinfo:
+        preflight.load_authorization(auth, expected_bundle_sha="f" * 64)
+    assert "distinct" in str(excinfo.value)
+
+
+def test_persistence_failure_preserves_the_attempt_tree(tmp_path, monkeypatch):
+    """Regression: cleanup used to run unconditionally and destroy the capture.
+
+    When persistence or its verification fails, the only remaining copy of the
+    evidence is the attempt tree itself, so it must survive and the failure must
+    be reported rather than silently sealed into a delivery.
+    """
+    import platform as platform_module
+
+    monkeypatch.setattr(platform_module, "system", lambda: "Darwin")
+    monkeypatch.setattr(preflight, "run_worker", _offline_worker)
+
+    sandbox_root = tmp_path / "sandbox"
+    sandbox_root.mkdir()
+    persistence_root = tmp_path / "out"
+    persistence_root.mkdir()
+    auth = tmp_path / "auth.json"
+    _write_auth(
+        auth,
+        contract_sha(),
+        roots={
+            "sandbox_root": str(sandbox_root),
+            "persistence_root": str(persistence_root),
+        },
+        loopback={
+            "host": "127.0.0.1",
+            "control_port": 19300,
+            "refused_port": 19301,
+            "connect_timeout_s": 2,
+            "max_bytes": 8192,
+        },
+    )
+    fixture = Path(__file__).resolve().parents[1] / "fixtures/seatbelt_probe.py"
+
+    def refuse(*_args, **_kwargs):
+        raise ValueError("package: simulated persistence failure")
+
+    monkeypatch.setattr(preflight, "persist_package", refuse)
+
+    result = preflight.run(
+        authorization_file=auth,
+        attempt_id="keep1",
+        output_root=persistence_root,
+        fixture_path=fixture,
+        bundle_dir=write_contract_bundle(tmp_path, contract_sha()),
+    )
+    assert result["status"] == "partial"
+    assert "persistence" in (result["failure"] or "")
+    assert "skipped" in result["cleanup"]
+    # the scene is still there, with its captures, for inspection
+    attempt = sandbox_root / "keep1"
+    assert attempt.is_dir()
+    assert list((attempt / "harness" / "capture").glob("*.log"))
+    assert result["package"]["finalized"] is False
+    assert result["final_verification"]["verified"] is False
+
+
+def test_unconfirmed_process_state_blocks_cleanup(tmp_path, monkeypatch):
+    """A cleanup question that could not be answered keeps the attempt."""
+    import platform as platform_module
+
+    monkeypatch.setattr(platform_module, "system", lambda: "Darwin")
+    monkeypatch.setattr(preflight, "run_worker", _offline_worker)
+    # the whole-tree state of the expected-cancellation case stays unknown
+    monkeypatch.setattr(preflight, "_cleanup_state_from_cancel", lambda _state: None)
+
+    sandbox_root = tmp_path / "sandbox"
+    sandbox_root.mkdir()
+    persistence_root = tmp_path / "out"
+    persistence_root.mkdir()
+    auth = tmp_path / "auth.json"
+    _write_auth(
+        auth,
+        contract_sha(),
+        roots={
+            "sandbox_root": str(sandbox_root),
+            "persistence_root": str(persistence_root),
+        },
+        loopback={
+            "host": "127.0.0.1",
+            "control_port": 19310,
+            "refused_port": 19311,
+            "connect_timeout_s": 2,
+            "max_bytes": 8192,
+        },
+    )
+    fixture = Path(__file__).resolve().parents[1] / "fixtures/seatbelt_probe.py"
+    result = preflight.run(
+        authorization_file=auth,
+        attempt_id="keep2",
+        output_root=persistence_root,
+        fixture_path=fixture,
+        bundle_dir=write_contract_bundle(tmp_path, contract_sha()),
+    )
+    assert result["cleanup_blockers"], "an unknown tree state must block cleanup"
+    assert (sandbox_root / "keep2").is_dir()
+    assert result["package"]["finalized"] is False
